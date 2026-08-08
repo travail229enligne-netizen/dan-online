@@ -8,16 +8,16 @@ export default function CategoryGrid({ categories = [] }) {
             key={cat.slug}
             href={`/categorie/${cat.slug}`}
             style={{
-              background: cat.color || "var(--terracotta)",
+              background: "var(--white)",
+              border: "1px solid var(--line)",
               borderRadius: "var(--radius-md)",
               padding: "18px 10px",
               textAlign: "center",
-              color: "var(--white)",
+              color: "var(--ink)",
               fontWeight: 600,
               fontSize: 13,
             }}
           >
-            <div style={{ fontSize: 26, marginBottom: 6 }}>{cat.icon}</div>
             {cat.name}
           </a>
         ))}
