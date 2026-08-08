@@ -2,8 +2,8 @@ const asyncHandler = require("express-async-handler");
 const Shop = require("../models/Shop");
 const User = require("../models/User");
 
-// @route  GET /api/shops
-// @access Public — liste des boutiques partenaires vérifiées
+// @route   GET /api/shops
+// @access  Public - liste des boutiques partenaires verifiees
 const getShops = asyncHandler(async (req, res) => {
   const filter = { status: "active" };
   if (req.query.category) filter.category = req.query.category;
@@ -15,26 +15,26 @@ const getShops = asyncHandler(async (req, res) => {
   res.json(shops);
 });
 
-// @route  GET /api/shops/me
-// @access Private (marchand) — récupère sa propre boutique (ou null)
+// @route   GET /api/shops/me
+// @access  Private (marchand) - recupere sa propre boutique (ou null)
 const getMyShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id }).populate("category", "name icon");
   res.json(shop || null);
 });
 
-// @route  GET /api/shops/:slug
-// @access Public
+// @route   GET /api/shops/:slug
+// @access  Public
 const getShopBySlug = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ slug: req.params.slug }).populate("category", "name icon");
   if (!shop) return res.status(404).json({ message: "Boutique introuvable." });
   res.json(shop);
 });
 
-// @route  POST /api/shops
-// @access Private (marchand) — crée sa boutique / demande d'emplacement virtuel
+// @route   POST /api/shops
+// @access  Private (marchand) - cree sa boutique / demande d'emplacement virtuel
 const createShop = asyncHandler(async (req, res) => {
   if (req.user.shop) {
-    return res.status(400).json({ message: "Vous possédez déjà une boutique." });
+    return res.status(400).json({ message: "Vous possedez deja une boutique." });
   }
 
   const { name, description, category, allee, numero, themeColor } = req.body;
@@ -52,7 +52,7 @@ const createShop = asyncHandler(async (req, res) => {
     description,
     category,
     location: { allee, numero },
-    themeColor: themeColor || "#c1592b",
+    themeColor: themeColor || "#111111",
     status: "pending", // en attente de validation par l'admin
   });
 
@@ -61,11 +61,11 @@ const createShop = asyncHandler(async (req, res) => {
   res.status(201).json(shop);
 });
 
-// @route  PUT /api/shops/me
-// @access Private (marchand) — met à jour sa propre boutique
+// @route   PUT /api/shops/me
+// @access  Private (marchand) - met a jour sa propre boutique
 const updateMyShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
-  if (!shop) return res.status(404).json({ message: "Aucune boutique associée à ce compte." });
+  if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
 
   const fields = ["name", "description", "logoUrl", "category", "themeColor"];
   fields.forEach((f) => {
@@ -80,12 +80,40 @@ const updateMyShop = asyncHandler(async (req, res) => {
   res.json(shop);
 });
 
-// @route  GET /api/shops/me/stats
-// @access Private (marchand) — tableau de bord ventes/commissions
+// @route   PUT /api/shops/me/close
+// @access  Private (marchand) - ferme temporairement sa boutique (reversible)
+const closeMyShop = asyncHandler(async (req, res) => {
+  const shop = await Shop.findOne({ owner: req.user._id });
+  if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
+  if (shop.status !== "active") {
+    return res.status(400).json({ message: "Seule une boutique active peut etre fermee." });
+  }
+
+  shop.status = "closed";
+  await shop.save();
+  res.json(shop);
+});
+
+// @route   PUT /api/shops/me/reopen
+// @access  Private (marchand) - rouvre sa boutique fermee
+const reopenMyShop = asyncHandler(async (req, res) => {
+  const shop = await Shop.findOne({ owner: req.user._id });
+  if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
+  if (shop.status !== "closed") {
+    return res.status(400).json({ message: "Seule une boutique fermee peut etre rouverte." });
+  }
+
+  shop.status = "active";
+  await shop.save();
+  res.json(shop);
+});
+
+// @route   GET /api/shops/me/stats
+// @access  Private (marchand) - tableau de bord ventes/commissions
 const getMyShopStats = asyncHandler(async (req, res) => {
   const Order = require("../models/Order");
   const shop = await Shop.findOne({ owner: req.user._id });
-  if (!shop) return res.status(404).json({ message: "Aucune boutique associée à ce compte." });
+  if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
 
   const orders = await Order.find({ "items.shop": shop._id, status: { $ne: "cancelled" } });
 
@@ -113,4 +141,13 @@ const getMyShopStats = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { getShops, getMyShop, getShopBySlug, createShop, updateMyShop, getMyShopStats };
+module.exports = {
+  getShops,
+  getMyShop,
+  getShopBySlug,
+  createShop,
+  updateMyShop,
+  closeMyShop,
+  reopenMyShop,
+  getMyShopStats,
+};
