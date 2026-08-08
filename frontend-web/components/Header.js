@@ -15,7 +15,7 @@ export default function Header() {
       <div className="container" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <a href="/" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 22 }}>🌟</span>
-          <h1 style={{ color: "var(--white)", fontSize: 22 }}>Dan-Online</h1>
+          <h1 style={{ color: "var(--white)", fontSize: 22 }}>EasyShop</h1>
         </a>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <a

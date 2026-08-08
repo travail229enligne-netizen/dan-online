@@ -55,7 +55,7 @@ export default function MerchantDashboard() {
             marginBottom: 4,
           }}
         >
-          Ta boutique est en attente de validation par l'équipe Dan-Online. Tu pourras ajouter des produits une fois validée.
+          Ta boutique est en attente de validation par l'équipe EasyShop. Tu pourras ajouter des produits une fois validée.
         </div>
       )}
 

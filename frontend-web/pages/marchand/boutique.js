@@ -95,7 +95,7 @@ export default function Boutique() {
       <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 18 }}>
         {existingShop
           ? existingShop.status === "pending"
-            ? "En attente de validation par l'équipe Dan-Online."
+            ? "En attente de validation par l'équipe EasyShop."
             : "Boutique active sur le marché."
           : "Renseigne les informations de ton emplacement virtuel."}
       </p>

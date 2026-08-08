@@ -2,16 +2,17 @@ const asyncHandler = require("express-async-handler");
 const Shop = require("../models/Shop");
 const User = require("../models/User");
 const Order = require("../models/Order");
+const Product = require("../models/Product");
 
-// @route  GET /api/admin/shops/pending
-// @access Private (admin) — boutiques en attente de validation
+// @route   GET /api/admin/shops/pending
+// @access  Private (admin) - boutiques en attente de validation
 const getPendingShops = asyncHandler(async (req, res) => {
   const shops = await Shop.find({ status: "pending" }).populate("owner", "name email phone");
   res.json(shops);
 });
 
-// @route  PUT /api/admin/shops/:id/validate
-// @access Private (admin) — valide un emplacement virtuel (boutique)
+// @route   PUT /api/admin/shops/:id/validate
+// @access  Private (admin) - valide un emplacement virtuel (boutique)
 const validateShop = asyncHandler(async (req, res) => {
   const { approve, commissionRate, rentAmount } = req.body;
   const shop = await Shop.findById(req.params.id);
@@ -26,16 +27,29 @@ const validateShop = asyncHandler(async (req, res) => {
   res.json(shop);
 });
 
-// @route  PUT /api/admin/shops/:id/suspend
-// @access Private (admin)
+// @route   PUT /api/admin/shops/:id/suspend
+// @access  Private (admin)
 const suspendShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findByIdAndUpdate(req.params.id, { status: "suspended" }, { new: true });
   if (!shop) return res.status(404).json({ message: "Boutique introuvable." });
   res.json(shop);
 });
 
-// @route  GET /api/admin/dashboard
-// @access Private (admin) — vue d'ensemble de la plateforme
+// @route   DELETE /api/admin/shops/:id
+// @access  Private (admin) - supprime definitivement une boutique (donnees test ou non-conformite)
+const deleteShop = asyncHandler(async (req, res) => {
+  const shop = await Shop.findById(req.params.id);
+  if (!shop) return res.status(404).json({ message: "Boutique introuvable." });
+
+  await Product.deleteMany({ shop: shop._id });
+  await User.findByIdAndUpdate(shop.owner, { $unset: { shop: "" } });
+  await shop.deleteOne();
+
+  res.json({ message: "Boutique supprimee avec succes." });
+});
+
+// @route   GET /api/admin/dashboard
+// @access  Private (admin) - vue d'ensemble de la plateforme
 const getDashboard = asyncHandler(async (req, res) => {
   const [totalMarchands, totalClients, activeShops, pendingShops, totalOrders] = await Promise.all([
     User.countDocuments({ role: "marchand" }),
@@ -60,4 +74,4 @@ const getDashboard = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { getPendingShops, validateShop, suspendShop, getDashboard };
+module.exports = { getPendingShops, validateShop, suspendShop, deleteShop, getDashboard };

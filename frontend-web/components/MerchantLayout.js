@@ -82,7 +82,7 @@ export default function MerchantLayout({ children, title }) {
           >
             <div style={{ padding: "0 20px 16px", borderBottom: "1px solid var(--line)" }}>
               <div style={{ fontFamily: "var(--font-display)", fontSize: 18, color: "var(--green-dark)" }}>
-                🌟 Dan-Online
+                🌟 EasyShop
               </div>
               <div style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 2 }}>Espace marchand</div>
             </div>
