@@ -5,6 +5,7 @@ import { useAuth } from "../lib/auth";
 const navItems = [
   { href: "/marchand/dashboard", label: "Tableau de bord", icon: "📊" },
   { href: "/marchand/boutique", label: "Ma boutique", icon: "🏪" },
+  { href: "/marchand/produits", label: "Produits", icon: "📦" },
   { href: "/marchand/commandes", label: "Commandes", icon: "🧾" },
   { href: "/compte", label: "Mon compte", icon: "👤" },
 ];
