@@ -11,6 +11,13 @@ const getPendingShops = asyncHandler(async (req, res) => {
   res.json(shops);
 });
 
+// @route   GET /api/admin/shops
+// @access  Private (admin) - liste de toutes les boutiques, tous statuts
+const getAllShops = asyncHandler(async (req, res) => {
+  const shops = await Shop.find().populate("owner", "name email phone").sort({ createdAt: -1 });
+  res.json(shops);
+});
+
 // @route   PUT /api/admin/shops/:id/validate
 // @access  Private (admin) - valide un emplacement virtuel (boutique)
 const validateShop = asyncHandler(async (req, res) => {
@@ -74,4 +81,4 @@ const getDashboard = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { getPendingShops, validateShop, suspendShop, deleteShop, getDashboard };
+module.exports = { getPendingShops, getAllShops, validateShop, suspendShop, deleteShop, getDashboard };

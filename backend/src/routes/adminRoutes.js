@@ -1,6 +1,7 @@
 const express = require("express");
 const {
   getPendingShops,
+  getAllShops,
   validateShop,
   suspendShop,
   deleteShop,
@@ -14,6 +15,7 @@ const router = express.Router();
 router.use(protect, authorize("admin"));
 
 router.get("/dashboard", getDashboard);
+router.get("/shops", getAllShops);
 router.get("/shops/pending", getPendingShops);
 router.put("/shops/:id/validate", validateShop);
 router.put("/shops/:id/suspend", suspendShop);
