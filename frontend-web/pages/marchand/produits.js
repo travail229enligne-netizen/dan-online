@@ -3,11 +3,15 @@ import MerchantLayout from "../../components/MerchantLayout";
 import ImageUpload from "../../components/ImageUpload";
 import api from "../../lib/api";
 
+const emptyForm = { name: "", price: "", stock: "", unit: "unité", image: "" };
+
 export default function MerchantProduits() {
   const [shop, setShop] = useState(undefined);
   const [products, setProducts] = useState([]);
-  const [form, setForm] = useState({ name: "", price: "", stock: "", unit: "unité", image: "" });
+  const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(null);
 
   const loadData = () => {
     api.get("/shops/me").then((r) => {
@@ -20,19 +24,49 @@ export default function MerchantProduits() {
     loadData();
   }, []);
 
+  const startEdit = (p) => {
+    setEditingId(p._id);
+    setForm({ name: p.name, price: p.price, stock: p.stock, unit: p.unit, image: p.image || "" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     try {
-      await api.post("/products", {
-        ...form,
-        price: Number(form.price),
-        stock: Number(form.stock),
-      });
-      setForm({ name: "", price: "", stock: "", unit: "unité", image: "" });
+      if (editingId) {
+        await api.put(`/products/${editingId}`, {
+          ...form,
+          price: Number(form.price),
+          stock: Number(form.stock),
+        });
+      } else {
+        await api.post("/products", {
+          ...form,
+          price: Number(form.price),
+          stock: Number(form.stock),
+        });
+      }
+      cancelEdit();
       loadData();
     } catch (err) {
-      setError(err.response?.data?.message || "Erreur lors de l'ajout du produit.");
+      setError(err.response?.data?.message || "Erreur lors de l'enregistrement du produit.");
+    }
+  };
+
+  const handleDelete = async (id, name) => {
+    if (!window.confirm(`Supprimer "${name}" ? Cette action est irreversible.`)) return;
+    setBusy(id);
+    try {
+      await api.delete(`/products/${id}`);
+      loadData();
+    } finally {
+      setBusy(null);
     }
   };
 
@@ -83,7 +117,9 @@ export default function MerchantProduits() {
       {shop && (
         <>
           <section style={{ marginTop: 24 }}>
-            <h2 style={{ fontSize: 16, marginBottom: 12 }}>Ajouter un produit</h2>
+            <h2 style={{ fontSize: 16, marginBottom: 12 }}>
+              {editingId ? "Modifier le produit" : "Ajouter un produit"}
+            </h2>
             <form
               onSubmit={handleSubmit}
               style={{
@@ -145,9 +181,26 @@ export default function MerchantProduits() {
 
               {error && <p style={{ color: "var(--terracotta-dark)", fontSize: 13 }}>{error}</p>}
 
-              <button className="btn-primary" disabled={shop.status !== "active"}>
-                Ajouter
-              </button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="btn-primary" disabled={shop.status !== "active"} style={{ flex: 1 }}>
+                  {editingId ? "Enregistrer les modifications" : "Ajouter"}
+                </button>
+                {editingId && (
+                  <button
+                    type="button"
+                    onClick={cancelEdit}
+                    style={{
+                      padding: "10px 16px",
+                      borderRadius: 10,
+                      border: "1px solid var(--line)",
+                      background: "var(--white)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Annuler
+                  </button>
+                )}
+              </div>
             </form>
           </section>
 
@@ -164,6 +217,7 @@ export default function MerchantProduits() {
                     justifyContent: "space-between",
                     padding: 14,
                     borderTop: i > 0 ? "1px solid var(--line)" : "none",
+                    flexWrap: "wrap",
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -179,10 +233,40 @@ export default function MerchantProduits() {
                     <div>
                       <div style={{ fontWeight: 600, fontSize: 14 }}>{p.name}</div>
                       <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>Stock: {p.stock} {p.unit}</div>
+                      <div style={{ fontWeight: 700, color: "var(--terracotta-dark)", fontSize: 13 }}>
+                        {p.price.toLocaleString("fr-FR")} FCFA
+                      </div>
                     </div>
                   </div>
-                  <div style={{ fontWeight: 700, color: "var(--terracotta-dark)" }}>
-                    {p.price.toLocaleString("fr-FR")} FCFA
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={() => startEdit(p)}
+                      style={{
+                        fontSize: 12,
+                        padding: "8px 14px",
+                        borderRadius: 8,
+                        border: "1px solid var(--line)",
+                        background: "var(--white)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Modifier
+                    </button>
+                    <button
+                      onClick={() => handleDelete(p._id, p.name)}
+                      disabled={busy === p._id}
+                      style={{
+                        fontSize: 12,
+                        padding: "8px 14px",
+                        borderRadius: 8,
+                        border: "1px solid var(--line)",
+                        color: "var(--terracotta-dark)",
+                        background: "var(--white)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Supprimer
+                    </button>
                   </div>
                 </div>
               ))}
