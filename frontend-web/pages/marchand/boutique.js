@@ -27,6 +27,7 @@ export default function Boutique() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [closing, setClosing] = useState(false);
 
   useEffect(() => {
     api.get("/categories").then((r) => setCategories(r.data)).catch(() => {});
@@ -69,6 +70,22 @@ export default function Boutique() {
     }
   };
 
+  const toggleClose = async () => {
+    if (existingShop.status === "active") {
+      if (!window.confirm("Fermer votre boutique ? Elle ne sera plus visible publiquement, mais vous pourrez la rouvrir a tout moment.")) return;
+    }
+    setClosing(true);
+    try {
+      const endpoint = existingShop.status === "active" ? "/shops/me/close" : "/shops/me/reopen";
+      const result = await api.put(endpoint, {});
+      setExistingShop(result.data);
+    } catch (err) {
+      setError(err.response?.data?.message || "Action impossible.");
+    } finally {
+      setClosing(false);
+    }
+  };
+
   return (
     <MerchantLayout title="Ma boutique">
       <h1 style={{ fontSize: 20, marginBottom: 4 }}>
@@ -96,9 +113,30 @@ export default function Boutique() {
         {existingShop
           ? existingShop.status === "pending"
             ? "En attente de validation par l'équipe EasyShop."
+            : existingShop.status === "closed"
+            ? "Ta boutique est fermée et n'apparaît plus publiquement."
             : "Boutique active sur le marché."
           : "Renseigne les informations de ton emplacement virtuel."}
       </p>
+
+      {existingShop && existingShop.status !== "pending" && (
+        <button
+          onClick={toggleClose}
+          disabled={closing}
+          style={{
+            marginBottom: 20,
+            fontSize: 13,
+            padding: "10px 16px",
+            borderRadius: 10,
+            border: "1px solid var(--line)",
+            background: "var(--white)",
+            color: existingShop.status === "active" ? "var(--terracotta-dark)" : "var(--green-dark)",
+            fontWeight: 600,
+          }}
+        >
+          {existingShop.status === "active" ? "Fermer ma boutique" : "Rouvrir ma boutique"}
+        </button>
+      )}
 
       <form
         onSubmit={handleSubmit}
@@ -170,7 +208,7 @@ export default function Boutique() {
         </div>
 
         <div>
-          <div style={{ fontSize: 12, marginBottom: 8 }}>Couleur de ta vitrine</div>
+          <div style={{ fontSize: 12, marginBottom: 8 }}>Couleur de la vitrine</div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             {themeOptions.map((t) => (
               <button
@@ -191,18 +229,18 @@ export default function Boutique() {
         </div>
 
         {error && <p style={{ color: "var(--terracotta-dark)", fontSize: 13 }}>{error}</p>}
-        {saved && <p style={{ color: "var(--green-deep)", fontSize: 13 }}>Boutique enregistrée !</p>}
+        {saved && <p style={{ color: "var(--green-dark)", fontSize: 13 }}>Boutique enregistrée !</p>}
 
         <button className="btn-primary" type="submit" disabled={saving}>
           {saving ? "Enregistrement..." : existingShop ? "Enregistrer les modifications" : "Créer ma boutique"}
         </button>
-
-        {!existingShop && (
-          <p style={{ fontSize: 12, color: "var(--ink-soft)", textAlign: "center" }}>
-            Ta boutique sera visible dès sa validation par l'équipe.
-          </p>
-        )}
       </form>
+
+      {!existingShop && (
+        <p style={{ fontSize: 12, color: "var(--ink-soft)", textAlign: "center", marginTop: 10 }}>
+          Ta boutique sera visible dès sa validation par l'équipe.
+        </p>
+      )}
     </MerchantLayout>
   );
 }
