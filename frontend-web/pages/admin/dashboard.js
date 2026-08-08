@@ -1,0 +1,129 @@
+import { useEffect, useState } from "react";
+import Header from "../../components/Header";
+import { useAuth } from "../../lib/auth";
+import api from "../../lib/api";
+
+export default function AdminDashboard() {
+  const { user, loading } = useAuth();
+  const [overview, setOverview] = useState(null);
+  const [pendingShops, setPendingShops] = useState([]);
+  const [busy, setBusy] = useState(null);
+
+  const load = () => {
+    api.get("/admin/dashboard").then((r) => setOverview(r.data)).catch(() => {});
+    api.get("/admin/shops/pending").then((r) => setPendingShops(r.data)).catch(() => {});
+  };
+
+  useEffect(() => {
+    if (!loading && user?.role === "admin") load();
+  }, [loading, user]);
+
+  const validate = async (shopId, approve) => {
+    setBusy(shopId);
+    try {
+      await api.put(`/admin/shops/${shopId}/validate`, { approve, commissionRate: 10 });
+      load();
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (loading) return null;
+
+  if (!user || user.role !== "admin") {
+    return (
+      <>
+        <Header />
+        <main className="container" style={{ paddingTop: 40, textAlign: "center" }}>
+          <p style={{ color: "var(--ink-soft)" }}>Accès réservé aux administrateurs.</p>
+        </main>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Header />
+      <main className="container" style={{ paddingTop: 24, paddingBottom: 60 }}>
+        <h1 style={{ fontSize: 22, marginBottom: 20 }}>Espace administrateur</h1>
+
+        {overview && (
+          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 28 }}>
+            {[
+              { label: "Marchands", value: overview.totalMarchands },
+              { label: "Clients", value: overview.totalClients },
+              { label: "Boutiques actives", value: overview.activeShops },
+              { label: "En attente", value: overview.pendingShops },
+              { label: "Commandes", value: overview.totalOrders },
+              { label: "Commission totale", value: `${overview.totalCommission.toLocaleString("fr-FR")} FCFA` },
+            ].map((c) => (
+              <div
+                key={c.label}
+                style={{
+                  background: "var(--white)",
+                  border: "1px solid var(--line)",
+                  borderRadius: "var(--radius-md)",
+                  padding: 14,
+                }}
+              >
+                <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>{c.label}</div>
+                <div style={{ fontSize: 17, fontWeight: 700, color: "var(--green-dark)", marginTop: 2 }}>{c.value}</div>
+              </div>
+            ))}
+          </section>
+        )}
+
+        <h2 style={{ fontSize: 16, marginBottom: 12 }}>Boutiques en attente de validation ({pendingShops.length})</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {pendingShops.map((shop) => (
+            <div
+              key={shop._id}
+              style={{
+                background: "var(--white)",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--radius-md)",
+                padding: 14,
+              }}
+            >
+              <div style={{ fontWeight: 700, fontSize: 14 }}>{shop.name}</div>
+              <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+                {shop.owner?.name} — {shop.owner?.phone}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+                {shop.location?.allee} {shop.location?.numero}
+              </div>
+              <p style={{ fontSize: 13, marginTop: 6 }}>{shop.description}</p>
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button
+                  className="btn-primary"
+                  style={{ fontSize: 12, padding: "8px 14px" }}
+                  disabled={busy === shop._id}
+                  onClick={() => validate(shop._id, true)}
+                >
+                  ✅ Valider
+                </button>
+                <button
+                  style={{
+                    fontSize: 12,
+                    padding: "8px 14px",
+                    borderRadius: 10,
+                    border: "1px solid var(--line)",
+                    color: "var(--terracotta-dark)",
+                    fontWeight: 600,
+                  }}
+                  disabled={busy === shop._id}
+                  onClick={() => validate(shop._id, false)}
+                >
+                  ❌ Refuser
+                </button>
+              </div>
+            </div>
+          ))}
+          {pendingShops.length === 0 && (
+            <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune boutique en attente.</p>
+          )}
+        </div>
+      </main>
+    </>
+  );
+}
