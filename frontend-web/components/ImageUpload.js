@@ -80,7 +80,7 @@ export default function ImageUpload({ value, onChange, label = 'Photo' }) {
           padding: '0.65rem 1.2rem',
           borderRadius: '8px',
           border: 'none',
-          background: uploading ? '#a9bdb2' : '#16543a',
+          background: uploading ? 'var(--ink-soft)' : 'var(--ink)',
           color: '#fbf6ee',
           fontFamily: 'Work Sans, sans-serif',
           fontWeight: 600,
