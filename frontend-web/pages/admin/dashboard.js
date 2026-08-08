@@ -7,11 +7,13 @@ export default function AdminDashboard() {
   const { user, loading } = useAuth();
   const [overview, setOverview] = useState(null);
   const [pendingShops, setPendingShops] = useState([]);
+  const [allShops, setAllShops] = useState([]);
   const [busy, setBusy] = useState(null);
 
   const load = () => {
     api.get("/admin/dashboard").then((r) => setOverview(r.data)).catch(() => {});
     api.get("/admin/shops/pending").then((r) => setPendingShops(r.data)).catch(() => {});
+    api.get("/admin/shops").then((r) => setAllShops(r.data)).catch(() => {});
   };
 
   useEffect(() => {
@@ -28,6 +30,17 @@ export default function AdminDashboard() {
     }
   };
 
+  const removeShop = async (shopId, shopName) => {
+    if (!window.confirm(`Supprimer definitivement "${shopName}" ? Cette action est irreversible.`)) return;
+    setBusy(shopId);
+    try {
+      await api.delete(`/admin/shops/${shopId}`);
+      load();
+    } finally {
+      setBusy(null);
+    }
+  };
+
   if (loading) return null;
 
   if (!user || user.role !== "admin") {
@@ -35,7 +48,7 @@ export default function AdminDashboard() {
       <>
         <Header />
         <main className="container" style={{ paddingTop: 40, textAlign: "center" }}>
-          <p style={{ color: "var(--ink-soft)" }}>Accès réservé aux administrateurs.</p>
+          <p style={{ color: "var(--ink-soft)" }}>Acces reserve aux administrateurs.</p>
         </main>
       </>
     );
@@ -74,7 +87,7 @@ export default function AdminDashboard() {
         )}
 
         <h2 style={{ fontSize: 16, marginBottom: 12 }}>Boutiques en attente de validation ({pendingShops.length})</h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
           {pendingShops.map((shop) => (
             <div
               key={shop._id}
@@ -87,7 +100,7 @@ export default function AdminDashboard() {
             >
               <div style={{ fontWeight: 700, fontSize: 14 }}>{shop.name}</div>
               <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-                {shop.owner?.name} — {shop.owner?.phone}
+                {shop.owner?.name} - {shop.owner?.phone}
               </div>
               <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
                 {shop.location?.allee} {shop.location?.numero}
@@ -100,7 +113,7 @@ export default function AdminDashboard() {
                   disabled={busy === shop._id}
                   onClick={() => validate(shop._id, true)}
                 >
-                  ✅ Valider
+                  Valider
                 </button>
                 <button
                   style={{
@@ -114,13 +127,57 @@ export default function AdminDashboard() {
                   disabled={busy === shop._id}
                   onClick={() => validate(shop._id, false)}
                 >
-                  ❌ Refuser
+                  Refuser
                 </button>
               </div>
             </div>
           ))}
           {pendingShops.length === 0 && (
             <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune boutique en attente.</p>
+          )}
+        </div>
+
+        <h2 style={{ fontSize: 16, marginBottom: 12 }}>Toutes les boutiques ({allShops.length})</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {allShops.map((shop) => (
+            <div
+              key={shop._id}
+              style={{
+                background: "var(--white)",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--radius-md)",
+                padding: 14,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+            >
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>{shop.name}</div>
+                <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+                  {shop.owner?.name} - statut : {shop.status}
+                </div>
+              </div>
+              <button
+                style={{
+                  fontSize: 12,
+                  padding: "8px 14px",
+                  borderRadius: 10,
+                  border: "1px solid var(--line)",
+                  color: "var(--terracotta-dark)",
+                  fontWeight: 600,
+                  whiteSpace: "nowrap",
+                }}
+                disabled={busy === shop._id}
+                onClick={() => removeShop(shop._id, shop.name)}
+              >
+                Supprimer
+              </button>
+            </div>
+          ))}
+          {allShops.length === 0 && (
+            <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune boutique.</p>
           )}
         </div>
       </main>
