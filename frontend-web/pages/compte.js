@@ -81,6 +81,21 @@ export default function Compte() {
               🏪 Tableau de bord marchand
             </a>
           )}
+          {user.role === "admin" && (
+            <a
+              href="/admin/dashboard"
+              style={{
+                background: "var(--white)",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--radius-md)",
+                padding: 14,
+                fontWeight: 600,
+                fontSize: 14,
+              }}
+            >
+              🛠️ Espace administrateur
+            </a>
+          )}
           <button
             onClick={logout}
             style={{

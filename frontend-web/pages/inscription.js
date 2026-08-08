@@ -23,7 +23,7 @@ export default function Inscription() {
     setLoading(true);
     try {
       const user = await register(form);
-      router.push(user.role === "marchand" ? "/marchand/dashboard" : "/");
+      router.push(user.role === "marchand" ? "/marchand/bienvenue" : "/");
     } catch (err) {
       setError(err.response?.data?.message || "Inscription impossible.");
     } finally {

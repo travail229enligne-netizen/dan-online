@@ -15,6 +15,13 @@ const getShops = asyncHandler(async (req, res) => {
   res.json(shops);
 });
 
+// @route  GET /api/shops/me
+// @access Private (marchand) — récupère sa propre boutique (ou null)
+const getMyShop = asyncHandler(async (req, res) => {
+  const shop = await Shop.findOne({ owner: req.user._id }).populate("category", "name icon");
+  res.json(shop || null);
+});
+
 // @route  GET /api/shops/:slug
 // @access Public
 const getShopBySlug = asyncHandler(async (req, res) => {
@@ -30,7 +37,7 @@ const createShop = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Vous possédez déjà une boutique." });
   }
 
-  const { name, description, category, allee, numero } = req.body;
+  const { name, description, category, allee, numero, themeColor } = req.body;
   const slug = name
     .toLowerCase()
     .normalize("NFD")
@@ -45,6 +52,7 @@ const createShop = asyncHandler(async (req, res) => {
     description,
     category,
     location: { allee, numero },
+    themeColor: themeColor || "#c1592b",
     status: "pending", // en attente de validation par l'admin
   });
 
@@ -59,11 +67,11 @@ const updateMyShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associée à ce compte." });
 
-  const fields = ["name", "description", "logoUrl", "category"];
+  const fields = ["name", "description", "logoUrl", "category", "themeColor"];
   fields.forEach((f) => {
     if (req.body[f] !== undefined) shop[f] = req.body[f];
   });
-  if (req.body.allee || req.body.numero) {
+  if (req.body.allee !== undefined || req.body.numero !== undefined) {
     shop.location.allee = req.body.allee ?? shop.location.allee;
     shop.location.numero = req.body.numero ?? shop.location.numero;
   }
@@ -105,4 +113,4 @@ const getMyShopStats = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { getShops, getShopBySlug, createShop, updateMyShop, getMyShopStats };
+module.exports = { getShops, getMyShop, getShopBySlug, createShop, updateMyShop, getMyShopStats };

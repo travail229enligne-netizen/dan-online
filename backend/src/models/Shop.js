@@ -7,6 +7,7 @@ const shopSchema = new mongoose.Schema(
     slug: { type: String, required: true, unique: true, lowercase: true },
     description: { type: String, default: "" },
     logoUrl: { type: String, default: "" },
+    themeColor: { type: String, default: "#c1592b" },
     // "Allée numérique" = emplacement virtuel, ex: "Allée 3, N°45"
     location: {
       allee: { type: String, default: "" },

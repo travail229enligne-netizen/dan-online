@@ -1,6 +1,7 @@
 const express = require("express");
 const {
   getShops,
+  getMyShop,
   getShopBySlug,
   createShop,
   updateMyShop,
@@ -12,6 +13,7 @@ const { authorize } = require("../middleware/roles");
 const router = express.Router();
 
 router.get("/", getShops);
+router.get("/me", protect, authorize("marchand"), getMyShop);
 router.get("/me/stats", protect, authorize("marchand"), getMyShopStats);
 router.get("/:slug", getShopBySlug);
 router.post("/", protect, authorize("marchand"), createShop);
