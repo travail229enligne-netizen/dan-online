@@ -53,11 +53,13 @@ export default function Boutique() {
     setError("");
     setSaving(true);
     try {
+      let result;
       if (existingShop) {
-        await api.put("/shops/me", form);
+        result = await api.put("/shops/me", form);
       } else {
-        await api.post("/shops", form);
+        result = await api.post("/shops", form);
       }
+      setExistingShop(result.data);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
@@ -72,11 +74,29 @@ export default function Boutique() {
       <h1 style={{ fontSize: 20, marginBottom: 4 }}>
         {existingShop ? "Paramètres de ma boutique" : "Créer ma boutique"}
       </h1>
+
+      {existingShop && existingShop.status === "active" && (
+        <a
+          href={`/boutique/${existingShop.slug}`}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            display: "inline-block",
+            marginBottom: 10,
+            fontSize: 13,
+            color: "var(--terracotta-dark)",
+            fontWeight: 600,
+          }}
+        >
+          Voir ma boutique en ligne
+        </a>
+      )}
+
       <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 18 }}>
         {existingShop
           ? existingShop.status === "pending"
-            ? "⏳ En attente de validation par l'équipe Dan-Online."
-            : "✅ Boutique active sur le marché."
+            ? "En attente de validation par l'équipe Dan-Online."
+            : "Boutique active sur le marché."
           : "Renseigne les informations de ton emplacement virtuel."}
       </p>
 
@@ -171,7 +191,7 @@ export default function Boutique() {
         </div>
 
         {error && <p style={{ color: "var(--terracotta-dark)", fontSize: 13 }}>{error}</p>}
-        {saved && <p style={{ color: "var(--green-deep)", fontSize: 13 }}>✅ Boutique enregistrée !</p>}
+        {saved && <p style={{ color: "var(--green-deep)", fontSize: 13 }}>Boutique enregistrée !</p>}
 
         <button className="btn-primary" type="submit" disabled={saving}>
           {saving ? "Enregistrement..." : existingShop ? "Enregistrer les modifications" : "Créer ma boutique"}
