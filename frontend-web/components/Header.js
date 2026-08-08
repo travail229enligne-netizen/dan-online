@@ -1,4 +1,10 @@
-export default function Header({ cartCount = 0 }) {
+import { useAuth } from "../lib/auth";
+import { useCart } from "../lib/cart";
+
+export default function Header() {
+  const { user } = useAuth();
+  const { count } = useCart();
+
   return (
     <header
       style={{
@@ -7,23 +13,32 @@ export default function Header({ cartCount = 0 }) {
       }}
     >
       <div className="container" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <a href="/" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 22 }}>🌟</span>
           <h1 style={{ color: "var(--white)", fontSize: 22 }}>Dan-Online</h1>
-        </div>
+        </a>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div
+          <a
+            href={user ? "/compte" : "/connexion"}
             style={{
               width: 36,
               height: 36,
               borderRadius: "50%",
               background: "var(--gold)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "var(--green-dark)",
+              fontWeight: 700,
+              fontSize: 14,
             }}
             aria-label="Profil"
-          />
-          <div style={{ position: "relative" }}>
+          >
+            {user ? user.name?.[0]?.toUpperCase() : "?"}
+          </a>
+          <a href="/panier" style={{ position: "relative" }}>
             <span style={{ color: "var(--white)", fontSize: 20 }}>🛒</span>
-            {cartCount > 0 && (
+            {count > 0 && (
               <span
                 style={{
                   position: "absolute",
@@ -40,10 +55,10 @@ export default function Header({ cartCount = 0 }) {
                   justifyContent: "center",
                 }}
               >
-                {cartCount}
+                {count}
               </span>
             )}
-          </div>
+          </a>
         </div>
       </div>
     </header>

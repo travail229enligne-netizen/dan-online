@@ -4,12 +4,13 @@ import HeroBanner from "../components/HeroBanner";
 import CategoryGrid from "../components/CategoryGrid";
 import ProductCard from "../components/ProductCard";
 import api from "../lib/api";
+import { useCart } from "../lib/cart";
 
 export default function Home() {
   const [categories, setCategories] = useState([]);
   const [shops, setShops] = useState([]);
   const [products, setProducts] = useState([]);
-  const [cartCount, setCartCount] = useState(0);
+  const { addToCart } = useCart();
 
   useEffect(() => {
     api.get("/categories").then((r) => setCategories(r.data)).catch(() => {});
@@ -19,12 +20,13 @@ export default function Home() {
 
   return (
     <>
-      <Header cartCount={cartCount} />
+      <Header />
 
       <main className="container" style={{ paddingBottom: 60 }}>
         <HeroBanner
           title="Le Marché de Dantokpa chez vous"
           subtitle="Toutes les allées du plus grand marché du Bénin, livrées chez vous en 48h."
+          onCtaClick={() => window.scrollTo({ top: 600, behavior: "smooth" })}
         />
 
         <CategoryGrid categories={categories} />
@@ -58,6 +60,9 @@ export default function Home() {
                 </div>
               </a>
             ))}
+            {shops.length === 0 && (
+              <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune boutique pour l'instant.</p>
+            )}
           </div>
         </section>
 
@@ -65,8 +70,11 @@ export default function Home() {
           <h3 style={{ fontSize: 18, marginBottom: 14 }}>Produits Populaires</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14 }}>
             {products.map((p) => (
-              <ProductCard key={p._id} product={p} onAddToCart={() => setCartCount((c) => c + 1)} />
+              <ProductCard key={p._id} product={p} onAddToCart={(prod) => addToCart(prod, 1)} />
             ))}
+            {products.length === 0 && (
+              <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucun produit pour l'instant.</p>
+            )}
           </div>
         </section>
       </main>
@@ -82,11 +90,11 @@ export default function Home() {
           padding: "10px 0",
         }}
       >
-        {["Accueil", "Boutiques", "Catégories", "Commandes", "Compte"].map((label) => (
-          <span key={label} style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-            {label}
-          </span>
-        ))}
+        <a href="/" style={{ fontSize: 12, color: "var(--green-deep)", fontWeight: 600 }}>Accueil</a>
+        <a href="/#boutiques" style={{ fontSize: 12, color: "var(--ink-soft)" }}>Boutiques</a>
+        <a href="/#categories" style={{ fontSize: 12, color: "var(--ink-soft)" }}>Catégories</a>
+        <a href="/commandes" style={{ fontSize: 12, color: "var(--ink-soft)" }}>Commandes</a>
+        <a href="/compte" style={{ fontSize: 12, color: "var(--ink-soft)" }}>Compte</a>
       </nav>
     </>
   );
