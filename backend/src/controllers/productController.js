@@ -2,14 +2,14 @@ const asyncHandler = require("express-async-handler");
 const Product = require("../models/Product");
 const Shop = require("../models/Shop");
 
-// @route  GET /api/products
-// @access Public — catalogue avec filtres
+// @route   GET /api/products
+// @access  Public - catalogue avec filtres
 const getProducts = asyncHandler(async (req, res) => {
   const { category, shop, search, page = 1, limit = 20 } = req.query;
   const filter = { isActive: true };
   if (category) filter.category = category;
   if (shop) filter.shop = shop;
-  if (search) filter.$text = { $search: search };
+  if (search) filter.name = { $regex: search, $options: "i" };
 
   const products = await Product.find(filter)
     .populate("shop", "name slug isVerified")
@@ -22,8 +22,8 @@ const getProducts = asyncHandler(async (req, res) => {
   res.json({ products, total, page: Number(page), pages: Math.ceil(total / limit) });
 });
 
-// @route  GET /api/products/:id
-// @access Public
+// @route   GET /api/products/:id
+// @access  Public
 const getProductById = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id)
     .populate("shop", "name slug isVerified")
@@ -32,8 +32,8 @@ const getProductById = asyncHandler(async (req, res) => {
   res.json(product);
 });
 
-// @route  POST /api/products
-// @access Private (marchand)
+// @route   POST /api/products
+// @access  Private (marchand)
 const createProduct = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(400).json({ message: "Créez d'abord votre boutique." });
@@ -56,8 +56,8 @@ const createProduct = asyncHandler(async (req, res) => {
   res.status(201).json(product);
 });
 
-// @route  PUT /api/products/:id
-// @access Private (marchand, propriétaire uniquement)
+// @route   PUT /api/products/:id
+// @access  Private (marchand, propriétaire uniquement)
 const updateProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id).populate("shop");
   if (!product) return res.status(404).json({ message: "Produit introuvable." });
@@ -74,8 +74,8 @@ const updateProduct = asyncHandler(async (req, res) => {
   res.json(product);
 });
 
-// @route  DELETE /api/products/:id
-// @access Private (marchand, propriétaire uniquement)
+// @route   DELETE /api/products/:id
+// @access  Private (marchand, propriétaire uniquement)
 const deleteProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id).populate("shop");
   if (!product) return res.status(404).json({ message: "Produit introuvable." });
