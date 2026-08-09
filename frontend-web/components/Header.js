@@ -7,7 +7,7 @@ const navItems = [
   { href: "/", label: "Accueil" },
   { href: "/#boutiques", label: "Boutiques" },
   { href: "/#categories", label: "Catégories" },
-  { href: "/commandes", label: "Commandes" },
+  { href: "/commande", label: "Commandes" },
 ];
 
 export default function Header() {

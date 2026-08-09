@@ -7,9 +7,9 @@ import { useCart } from "../../lib/cart";
 function shade(hex, percent) {
   try {
     const num = parseInt(hex.replace("#", ""), 16);
-    const r = Math.min(255, Math.max(0, (num >> 16) + percent));
-    const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00ff) + percent));
-    const b = Math.min(255, Math.max(0, (num & 0x0000ff) + percent));
+    let r = Math.min(255, Math.max(0, (num >> 16) + percent));
+    let g = Math.min(255, Math.max(0, ((num >> 8) & 0x00ff) + percent));
+    let b = Math.min(255, Math.max(0, (num & 0x0000ff) + percent));
     return `rgb(${r}, ${g}, ${b})`;
   } catch {
     return hex;
@@ -61,8 +61,9 @@ export default function BoutiquePublique() {
     );
   }
 
-  const theme = shop.themeColor || "#c1592b";
+  const theme = shop.themeColor || "#111111";
   const themeDark = shade(theme, -30);
+  const location = [shop.location?.allee, shop.location?.numero].filter(Boolean).join(", ");
 
   return (
     <>
@@ -84,7 +85,7 @@ export default function BoutiquePublique() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 28,
+              fontSize: 26,
               fontWeight: 700,
               color: "var(--white)",
               marginBottom: 14,
@@ -93,10 +94,15 @@ export default function BoutiquePublique() {
           >
             {shop.name?.[0]?.toUpperCase()}
           </div>
-          <h1 style={{ color: "var(--white)", fontSize: 26, marginBottom: 6 }}>{shop.name}</h1>
+
+          <h1 style={{ color: "var(--white)", fontSize: 24, marginBottom: 6 }}>{shop.name}</h1>
+
           {shop.description && (
-            <p style={{ color: "rgba(255,255,255,0.9)", fontSize: 14, maxWidth: 480 }}>{shop.description}</p>
+            <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 14, maxWidth: 480 }}>
+              {shop.description}
+            </p>
           )}
+
           <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
             {shop.isVerified && (
               <span
@@ -110,10 +116,10 @@ export default function BoutiquePublique() {
                   border: "1px solid rgba(255,255,255,0.35)",
                 }}
               >
-                ✔ Boutique vérifiée
+                Boutique vérifiée
               </span>
             )}
-            {(shop.location?.allee || shop.location?.numero) && (
+            {location && (
               <span
                 style={{
                   background: "rgba(255,255,255,0.18)",
@@ -125,7 +131,7 @@ export default function BoutiquePublique() {
                   border: "1px solid rgba(255,255,255,0.35)",
                 }}
               >
-                📍 {shop.location?.allee} {shop.location?.numero}
+                {location}
               </span>
             )}
             {shop.category?.name && (
@@ -140,7 +146,7 @@ export default function BoutiquePublique() {
                   border: "1px solid rgba(255,255,255,0.35)",
                 }}
               >
-                {shop.category.icon} {shop.category.name}
+                {shop.category.name}
               </span>
             )}
           </div>
@@ -168,26 +174,24 @@ export default function BoutiquePublique() {
                   overflow: "hidden",
                 }}
               >
-                <div
-                  style={{
-                    height: 110,
-                    background: `${theme}22 url(${p.images?.[0] || ""}) center/cover no-repeat`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 30,
-                  }}
-                >
-                  {!p.images?.[0] && "🛍️"}
-                </div>
+                <a href={`/produit/${p._id}`}>
+                  <div
+                    style={{
+                      height: 110,
+                      background: `#eee url(${p.images?.[0] || ""}) center/cover no-repeat`,
+                    }}
+                  />
+                </a>
                 <div style={{ padding: 12 }}>
-                  <div style={{ fontWeight: 700, color: themeDark }}>
-                    {p.price?.toLocaleString("fr-FR")} FCFA
-                  </div>
-                  <div style={{ fontWeight: 600, fontSize: 14, marginTop: 2 }}>{p.name}</div>
-                  <div style={{ fontSize: 12, color: "var(--ink-soft)", marginBottom: 10 }}>
-                    Stock : {p.stock} {p.unit}
-                  </div>
+                  <a href={`/produit/${p._id}`}>
+                    <div style={{ fontWeight: 700, color: "var(--terracotta-dark)" }}>
+                      {p.price?.toLocaleString("fr-FR")} FCFA
+                    </div>
+                    <div style={{ fontSize: 14, marginTop: 2 }}>{p.name}</div>
+                    <div style={{ fontSize: 12, color: "var(--ink-soft)", marginBottom: 10 }}>
+                      Stock : {p.stock} {p.unit}
+                    </div>
+                  </a>
                   <button
                     style={{
                       width: "100%",
@@ -204,7 +208,7 @@ export default function BoutiquePublique() {
                       setTimeout(() => setAdded(null), 1200);
                     }}
                   >
-                    {added === p._id ? "✓ Ajouté" : "Ajouter au panier"}
+                    {added === p._id ? "Ajouté !" : "Ajouter au panier"}
                   </button>
                 </div>
               </div>
