@@ -63,7 +63,7 @@ export default function Recherche() {
   return (
     <>
       <Header />
-      <main className="container" style={{ paddingTop: 20, paddingBottom: 60 }}>
+      <main className="container" style={{ paddingTop: 20, paddingBottom: 60, boxSizing: "border-box" }}>
         <form onSubmit={handleSubmit} style={{ marginBottom: 12 }}>
           <input
             autoFocus
@@ -76,6 +76,7 @@ export default function Recherche() {
               border: "1px solid var(--line)",
               borderRadius: 10,
               fontSize: 14,
+              boxSizing: "border-box",
             }}
           />
         </form>
@@ -98,6 +99,8 @@ export default function Recherche() {
         {showFilters && (
           <div
             style={{
+              width: "100%",
+              boxSizing: "border-box",
               background: "var(--white)",
               border: "1px solid var(--line)",
               borderRadius: "var(--radius-md)",
@@ -116,14 +119,14 @@ export default function Recherche() {
                   placeholder="Min"
                   value={minPrice}
                   onChange={(e) => setMinPrice(e.target.value)}
-                  style={{ flex: 1, padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 13 }}
+                  style={{ width: "50%", minWidth: 0, boxSizing: "border-box", padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 13 }}
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(e.target.value)}
-                  style={{ flex: 1, padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 13 }}
+                  style={{ width: "50%", minWidth: 0, boxSizing: "border-box", padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 13 }}
                 />
               </div>
             </div>
@@ -134,7 +137,7 @@ export default function Recherche() {
                 placeholder="ex: Allée 3"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                style={{ width: "100%", padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 13 }}
+                style={{ width: "100%", boxSizing: "border-box", padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 13 }}
               />
             </div>
 
