@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/router";
 import Header from "../../components/Header";
 import ProductCard from "../../components/ProductCard";
@@ -24,12 +24,20 @@ function whatsappLink(phone, shopName) {
   return `https://wa.me/${digits}?text=${message}`;
 }
 
+const sortOptions = [
+  { value: "recent", label: "Plus récents" },
+  { value: "price_asc", label: "Prix croissant" },
+  { value: "price_desc", label: "Prix décroissant" },
+];
+
 export default function BoutiquePublique() {
   const router = useRouter();
   const { slug } = router.query;
   const { addToCart } = useCart();
   const [shop, setShop] = useState(undefined);
   const [products, setProducts] = useState([]);
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("recent");
 
   useEffect(() => {
     if (!slug) return;
@@ -42,6 +50,18 @@ export default function BoutiquePublique() {
       .then((r) => setProducts(r.data.products))
       .catch(() => setShop(null));
   }, [slug]);
+
+  const visibleProducts = useMemo(() => {
+    let list = [...products];
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter((p) => p.name.toLowerCase().includes(q));
+    }
+    if (sort === "price_asc") list.sort((a, b) => a.price - b.price);
+    else if (sort === "price_desc") list.sort((a, b) => b.price - a.price);
+    else list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return list;
+  }, [products, search, sort]);
 
   if (shop === undefined) {
     return (
@@ -171,13 +191,52 @@ export default function BoutiquePublique() {
           Produits {products.length > 0 && `(${products.length})`}
         </h2>
 
+        {products.length > 0 && (
+          <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+            <input
+              placeholder="Rechercher un produit..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                flex: 1,
+                minWidth: 160,
+                padding: 10,
+                border: "1px solid var(--line)",
+                borderRadius: 8,
+                fontSize: 13,
+              }}
+            />
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              style={{
+                padding: 10,
+                border: "1px solid var(--line)",
+                borderRadius: 8,
+                fontSize: 13,
+                background: "var(--white)",
+              }}
+            >
+              {sortOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {products.length === 0 ? (
           <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>
             Cette boutique n'a pas encore de produits en ligne.
           </p>
+        ) : visibleProducts.length === 0 ? (
+          <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>
+            Aucun produit ne correspond à ta recherche.
+          </p>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14 }}>
-            {products.map((p) => (
+            {visibleProducts.map((p) => (
               <ProductCard key={p._id} product={p} onAddToCart={(prod) => addToCart(prod, 1)} />
             ))}
           </div>
