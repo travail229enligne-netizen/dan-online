@@ -2,6 +2,13 @@ const asyncHandler = require("express-async-handler");
 const Product = require("../models/Product");
 const Shop = require("../models/Shop");
 
+function sanitizeTiers(tiers) {
+  if (!Array.isArray(tiers)) return [];
+  return tiers
+    .filter((t) => t && t.minQty > 1 && t.price >= 0)
+    .sort((a, b) => a.minQty - b.minQty);
+}
+
 // @route   GET /api/products
 // @access  Public - catalogue avec filtres
 const getProducts = asyncHandler(async (req, res) => {
@@ -41,7 +48,7 @@ const createProduct = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Votre boutique n'est pas encore validée par l'administrateur." });
   }
 
-  const { name, description, price, unit, stock, category, images } = req.body;
+  const { name, description, price, unit, stock, category, images, priceTiers } = req.body;
   const product = await Product.create({
     shop: shop._id,
     category,
@@ -51,6 +58,7 @@ const createProduct = asyncHandler(async (req, res) => {
     unit,
     stock,
     images,
+    priceTiers: sanitizeTiers(priceTiers),
   });
 
   res.status(201).json(product);
@@ -69,6 +77,9 @@ const updateProduct = asyncHandler(async (req, res) => {
   fields.forEach((f) => {
     if (req.body[f] !== undefined) product[f] = req.body[f];
   });
+  if (req.body.priceTiers !== undefined) {
+    product.priceTiers = sanitizeTiers(req.body.priceTiers);
+  }
 
   await product.save();
   res.json(product);
