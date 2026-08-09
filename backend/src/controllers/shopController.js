@@ -25,7 +25,7 @@ const getMyShop = asyncHandler(async (req, res) => {
 // @route   GET /api/shops/:slug
 // @access  Public
 const getShopBySlug = asyncHandler(async (req, res) => {
-  const shop = await Shop.findOne({ slug: req.params.slug }).populate("category", "name icon");
+  const shop = await Shop.findOne({ slug: req.params.slug }).populate("category", "name icon").populate("owner", "phone");
   if (!shop) return res.status(404).json({ message: "Boutique introuvable." });
   res.json(shop);
 });
