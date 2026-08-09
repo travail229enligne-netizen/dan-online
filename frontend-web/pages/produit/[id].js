@@ -18,7 +18,7 @@ export default function ProduitDetail() {
   const { addToCart } = useCart();
   const [product, setProduct] = useState(undefined);
   const [activeImage, setActiveImage] = useState(0);
-  const [qty, setQty] = useState(1);
+  const [qty, setQty] = useState("1");
   const [added, setAdded] = useState(false);
 
   useEffect(() => {
@@ -168,7 +168,8 @@ export default function ProduitDetail() {
             min={1}
             max={product.stock}
             value={qty}
-            onChange={(e) => setQty(Math.max(1, Number(e.target.value)))}
+            onChange={(e) => setQty(e.target.value)}
+            onBlur={() => setQty((v) => Math.max(1, Number(v) || 1))}
             style={{ width: 70, padding: 8, border: "1px solid var(--line)", borderRadius: 8 }}
           />
         </div>
@@ -178,7 +179,7 @@ export default function ProduitDetail() {
           style={{ width: "100%", padding: 14, fontSize: 15 }}
           disabled={product.stock === 0}
           onClick={() => {
-            addToCart({ ...product, price: unitPrice }, qty);
+            addToCart({ ...product, price: unitPrice }, Math.max(1, Number(qty) || 1));
             setAdded(true);
             setTimeout(() => setAdded(false), 2000);
           }}
