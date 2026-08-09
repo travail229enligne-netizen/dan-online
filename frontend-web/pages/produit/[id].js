@@ -18,6 +18,16 @@ export default function ProduitDetail() {
     api.get(`/products/${id}`).then((r) => setProduct(r.data)).catch(() => setProduct(null));
   }, [id]);
 
+  const images = product && product.images && product.images.length > 0 ? product.images : [null];
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveImage((i) => (i + 1) % images.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [images.length]);
+
   if (product === undefined) {
     return (
       <>
@@ -40,8 +50,6 @@ export default function ProduitDetail() {
     );
   }
 
-  const images = product.images && product.images.length > 0 ? product.images : [null];
-
   return (
     <>
       <Header />
@@ -54,6 +62,7 @@ export default function ProduitDetail() {
               ? `#eee url(${images[activeImage]}) center/cover no-repeat`
               : "#eee",
             marginBottom: 10,
+            transition: "background-image 0.3s ease",
           }}
         />
 
