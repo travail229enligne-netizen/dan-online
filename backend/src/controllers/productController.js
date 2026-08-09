@@ -9,7 +9,7 @@ const getProducts = asyncHandler(async (req, res) => {
   const filter = { isActive: true };
   if (category) filter.category = category;
   if (shop) filter.shop = shop;
-  if (search) filter.name = { $regex: search, $options: "i" };
+  if (search && search.trim()) filter.name = { $regex: search.trim(), $options: "i" };
 
   const products = await Product.find(filter)
     .populate("shop", "name slug isVerified")
