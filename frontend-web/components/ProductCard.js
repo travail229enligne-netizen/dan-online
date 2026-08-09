@@ -1,8 +1,17 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "../lib/auth";
+import api from "../lib/api";
 
-export default function ProductCard({ product, onAddToCart }) {
+export default function ProductCard({ product, onAddToCart, isFavorite: initialFav = false }) {
+  const { user } = useAuth();
   const images = product.images && product.images.length > 0 ? product.images : [null];
   const [active, setActive] = useState(0);
+  const [isFav, setIsFav] = useState(initialFav);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setIsFav(initialFav);
+  }, [initialFav]);
 
   useEffect(() => {
     if (images.length <= 1) return;
@@ -11,6 +20,28 @@ export default function ProductCard({ product, onAddToCart }) {
     }, 3000);
     return () => clearInterval(interval);
   }, [images.length]);
+
+  const toggleFavorite = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      window.location.href = "/connexion";
+      return;
+    }
+    setBusy(true);
+    try {
+      if (isFav) {
+        await api.delete(`/favorites/${product._id}`);
+        setIsFav(false);
+      } else {
+        await api.post(`/favorites/${product._id}`);
+        setIsFav(true);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div
@@ -30,6 +61,29 @@ export default function ProductCard({ product, onAddToCart }) {
             position: "relative",
           }}
         >
+          {user?.role === "client" && (
+            <button
+              onClick={toggleFavorite}
+              disabled={busy}
+              aria-label={isFav ? "Retirer des favoris" : "Ajouter aux favoris"}
+              style={{
+                position: "absolute",
+                top: 8,
+                right: 8,
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.9)",
+                border: "none",
+                fontSize: 16,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {isFav ? "♥" : "♡"}
+            </button>
+          )}
           {images.length > 1 && (
             <div style={{ position: "absolute", bottom: 8, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 4 }}>
               {images.map((_, i) => (

@@ -8,6 +8,7 @@ const navItems = [
   { href: "/#boutiques", label: "Boutiques" },
   { href: "/#categories", label: "Catégories" },
   { href: "/commande", label: "Commandes" },
+  { href: "/favoris", label: "Favoris" },
 ];
 
 export default function Header() {
