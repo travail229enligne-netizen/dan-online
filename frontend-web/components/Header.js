@@ -37,29 +37,34 @@ export default function Header() {
               <h1 style={{ color: "var(--white)", fontSize: 22 }}>EasyShop</h1>
             </a>
           </div>
-          <a href="/panier" style={{ color: "var(--white)", position: "relative" }}>
-            <span style={{ fontSize: 20 }}>🛒</span>
-            {count > 0 && (
-              <span
-                style={{
-                  position: "absolute",
-                  top: -8,
-                  right: -10,
-                  background: "var(--terracotta)",
-                  color: "var(--white)",
-                  borderRadius: "50%",
-                  fontSize: 11,
-                  width: 18,
-                  height: 18,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {count}
-              </span>
-            )}
-          </a>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <a href="/recherche" aria-label="Rechercher" style={{ color: "var(--white)", fontSize: 20 }}>
+              🔍
+            </a>
+            <a href="/panier" style={{ color: "var(--white)", position: "relative" }}>
+              <span style={{ fontSize: 20 }}>🛒</span>
+              {count > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: -8,
+                    right: -10,
+                    background: "var(--terracotta)",
+                    color: "var(--white)",
+                    borderRadius: "50%",
+                    fontSize: 11,
+                    width: 18,
+                    height: 18,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {count}
+                </span>
+              )}
+            </a>
+          </div>
         </div>
       </header>
 
