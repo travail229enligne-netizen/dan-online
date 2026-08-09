@@ -3,7 +3,7 @@ import MerchantLayout from "../../components/MerchantLayout";
 import ImageUploadMulti from "../../components/ImageUploadMulti";
 import api from "../../lib/api";
 
-const emptyForm = { name: "", description: "", price: "", stock: "", unit: "unité", images: [] };
+const emptyForm = { name: "", description: "", price: "", stock: "", unit: "unité", images: [], priceTiers: [] };
 
 export default function MerchantProduits() {
   const [shop, setShop] = useState(undefined);
@@ -33,6 +33,7 @@ export default function MerchantProduits() {
       stock: p.stock,
       unit: p.unit,
       images: p.images || [],
+      priceTiers: p.priceTiers || [],
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -42,22 +43,39 @@ export default function MerchantProduits() {
     setForm(emptyForm);
   };
 
+  const addTier = () => {
+    setForm({ ...form, priceTiers: [...form.priceTiers, { minQty: "", price: "" }] });
+  };
+
+  const updateTier = (index, field, value) => {
+    const tiers = [...form.priceTiers];
+    tiers[index] = { ...tiers[index], [field]: value };
+    setForm({ ...form, priceTiers: tiers });
+  };
+
+  const removeTier = (index) => {
+    setForm({ ...form, priceTiers: form.priceTiers.filter((_, i) => i !== index) });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     try {
+      const cleanTiers = form.priceTiers
+        .filter((t) => t.minQty && t.price)
+        .map((t) => ({ minQty: Number(t.minQty), price: Number(t.price) }));
+
+      const payload = {
+        ...form,
+        price: Number(form.price),
+        stock: Number(form.stock),
+        priceTiers: cleanTiers,
+      };
+
       if (editingId) {
-        await api.put(`/products/${editingId}`, {
-          ...form,
-          price: Number(form.price),
-          stock: Number(form.stock),
-        });
+        await api.put(`/products/${editingId}`, payload);
       } else {
-        await api.post("/products", {
-          ...form,
-          price: Number(form.price),
-          stock: Number(form.stock),
-        });
+        await api.post("/products", payload);
       }
       cancelEdit();
       loadData();
@@ -168,7 +186,7 @@ export default function MerchantProduits() {
 
               <div style={{ display: "flex", gap: 10 }}>
                 <label style={{ fontSize: 12, flex: 1 }}>
-                  Prix (FCFA)
+                  Prix détail (FCFA)
                   <input
                     required
                     type="number"
@@ -195,6 +213,50 @@ export default function MerchantProduits() {
                     style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
                   />
                 </label>
+              </div>
+
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600 }}>Prix par quantité (gros/demi-gros)</span>
+                  <button
+                    type="button"
+                    onClick={addTier}
+                    style={{ fontSize: 12, color: "var(--ink)", fontWeight: 600, textDecoration: "underline" }}
+                  >
+                    + Ajouter un palier
+                  </button>
+                </div>
+                {form.priceTiers.length === 0 && (
+                  <p style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+                    Aucun palier. Le produit sera vendu au prix détail quelle que soit la quantité.
+                  </p>
+                )}
+                {form.priceTiers.map((tier, i) => (
+                  <div key={i} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
+                    <input
+                      type="number"
+                      placeholder="À partir de (qté)"
+                      value={tier.minQty}
+                      onChange={(e) => updateTier(i, "minQty", e.target.value)}
+                      style={{ flex: 1, padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 12 }}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Prix unitaire"
+                      value={tier.price}
+                      onChange={(e) => updateTier(i, "price", e.target.value)}
+                      style={{ flex: 1, padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 12 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeTier(i)}
+                      aria-label="Retirer ce palier"
+                      style={{ fontSize: 16, color: "var(--terracotta-dark)", padding: "0 6px" }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
               </div>
 
               {error && <p style={{ color: "var(--terracotta-dark)", fontSize: 13 }}>{error}</p>}
@@ -253,6 +315,11 @@ export default function MerchantProduits() {
                       <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>Stock: {p.stock} {p.unit}</div>
                       <div style={{ fontWeight: 700, color: "var(--terracotta-dark)", fontSize: 13 }}>
                         {p.price.toLocaleString("fr-FR")} FCFA
+                        {p.priceTiers?.length > 0 && (
+                          <span style={{ fontWeight: 400, fontSize: 11, color: "var(--ink-soft)" }}>
+                            {" "}+ {p.priceTiers.length} palier{p.priceTiers.length > 1 ? "s" : ""}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

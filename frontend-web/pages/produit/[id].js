@@ -4,6 +4,14 @@ import Header from "../../components/Header";
 import api from "../../lib/api";
 import { useCart } from "../../lib/cart";
 
+function priceForQty(product, qty) {
+  if (!product.priceTiers || product.priceTiers.length === 0) return product.price;
+  const applicable = product.priceTiers
+    .filter((t) => qty >= t.minQty)
+    .sort((a, b) => b.minQty - a.minQty);
+  return applicable.length > 0 ? applicable[0].price : product.price;
+}
+
 export default function ProduitDetail() {
   const router = useRouter();
   const { id } = router.query;
@@ -50,6 +58,9 @@ export default function ProduitDetail() {
     );
   }
 
+  const unitPrice = priceForQty(product, qty);
+  const total = unitPrice * qty;
+
   return (
     <>
       <Header />
@@ -93,10 +104,45 @@ export default function ProduitDetail() {
           </a>
         )}
 
-        <div style={{ fontSize: 24, fontWeight: 700, color: "var(--terracotta-dark)", margin: "14px 0" }}>
-          {product.price?.toLocaleString("fr-FR")} FCFA
+        <div style={{ fontSize: 24, fontWeight: 700, color: "var(--terracotta-dark)", margin: "14px 0 4px" }}>
+          {unitPrice.toLocaleString("fr-FR")} FCFA
           <span style={{ fontSize: 13, fontWeight: 400, color: "var(--ink-soft)" }}> / {product.unit}</span>
         </div>
+
+        {qty > 1 && (
+          <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
+            Total pour {qty} {product.unit} : <strong style={{ color: "var(--ink)" }}>{total.toLocaleString("fr-FR")} FCFA</strong>
+          </p>
+        )}
+
+        {product.priceTiers && product.priceTiers.length > 0 && (
+          <div
+            style={{
+              background: "var(--white)",
+              border: "1px solid var(--line)",
+              borderRadius: "var(--radius-md)",
+              padding: 12,
+              marginBottom: 16,
+            }}
+          >
+            <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Prix par quantité</div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--ink-soft)", padding: "3px 0" }}>
+              <span>1 - {product.priceTiers[0].minQty - 1} {product.unit}</span>
+              <span>{product.price.toLocaleString("fr-FR")} FCFA/{product.unit}</span>
+            </div>
+            {product.priceTiers.map((tier, i) => {
+              const next = product.priceTiers[i + 1];
+              return (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--ink-soft)", padding: "3px 0" }}>
+                  <span>
+                    {tier.minQty}{next ? ` - ${next.minQty - 1}` : "+"} {product.unit}
+                  </span>
+                  <span>{tier.price.toLocaleString("fr-FR")} FCFA/{product.unit}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {product.stock === 0 ? (
           <p style={{ fontSize: 13, color: "var(--terracotta-dark)", fontWeight: 600, marginBottom: 16 }}>
@@ -132,7 +178,7 @@ export default function ProduitDetail() {
           style={{ width: "100%", padding: 14, fontSize: 15 }}
           disabled={product.stock === 0}
           onClick={() => {
-            addToCart(product, qty);
+            addToCart({ ...product, price: unitPrice }, qty);
             setAdded(true);
             setTimeout(() => setAdded(false), 2000);
           }}
