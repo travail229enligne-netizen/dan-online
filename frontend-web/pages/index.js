@@ -31,7 +31,7 @@ export default function Home() {
 
         <CategoryGrid categories={categories} />
 
-        <section style={{ marginTop: 32 }}>
+        <section id="boutiques" style={{ marginTop: 32 }}>
           <h3 style={{ fontSize: 18, marginBottom: 14 }}>Boutiques Partenaires</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
             {shops.map((shop) => (
@@ -48,14 +48,14 @@ export default function Home() {
                   padding: 12,
                 }}
               >
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--gold)" }} />
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--ink)" }} />
                 <div>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{shop.name}</div>
                   <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
                     {shop.location?.allee} {shop.location?.numero}
                   </div>
                   {shop.isVerified && (
-                    <span style={{ fontSize: 11, color: "var(--green-deep)" }}>✔ Vérifié</span>
+                    <span style={{ fontSize: 11, color: "var(--ink)" }}>✓ Vérifié</span>
                   )}
                 </div>
               </a>
@@ -66,7 +66,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section style={{ marginTop: 32 }}>
+        <section id="categories" style={{ marginTop: 32 }}>
           <h3 style={{ fontSize: 18, marginBottom: 14 }}>Produits Populaires</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14 }}>
             {products.map((p) => (
@@ -78,24 +78,6 @@ export default function Home() {
           </div>
         </section>
       </main>
-
-      <nav
-        style={{
-          position: "sticky",
-          bottom: 0,
-          background: "var(--white)",
-          borderTop: "1px solid var(--line)",
-          display: "flex",
-          justifyContent: "space-around",
-          padding: "10px 0",
-        }}
-      >
-        <a href="/" style={{ fontSize: 12, color: "var(--green-deep)", fontWeight: 600 }}>Accueil</a>
-        <a href="/#boutiques" style={{ fontSize: 12, color: "var(--ink-soft)" }}>Boutiques</a>
-        <a href="/#categories" style={{ fontSize: 12, color: "var(--ink-soft)" }}>Catégories</a>
-        <a href="/commandes" style={{ fontSize: 12, color: "var(--ink-soft)" }}>Commandes</a>
-        <a href="/compte" style={{ fontSize: 12, color: "var(--ink-soft)" }}>Compte</a>
-      </nav>
     </>
   );
 }
