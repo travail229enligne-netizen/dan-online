@@ -2,9 +2,10 @@ const asyncHandler = require("express-async-handler");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const Shop = require("../models/Shop");
+const { resolveCommissionRate } = require("../utils/commission");
 
-// @route  POST /api/orders
-// @access Private (client) — passe une commande en paiement à la livraison
+// @route   POST /api/orders
+// @access  Private (client) - passe une commande en paiement à la livraison
 const createOrder = asyncHandler(async (req, res) => {
   const { items, deliveryAddress, deliveryPhone } = req.body;
   if (!items || items.length === 0) {
@@ -14,7 +15,6 @@ const createOrder = asyncHandler(async (req, res) => {
   let itemsTotal = 0;
   let commissionAmount = 0;
   const orderItems = [];
-  const defaultRate = Number(process.env.DEFAULT_COMMISSION_RATE || 10);
 
   for (const it of items) {
     const product = await Product.findById(it.productId).populate("shop");
@@ -27,7 +27,7 @@ const createOrder = asyncHandler(async (req, res) => {
 
     const lineTotal = product.price * it.quantity;
     itemsTotal += lineTotal;
-    const rate = product.shop.commissionRate ?? defaultRate;
+    const rate = await resolveCommissionRate(product.shop._id, product.category);
     commissionAmount += (lineTotal * rate) / 100;
 
     orderItems.push({
@@ -61,15 +61,15 @@ const createOrder = asyncHandler(async (req, res) => {
   res.status(201).json(order);
 });
 
-// @route  GET /api/orders/mine
-// @access Private (client)
+// @route   GET /api/orders/mine
+// @access  Private (client)
 const getMyOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({ client: req.user._id }).sort({ createdAt: -1 });
   res.json(orders);
 });
 
-// @route  GET /api/orders/shop
-// @access Private (marchand) — commandes contenant les produits de sa boutique
+// @route   GET /api/orders/shop
+// @access  Private (marchand) - commandes contenant les produits de sa boutique
 const getShopOrders = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associée." });
@@ -78,8 +78,8 @@ const getShopOrders = asyncHandler(async (req, res) => {
   res.json(orders);
 });
 
-// @route  PUT /api/orders/:id/status
-// @access Private (marchand/admin) — met à jour le statut (confirmée, livrée...)
+// @route   PUT /api/orders/:id/status
+// @access  Private (marchand/admin) - met à jour le statut (confirmée, livrée...)
 const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
   const validStatuses = ["pending", "confirmed", "out_for_delivery", "delivered", "cancelled"];
