@@ -8,6 +8,7 @@ export default function ProductCard({ product, onAddToCart, isFavorite: initialF
   const [active, setActive] = useState(0);
   const [isFav, setIsFav] = useState(initialFav);
   const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
     setIsFav(initialFav);
@@ -32,10 +33,13 @@ export default function ProductCard({ product, onAddToCart, isFavorite: initialF
       if (isFav) {
         await api.delete(`/favorites/${product._id}`);
         setIsFav(false);
+        setFeedback("Retiré des favoris");
       } else {
         await api.post(`/favorites/${product._id}`);
         setIsFav(true);
+        setFeedback("Ajouté aux favoris");
       }
+      setTimeout(() => setFeedback(""), 1600);
     } catch {
       // ignore
     } finally {
@@ -83,6 +87,24 @@ export default function ProductCard({ product, onAddToCart, isFavorite: initialF
             >
               {isFav ? "♥" : "♡"}
             </button>
+          )}
+          {feedback && (
+            <div
+              style={{
+                position: "absolute",
+                top: 46,
+                right: 8,
+                background: "rgba(17,17,17,0.85)",
+                color: "var(--white)",
+                fontSize: 11,
+                fontWeight: 600,
+                padding: "5px 10px",
+                borderRadius: 6,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {feedback}
+            </div>
           )}
           {images.length > 1 && (
             <div style={{ position: "absolute", bottom: 8, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 4 }}>
