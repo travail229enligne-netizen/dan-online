@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Header from "../../components/Header";
+import ProductCard from "../../components/ProductCard";
 import api from "../../lib/api";
 import { useCart } from "../../lib/cart";
 
@@ -22,7 +23,6 @@ export default function BoutiquePublique() {
   const { addToCart } = useCart();
   const [shop, setShop] = useState(undefined);
   const [products, setProducts] = useState([]);
-  const [added, setAdded] = useState(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -72,38 +72,22 @@ export default function BoutiquePublique() {
       <div
         style={{
           background: `linear-gradient(135deg, ${theme}, ${themeDark})`,
-          padding: "36px 0 30px",
+          padding: "20px 0",
         }}
       >
         <div className="container">
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 18,
-              background: "rgba(255,255,255,0.2)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 26,
-              fontWeight: 700,
-              color: "var(--white)",
-              marginBottom: 14,
-              border: "1px solid rgba(255,255,255,0.35)",
-            }}
-          >
-            {shop.name?.[0]?.toUpperCase()}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <h1 style={{ color: "var(--white)", fontSize: 20 }}>{shop.name}</h1>
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", display: "inline-block" }} />
           </div>
 
-          <h1 style={{ color: "var(--white)", fontSize: 24, marginBottom: 6 }}>{shop.name}</h1>
-
           {shop.description && (
-            <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 14, maxWidth: 480 }}>
+            <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 13, maxWidth: 480, lineHeight: 1.5 }}>
               {shop.description}
             </p>
           )}
 
-          <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
             {shop.isVerified && (
               <span
                 style={{
@@ -153,7 +137,7 @@ export default function BoutiquePublique() {
         </div>
       </div>
 
-      <main className="container" style={{ paddingTop: 26, paddingBottom: 60 }}>
+      <main className="container" style={{ paddingTop: 22, paddingBottom: 60 }}>
         <h2 style={{ fontSize: 18, marginBottom: 14 }}>
           Produits {products.length > 0 && `(${products.length})`}
         </h2>
@@ -163,55 +147,9 @@ export default function BoutiquePublique() {
             Cette boutique n'a pas encore de produits en ligne.
           </p>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14 }}>
             {products.map((p) => (
-              <div
-                key={p._id}
-                style={{
-                  background: "var(--white)",
-                  border: "1px solid var(--line)",
-                  borderRadius: "var(--radius-md)",
-                  overflow: "hidden",
-                }}
-              >
-                <a href={`/produit/${p._id}`}>
-                  <div
-                    style={{
-                      height: 110,
-                      background: `#eee url(${p.images?.[0] || ""}) center/cover no-repeat`,
-                    }}
-                  />
-                </a>
-                <div style={{ padding: 12 }}>
-                  <a href={`/produit/${p._id}`}>
-                    <div style={{ fontWeight: 700, color: "var(--terracotta-dark)" }}>
-                      {p.price?.toLocaleString("fr-FR")} FCFA
-                    </div>
-                    <div style={{ fontSize: 14, marginTop: 2 }}>{p.name}</div>
-                    <div style={{ fontSize: 12, color: "var(--ink-soft)", marginBottom: 10 }}>
-                      Stock : {p.stock} {p.unit}
-                    </div>
-                  </a>
-                  <button
-                    style={{
-                      width: "100%",
-                      background: theme,
-                      color: "var(--white)",
-                      fontWeight: 600,
-                      fontSize: 12,
-                      padding: "9px 0",
-                      borderRadius: 8,
-                    }}
-                    onClick={() => {
-                      addToCart(p, 1);
-                      setAdded(p._id);
-                      setTimeout(() => setAdded(null), 1200);
-                    }}
-                  >
-                    {added === p._id ? "Ajouté !" : "Ajouter au panier"}
-                  </button>
-                </div>
-              </div>
+              <ProductCard key={p._id} product={p} onAddToCart={(prod) => addToCart(prod, 1)} />
             ))}
           </div>
         )}
