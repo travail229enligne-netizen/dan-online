@@ -9,6 +9,7 @@ export default function AdminDashboard() {
   const [pendingShops, setPendingShops] = useState([]);
   const [allShops, setAllShops] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [withdrawals, setWithdrawals] = useState([]);
   const [busy, setBusy] = useState(null);
 
   const load = () => {
@@ -16,6 +17,7 @@ export default function AdminDashboard() {
     api.get("/admin/shops/pending").then((r) => setPendingShops(r.data)).catch(() => {});
     api.get("/admin/shops").then((r) => setAllShops(r.data)).catch(() => {});
     api.get("/categories").then((r) => setCategories(r.data)).catch(() => {});
+    api.get("/admin/withdrawals").then((r) => setWithdrawals(r.data)).catch(() => {});
   };
 
   useEffect(() => {
@@ -47,6 +49,17 @@ export default function AdminDashboard() {
     setBusy(categoryId);
     try {
       await api.put(`/categories/${categoryId}/commission`, { commissionRate: value });
+      load();
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const processWithdrawal = async (id, status) => {
+    if (status === "paid" && !window.confirm("Confirmer que le paiement Mobile Money a bien été envoyé au marchand ?")) return;
+    setBusy(id);
+    try {
+      await api.put(`/admin/withdrawals/${id}`, { status });
       load();
     } finally {
       setBusy(null);
@@ -98,6 +111,54 @@ export default function AdminDashboard() {
           </section>
         )}
 
+        <h2 style={{ fontSize: 16, marginBottom: 12 }}>Retraits à traiter ({withdrawals.length})</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
+          {withdrawals.map((w) => (
+            <div
+              key={w._id}
+              style={{
+                background: "var(--white)",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--radius-md)",
+                padding: 14,
+              }}
+            >
+              <div style={{ fontWeight: 700, fontSize: 14 }}>{w.amount.toLocaleString("fr-FR")} FCFA</div>
+              <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+                {w.shop?.name} - {w.shop?.owner?.name}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>Mobile Money : {w.phone}</div>
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button
+                  className="btn-primary"
+                  style={{ fontSize: 12, padding: "8px 14px" }}
+                  disabled={busy === w._id}
+                  onClick={() => processWithdrawal(w._id, "paid")}
+                >
+                  Marquer payé
+                </button>
+                <button
+                  style={{
+                    fontSize: 12,
+                    padding: "8px 14px",
+                    borderRadius: 10,
+                    border: "1px solid var(--line)",
+                    color: "var(--terracotta-dark)",
+                    fontWeight: 600,
+                  }}
+                  disabled={busy === w._id}
+                  onClick={() => processWithdrawal(w._id, "rejected")}
+                >
+                  Refuser
+                </button>
+              </div>
+            </div>
+          ))}
+          {withdrawals.length === 0 && (
+            <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucun retrait en attente.</p>
+          )}
+        </div>
+
         <h2 style={{ fontSize: 16, marginBottom: 12 }}>Commissions par catégorie</h2>
         <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", marginBottom: 32 }}>
           {categories.map((cat, i) => (
@@ -131,7 +192,7 @@ export default function AdminDashboard() {
           )}
         </div>
         <p style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: -20, marginBottom: 32 }}>
-          Laisse vide pour utiliser le taux par défaut de la plateforme. La commission d'une boutique spécifique (réglée lors de sa validation) est toujours prioritaire.
+          Laisse vide pour utiliser le taux par défaut de la plateforme. La commission d'une boutique spécifique est toujours prioritaire.
         </p>
 
         <h2 style={{ fontSize: 16, marginBottom: 12 }}>Boutiques en attente de validation ({pendingShops.length})</h2>
