@@ -8,12 +8,14 @@ export default function AdminDashboard() {
   const [overview, setOverview] = useState(null);
   const [pendingShops, setPendingShops] = useState([]);
   const [allShops, setAllShops] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [busy, setBusy] = useState(null);
 
   const load = () => {
     api.get("/admin/dashboard").then((r) => setOverview(r.data)).catch(() => {});
     api.get("/admin/shops/pending").then((r) => setPendingShops(r.data)).catch(() => {});
     api.get("/admin/shops").then((r) => setAllShops(r.data)).catch(() => {});
+    api.get("/categories").then((r) => setCategories(r.data)).catch(() => {});
   };
 
   useEffect(() => {
@@ -41,6 +43,16 @@ export default function AdminDashboard() {
     }
   };
 
+  const updateCategoryCommission = async (categoryId, value) => {
+    setBusy(categoryId);
+    try {
+      await api.put(`/categories/${categoryId}/commission`, { commissionRate: value });
+      load();
+    } finally {
+      setBusy(null);
+    }
+  };
+
   if (loading) return null;
 
   if (!user || user.role !== "admin") {
@@ -48,7 +60,7 @@ export default function AdminDashboard() {
       <>
         <Header />
         <main className="container" style={{ paddingTop: 40, textAlign: "center" }}>
-          <p style={{ color: "var(--ink-soft)" }}>Acces reserve aux administrateurs.</p>
+          <p style={{ color: "var(--ink-soft)" }}>Accès réservé aux administrateurs.</p>
         </main>
       </>
     );
@@ -85,6 +97,42 @@ export default function AdminDashboard() {
             ))}
           </section>
         )}
+
+        <h2 style={{ fontSize: 16, marginBottom: 12 }}>Commissions par catégorie</h2>
+        <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", marginBottom: 32 }}>
+          {categories.map((cat, i) => (
+            <div
+              key={cat._id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+                padding: 12,
+                borderTop: i > 0 ? "1px solid var(--line)" : "none",
+              }}
+            >
+              <div style={{ fontSize: 13, fontWeight: 600 }}>{cat.name}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <input
+                  type="number"
+                  defaultValue={cat.commissionRate ?? ""}
+                  placeholder="Défaut"
+                  disabled={busy === cat._id}
+                  onBlur={(e) => updateCategoryCommission(cat._id, e.target.value)}
+                  style={{ width: 64, padding: 6, border: "1px solid var(--line)", borderRadius: 6, fontSize: 12, textAlign: "center" }}
+                />
+                <span style={{ fontSize: 12, color: "var(--ink-soft)" }}>%</span>
+              </div>
+            </div>
+          ))}
+          {categories.length === 0 && (
+            <p style={{ padding: 12, fontSize: 13, color: "var(--ink-soft)" }}>Aucune catégorie.</p>
+          )}
+        </div>
+        <p style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: -20, marginBottom: 32 }}>
+          Laisse vide pour utiliser le taux par défaut de la plateforme. La commission d'une boutique spécifique (réglée lors de sa validation) est toujours prioritaire.
+        </p>
 
         <h2 style={{ fontSize: 16, marginBottom: 12 }}>Boutiques en attente de validation ({pendingShops.length})</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
