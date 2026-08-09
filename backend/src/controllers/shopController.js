@@ -7,6 +7,7 @@ const User = require("../models/User");
 const getShops = asyncHandler(async (req, res) => {
   const filter = { status: "active" };
   if (req.query.category) filter.category = req.query.category;
+  if (req.query.search) filter.name = { $regex: req.query.search, $options: "i" };
 
   const shops = await Shop.find(filter)
     .populate("category", "name icon")
@@ -53,7 +54,7 @@ const createShop = asyncHandler(async (req, res) => {
     category,
     location: { allee, numero },
     themeColor: themeColor || "#111111",
-    status: "pending", // en attente de validation par l'admin
+    status: "pending",
   });
 
   await User.findByIdAndUpdate(req.user._id, { shop: shop._id });
@@ -81,7 +82,7 @@ const updateMyShop = asyncHandler(async (req, res) => {
 });
 
 // @route   PUT /api/shops/me/close
-// @access  Private (marchand) - ferme temporairement sa boutique (reversible)
+// @access  Private (marchand)
 const closeMyShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
@@ -95,7 +96,7 @@ const closeMyShop = asyncHandler(async (req, res) => {
 });
 
 // @route   PUT /api/shops/me/reopen
-// @access  Private (marchand) - rouvre sa boutique fermee
+// @access  Private (marchand)
 const reopenMyShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
@@ -109,7 +110,7 @@ const reopenMyShop = asyncHandler(async (req, res) => {
 });
 
 // @route   GET /api/shops/me/stats
-// @access  Private (marchand) - tableau de bord ventes/commissions
+// @access  Private (marchand)
 const getMyShopStats = asyncHandler(async (req, res) => {
   const Order = require("../models/Order");
   const shop = await Shop.findOne({ owner: req.user._id });
