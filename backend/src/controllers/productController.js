@@ -12,11 +12,22 @@ function sanitizeTiers(tiers) {
 // @route   GET /api/products
 // @access  Public - catalogue avec filtres
 const getProducts = asyncHandler(async (req, res) => {
-  const { category, shop, search, page = 1, limit = 20 } = req.query;
+  const { category, shop, search, minPrice, maxPrice, wholesale, location, page = 1, limit = 20 } = req.query;
   const filter = { isActive: true };
   if (category) filter.category = category;
   if (shop) filter.shop = shop;
   if (search && search.trim()) filter.name = { $regex: search.trim(), $options: "i" };
+  if (minPrice) filter.price = { ...filter.price, $gte: Number(minPrice) };
+  if (maxPrice) filter.price = { ...filter.price, $lte: Number(maxPrice) };
+  if (wholesale === "true") filter.priceTiers = { $exists: true, $not: { $size: 0 } };
+
+  if (location && location.trim()) {
+    const matchingShops = await Shop.find({
+      status: "active",
+      "location.allee": { $regex: location.trim(), $options: "i" },
+    }).select("_id");
+    filter.shop = { $in: matchingShops.map((s) => s._id) };
+  }
 
   const products = await Product.find(filter)
     .populate("shop", "name slug isVerified")
