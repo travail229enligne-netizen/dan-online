@@ -17,6 +17,13 @@ function shade(hex, percent) {
   }
 }
 
+function whatsappLink(phone, shopName) {
+  if (!phone) return null;
+  const digits = phone.replace(/[^0-9]/g, "");
+  const message = encodeURIComponent(`Bonjour, je vous contacte depuis EasyShop au sujet de votre boutique ${shopName}.`);
+  return `https://wa.me/${digits}?text=${message}`;
+}
+
 export default function BoutiquePublique() {
   const router = useRouter();
   const { slug } = router.query;
@@ -64,6 +71,7 @@ export default function BoutiquePublique() {
   const theme = shop.themeColor || "#111111";
   const themeDark = shade(theme, -30);
   const location = [shop.location?.allee, shop.location?.numero].filter(Boolean).join(", ");
+  const waLink = whatsappLink(shop.owner?.phone, shop.name);
 
   return (
     <>
@@ -76,9 +84,30 @@ export default function BoutiquePublique() {
         }}
       >
         <div className="container">
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <h1 style={{ color: "var(--white)", fontSize: 20 }}>{shop.name}</h1>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", display: "inline-block" }} />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <h1 style={{ color: "var(--white)", fontSize: 20 }}>{shop.name}</h1>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", display: "inline-block" }} />
+            </div>
+            {waLink && (
+              <a
+                href={waLink}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  background: "rgba(255,255,255,0.18)",
+                  color: "var(--white)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  padding: "8px 14px",
+                  borderRadius: 20,
+                  border: "1px solid rgba(255,255,255,0.35)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Contacter
+              </a>
+            )}
           </div>
 
           {shop.description && (
