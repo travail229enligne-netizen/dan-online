@@ -11,6 +11,7 @@ const productRoutes = require("./routes/productRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 const seedRoute = require("./routes/seedRoute");
 
 connectDB();
@@ -28,7 +29,7 @@ app.use(express.json());
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
 app.get("/", (req, res) => {
-  res.json({ message: "🛍️ API Dan-Online — Le Marché de Dantokpa chez vous", status: "ok" });
+  res.json({ message: "API EasyShop - Le Marché de Dantokpa chez vous", status: "ok" });
 });
 app.get("/api/health", (req, res) => res.json({ status: "healthy", uptime: process.uptime() }));
 
@@ -38,6 +39,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/reviews", reviewRoutes);
 app.use("/api/seed", seedRoute);
 
 // 404
@@ -55,5 +57,5 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Serveur Dan-Online démarré sur le port ${PORT} (${process.env.NODE_ENV || "development"})`);
+  console.log(`Serveur EasyShop démarré sur le port ${PORT} (${process.env.NODE_ENV || "development"})`);
 });
