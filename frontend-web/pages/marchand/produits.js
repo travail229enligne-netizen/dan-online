@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import MerchantLayout from "../../components/MerchantLayout";
-import ImageUpload from "../../components/ImageUpload";
+import ImageUploadMulti from "../../components/ImageUploadMulti";
 import api from "../../lib/api";
 
-const emptyForm = { name: "", price: "", stock: "", unit: "unité", image: "" };
+const emptyForm = { name: "", description: "", price: "", stock: "", unit: "unité", images: [] };
 
 export default function MerchantProduits() {
   const [shop, setShop] = useState(undefined);
@@ -26,7 +26,14 @@ export default function MerchantProduits() {
 
   const startEdit = (p) => {
     setEditingId(p._id);
-    setForm({ name: p.name, price: p.price, stock: p.stock, unit: p.unit, image: p.image || "" });
+    setForm({
+      name: p.name,
+      description: p.description || "",
+      price: p.price,
+      stock: p.stock,
+      unit: p.unit,
+      images: p.images || [],
+    });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -132,10 +139,11 @@ export default function MerchantProduits() {
                 gap: 10,
               }}
             >
-              <ImageUpload
-                label="Photo du produit"
-                value={form.image}
-                onChange={(url) => setForm({ ...form, image: url })}
+              <ImageUploadMulti
+                label="Photos du produit"
+                values={form.images}
+                onChange={(images) => setForm({ ...form, images })}
+                max={5}
               />
 
               <label style={{ fontSize: 12 }}>
@@ -145,6 +153,16 @@ export default function MerchantProduits() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
+                />
+              </label>
+
+              <label style={{ fontSize: 12 }}>
+                Description
+                <textarea
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8, fontFamily: "inherit" }}
                 />
               </label>
 
@@ -221,9 +239,9 @@ export default function MerchantProduits() {
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    {p.image ? (
+                    {p.images && p.images[0] ? (
                       <img
-                        src={p.image}
+                        src={p.images[0]}
                         alt={p.name}
                         style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", border: "1px solid var(--line)" }}
                       />
