@@ -17,7 +17,7 @@ const shopSchema = new mongoose.Schema(
     isVerified: { type: Boolean, default: false }, // badge "Vérifié"
     status: {
       type: String,
-      enum: ["pending", "active", "suspended"],
+      enum: ["pending", "active", "suspended", "closed"],
       default: "pending",
     },
     // Loyer de l'emplacement virtuel (abonnement plateforme)
