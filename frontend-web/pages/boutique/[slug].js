@@ -38,6 +38,7 @@ export default function BoutiquePublique() {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("recent");
+  const [reviews, setReviews] = useState({ reviews: [], average: 0, count: 0 });
 
   useEffect(() => {
     if (!slug) return;
@@ -45,6 +46,7 @@ export default function BoutiquePublique() {
       .get(`/shops/${slug}`)
       .then((r) => {
         setShop(r.data);
+        api.get(`/reviews/shop/${r.data._id}`).then((rr) => setReviews(rr.data)).catch(() => {});
         return api.get(`/products?shop=${r.data._id}&limit=50`);
       })
       .then((r) => setProducts(r.data.products))
@@ -136,7 +138,34 @@ export default function BoutiquePublique() {
             </p>
           )}
 
+          {reviews.count > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10 }}>
+              <span style={{ color: "#fbbf24", fontSize: 14 }}>★</span>
+              <span style={{ color: "var(--white)", fontSize: 13, fontWeight: 600 }}>
+                {reviews.average.toFixed(1)}
+              </span>
+              <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 12 }}>
+                ({reviews.count} avis)
+              </span>
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+            {shop.isProfessional && (
+              <span
+                style={{
+                  background: "rgba(255,255,255,0.25)",
+                  color: "var(--white)",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  padding: "5px 12px",
+                  borderRadius: 20,
+                  border: "1px solid rgba(255,255,255,0.5)",
+                }}
+              >
+                Boutique professionnelle
+              </span>
+            )}
             {shop.isVerified && (
               <span
                 style={{
@@ -204,6 +233,7 @@ export default function BoutiquePublique() {
                 border: "1px solid var(--line)",
                 borderRadius: 8,
                 fontSize: 13,
+                boxSizing: "border-box",
               }}
             />
             <select
@@ -240,6 +270,47 @@ export default function BoutiquePublique() {
               <ProductCard key={p._id} product={p} onAddToCart={(prod) => addToCart(prod, 1)} />
             ))}
           </div>
+        )}
+
+        {reviews.count > 0 && (
+          <section style={{ marginTop: 36 }}>
+            <h2 style={{ fontSize: 18, marginBottom: 14 }}>
+              Avis clients ({reviews.count})
+            </h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {reviews.reviews.map((r) => (
+                <div
+                  key={r._id}
+                  style={{
+                    background: "var(--white)",
+                    border: "1px solid var(--line)",
+                    borderRadius: "var(--radius-md)",
+                    padding: 14,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontWeight: 600, fontSize: 13 }}>{r.client?.name || "Client"}</span>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 600,
+                          color: "var(--green-dark)",
+                          background: "#e8f5ee",
+                          padding: "2px 8px",
+                          borderRadius: 10,
+                        }}
+                      >
+                        Achat vérifié
+                      </span>
+                    </div>
+                    <span style={{ color: "#f5a623", fontSize: 13 }}>{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
+                  </div>
+                  {r.comment && <p style={{ fontSize: 13, color: "var(--ink)", marginTop: 6 }}>{r.comment}</p>}
+                </div>
+              ))}
+            </div>
+          </section>
         )}
       </main>
     </>

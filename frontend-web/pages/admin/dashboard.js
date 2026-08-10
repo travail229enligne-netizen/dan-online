@@ -45,6 +45,16 @@ export default function AdminDashboard() {
     }
   };
 
+  const toggleProfessional = async (shopId, current) => {
+    setBusy(shopId);
+    try {
+      await api.put(`/admin/shops/${shopId}/professional`, { isProfessional: !current });
+      load();
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const updateCategoryCommission = async (categoryId, value) => {
     setBusy(categoryId);
     try {
@@ -256,33 +266,40 @@ export default function AdminDashboard() {
                 border: "1px solid var(--line)",
                 borderRadius: "var(--radius-md)",
                 padding: 14,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 10,
               }}
             >
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>{shop.name}</div>
-                <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-                  {shop.owner?.name} - statut : {shop.status}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>{shop.name}</div>
+                  <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+                    {shop.owner?.name} - statut : {shop.status}
+                  </div>
                 </div>
+                <button
+                  style={{
+                    fontSize: 12,
+                    padding: "8px 14px",
+                    borderRadius: 10,
+                    border: "1px solid var(--line)",
+                    color: "var(--terracotta-dark)",
+                    fontWeight: 600,
+                    whiteSpace: "nowrap",
+                  }}
+                  disabled={busy === shop._id}
+                  onClick={() => removeShop(shop._id, shop.name)}
+                >
+                  Supprimer
+                </button>
               </div>
-              <button
-                style={{
-                  fontSize: 12,
-                  padding: "8px 14px",
-                  borderRadius: 10,
-                  border: "1px solid var(--line)",
-                  color: "var(--terracotta-dark)",
-                  fontWeight: 600,
-                  whiteSpace: "nowrap",
-                }}
-                disabled={busy === shop._id}
-                onClick={() => removeShop(shop._id, shop.name)}
-              >
-                Supprimer
-              </button>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                <input
+                  type="checkbox"
+                  checked={!!shop.isProfessional}
+                  disabled={busy === shop._id}
+                  onChange={() => toggleProfessional(shop._id, shop.isProfessional)}
+                />
+                Boutique professionnelle
+              </label>
             </div>
           ))}
           {allShops.length === 0 && (
