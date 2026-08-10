@@ -36,6 +36,8 @@ export default function BoutiquePublique() {
   const { addToCart } = useCart();
   const [shop, setShop] = useState(undefined);
   const [products, setProducts] = useState([]);
+  const [collections, setCollections] = useState([]);
+  const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("recent");
   const [reviews, setReviews] = useState({ reviews: [], average: 0, count: 0 });
@@ -47,6 +49,7 @@ export default function BoutiquePublique() {
       .then((r) => {
         setShop(r.data);
         api.get(`/reviews/shop/${r.data._id}`).then((rr) => setReviews(rr.data)).catch(() => {});
+        api.get(`/collections/shop/${r.data._id}`).then((cr) => setCollections(cr.data)).catch(() => {});
         return api.get(`/products?shop=${r.data._id}&limit=50`);
       })
       .then((r) => setProducts(r.data.products))
@@ -55,6 +58,15 @@ export default function BoutiquePublique() {
 
   const visibleProducts = useMemo(() => {
     let list = [...products];
+
+    if (activeTab !== "all") {
+      const col = collections.find((c) => c._id === activeTab);
+      if (col) {
+        const ids = new Set(col.products.map((p) => p._id));
+        list = list.filter((p) => ids.has(p._id));
+      }
+    }
+
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter((p) => p.name.toLowerCase().includes(q));
@@ -63,7 +75,7 @@ export default function BoutiquePublique() {
     else if (sort === "price_desc") list.sort((a, b) => b.price - a.price);
     else list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     return list;
-  }, [products, search, sort]);
+  }, [products, collections, activeTab, search, sort]);
 
   if (shop === undefined) {
     return (
@@ -94,6 +106,7 @@ export default function BoutiquePublique() {
   const themeDark = shade(theme, -30);
   const location = [shop.location?.allee, shop.location?.numero].filter(Boolean).join(", ");
   const waLink = whatsappLink(shop.owner?.phone, shop.name);
+  const nonEmptyCollections = collections.filter((c) => c.products.length > 0);
 
   return (
     <>
@@ -216,8 +229,46 @@ export default function BoutiquePublique() {
       </div>
 
       <main className="container" style={{ paddingTop: 22, paddingBottom: 60 }}>
+        {nonEmptyCollections.length > 0 && (
+          <div style={{ display: "flex", gap: 8, marginBottom: 18, overflowX: "auto" }}>
+            <button
+              onClick={() => setActiveTab("all")}
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                padding: "8px 16px",
+                borderRadius: 20,
+                border: activeTab === "all" ? "none" : "1px solid var(--line)",
+                background: activeTab === "all" ? "var(--ink)" : "var(--white)",
+                color: activeTab === "all" ? "var(--white)" : "var(--ink)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Tous les produits
+            </button>
+            {nonEmptyCollections.map((col) => (
+              <button
+                key={col._id}
+                onClick={() => setActiveTab(col._id)}
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  padding: "8px 16px",
+                  borderRadius: 20,
+                  border: activeTab === col._id ? "none" : "1px solid var(--line)",
+                  background: activeTab === col._id ? "var(--ink)" : "var(--white)",
+                  color: activeTab === col._id ? "var(--white)" : "var(--ink)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {col.name}
+              </button>
+            ))}
+          </div>
+        )}
+
         <h2 style={{ fontSize: 18, marginBottom: 14 }}>
-          Produits {products.length > 0 && `(${products.length})`}
+          Produits {products.length > 0 && `(${visibleProducts.length})`}
         </h2>
 
         {products.length > 0 && (
