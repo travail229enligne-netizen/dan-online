@@ -61,7 +61,8 @@ const getMessages = asyncHandler(async (req, res) => {
 // @access  Private (participant a la conversation)
 const sendMessage = asyncHandler(async (req, res) => {
   const { text } = req.body;
-  if (!text || !text.trim()) return res.status(400).json({ message: "Message vide." });
+  const { imageUrl } = req.body;
+  if ((!text || !text.trim()) && !imageUrl) return res.status(400).json({ message: "Message vide." });
 
   const conversation = await Conversation.findById(req.params.conversationId).populate("shop");
   if (!conversation) return res.status(404).json({ message: "Conversation introuvable." });
@@ -76,10 +77,11 @@ const sendMessage = asyncHandler(async (req, res) => {
     conversation: conversation._id,
     sender: req.user._id,
     senderRole: isClient ? "client" : "marchand",
-    text: text.trim(),
+    text: text ? text.trim() : "",
+    imageUrl: imageUrl || "",
   });
 
-  conversation.lastMessage = text.trim();
+  conversation.lastMessage = text && text.trim() ? text.trim() : "Photo envoyée";
   conversation.lastMessageAt = new Date();
   if (isClient) conversation.unreadForMerchant += 1;
   if (isMerchant) conversation.unreadForClient += 1;
