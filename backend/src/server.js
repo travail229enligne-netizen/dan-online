@@ -15,6 +15,7 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const favoriteRoutes = require("./routes/favoriteRoutes");
 const walletRoutes = require("./routes/walletRoutes");
 const collectionRoutes = require("./routes/collectionRoutes");
+const messageRoutes = require("./routes/messageRoutes");
 const seedRoute = require("./routes/seedRoute");
 
 connectDB();
@@ -46,6 +47,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/favorites", favoriteRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/collections", collectionRoutes);
+app.use("/api/messages", messageRoutes);
 app.use("/api/seed", seedRoute);
 
 // 404
