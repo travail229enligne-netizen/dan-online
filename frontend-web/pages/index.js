@@ -1,19 +1,16 @@
 import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import HeroBanner from "../components/HeroBanner";
-import CategoryGrid from "../components/CategoryGrid";
 import ProductCard from "../components/ProductCard";
 import api from "../lib/api";
 import { useCart } from "../lib/cart";
 
 export default function Home() {
-  const [categories, setCategories] = useState([]);
   const [shops, setShops] = useState([]);
   const [products, setProducts] = useState([]);
   const { addToCart } = useCart();
 
   useEffect(() => {
-    api.get("/categories").then((r) => setCategories(r.data)).catch(() => {});
     api.get("/shops").then((r) => setShops(r.data.slice(0, 4))).catch(() => {});
     api.get("/products?limit=8").then((r) => setProducts(r.data.products)).catch(() => {});
   }, []);
@@ -28,8 +25,6 @@ export default function Home() {
           subtitle="Toutes les allées du plus grand marché du Bénin, livrées chez vous en 48h."
           onCtaClick={() => window.scrollTo({ top: 600, behavior: "smooth" })}
         />
-
-        <CategoryGrid categories={categories} />
 
         <section id="boutiques" style={{ marginTop: 32 }}>
           <h3 style={{ fontSize: 18, marginBottom: 14 }}>Boutiques Partenaires</h3>
@@ -66,7 +61,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="categories" style={{ marginTop: 32 }}>
+        <section style={{ marginTop: 32 }}>
           <h3 style={{ fontSize: 18, marginBottom: 14 }}>Produits Populaires</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14 }}>
             {products.map((p) => (
