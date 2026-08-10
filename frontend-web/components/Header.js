@@ -18,6 +18,25 @@ export default function Header() {
     }
   }, [open]);
 
+  const navLink = (href, label) => (
+    <a
+      href={href}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        padding: "12px 14px",
+        borderRadius: 10,
+        fontSize: 14,
+        fontWeight: router.pathname === href ? 700 : 500,
+        color: router.pathname === href ? "var(--white)" : "var(--ink)",
+        background: router.pathname === href ? "var(--ink)" : "transparent",
+        marginBottom: 4,
+      }}
+    >
+      {label}
+    </a>
+  );
+
   return (
     <>
       <header
@@ -99,22 +118,7 @@ export default function Header() {
             </div>
 
             <div style={{ padding: "12px 8px", flex: 1 }}>
-              <a
-                href="/"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "12px 14px",
-                  borderRadius: 10,
-                  fontSize: 14,
-                  fontWeight: router.pathname === "/" ? 700 : 500,
-                  color: router.pathname === "/" ? "var(--white)" : "var(--ink)",
-                  background: router.pathname === "/" ? "var(--ink)" : "transparent",
-                  marginBottom: 4,
-                }}
-              >
-                Accueil
-              </a>
+              {navLink("/", "Accueil")}
 
               <a
                 href="/#boutiques"
@@ -174,39 +178,9 @@ export default function Header() {
                 </div>
               )}
 
-              <a
-                href="/commandes"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "12px 14px",
-                  borderRadius: 10,
-                  fontSize: 14,
-                  fontWeight: router.pathname === "/commandes" ? 700 : 500,
-                  color: router.pathname === "/commandes" ? "var(--white)" : "var(--ink)",
-                  background: router.pathname === "/commandes" ? "var(--ink)" : "transparent",
-                  marginBottom: 4,
-                }}
-              >
-                Commandes
-              </a>
-
-              <a
-                href="/favoris"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "12px 14px",
-                  borderRadius: 10,
-                  fontSize: 14,
-                  fontWeight: router.pathname === "/favoris" ? 700 : 500,
-                  color: router.pathname === "/favoris" ? "var(--white)" : "var(--ink)",
-                  background: router.pathname === "/favoris" ? "var(--ink)" : "transparent",
-                  marginBottom: 4,
-                }}
-              >
-                Favoris
-              </a>
+              {navLink("/commandes", "Commandes")}
+              {navLink("/favoris", "Favoris")}
+              {navLink("/messages", "Messages")}
 
               <a
                 href={user ? "/compte" : "/connexion"}

@@ -4,6 +4,7 @@ import Header from "../../components/Header";
 import ProductCard from "../../components/ProductCard";
 import api from "../../lib/api";
 import { useCart } from "../../lib/cart";
+import { useAuth } from "../../lib/auth";
 
 function shade(hex, percent) {
   try {
@@ -34,6 +35,7 @@ export default function BoutiquePublique() {
   const router = useRouter();
   const { slug } = router.query;
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const [shop, setShop] = useState(undefined);
   const [products, setProducts] = useState([]);
   const [collections, setCollections] = useState([]);
@@ -124,6 +126,23 @@ export default function BoutiquePublique() {
               <h1 style={{ color: "var(--white)", fontSize: 20 }}>{shop.name}</h1>
               <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", display: "inline-block" }} />
             </div>
+            {user?.role === "client" && (
+              <a
+                href={`/messages/${shop._id}`}
+                style={{
+                  background: "rgba(255,255,255,0.18)",
+                  color: "var(--white)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  padding: "8px 14px",
+                  borderRadius: 20,
+                  border: "1px solid rgba(255,255,255,0.35)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Message
+              </a>
+            )}
             {waLink && (
               <a
                 href={waLink}
