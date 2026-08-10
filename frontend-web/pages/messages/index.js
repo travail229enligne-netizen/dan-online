@@ -42,7 +42,7 @@ export default function Messages() {
               return (
                 <a
                   key={conv._id}
-                  href={`/messages/${conv.shop?._id}`}
+                  href={`/messages/c/${conv._id}`}
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
