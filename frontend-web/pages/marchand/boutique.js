@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import MerchantLayout from "../../components/MerchantLayout";
+import ImageUpload from "../../components/ImageUpload";
 import api from "../../lib/api";
 
 const themeOptions = [
@@ -23,6 +24,7 @@ export default function Boutique() {
     allee: "",
     numero: "",
     themeColor: "#c1592b",
+    logoUrl: "",
   });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -43,6 +45,7 @@ export default function Boutique() {
             allee: r.data.location?.allee || "",
             numero: r.data.location?.numero || "",
             themeColor: r.data.themeColor || "#c1592b",
+            logoUrl: r.data.logoUrl || "",
           });
         }
       })
@@ -150,6 +153,12 @@ export default function Boutique() {
           gap: 16,
         }}
       >
+        <ImageUpload
+          label="Logo de la boutique"
+          value={form.logoUrl}
+          onChange={(url) => setForm({ ...form, logoUrl: url })}
+        />
+
         <label style={{ fontSize: 12 }}>
           Nom de la boutique
           <input
@@ -180,7 +189,7 @@ export default function Boutique() {
             <option value="">Choisir...</option>
             {categories.map((c) => (
               <option key={c._id} value={c._id}>
-                {c.icon} {c.name}
+                {c.name}
               </option>
             ))}
           </select>

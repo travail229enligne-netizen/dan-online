@@ -43,12 +43,50 @@ export default function Home() {
                   padding: 12,
                 }}
               >
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--ink)" }} />
-                <div>
+                {shop.logoUrl ? (
+                  <img
+                    src={shop.logoUrl}
+                    alt={shop.name}
+                    style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", flexShrink: 0 }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 10,
+                      background: "var(--ink)",
+                      color: "var(--white)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 700,
+                      fontSize: 16,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {shop.name?.[0]?.toUpperCase()}
+                  </div>
+                )}
+                <div style={{ minWidth: 0 }}>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{shop.name}</div>
                   <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
                     {shop.location?.allee} {shop.location?.numero}
                   </div>
+                  {shop.description && (
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "var(--ink-soft)",
+                        marginTop: 2,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {shop.description}
+                    </div>
+                  )}
                   {shop.isVerified && (
                     <span style={{ fontSize: 11, color: "var(--ink)" }}>✓ Vérifié</span>
                   )}
