@@ -19,7 +19,7 @@ const getConversations = asyncHandler(async (req, res) => {
 
   const conversations = await Conversation.find(filter)
     .populate("client", "name")
-    .populate("shop", "name")
+    .populate("shop", "name logoUrl")
     .sort({ lastMessageAt: -1 });
 
   res.json(conversations);
@@ -38,18 +38,19 @@ const startConversation = asyncHandler(async (req, res) => {
 // @route   GET /api/messages/:conversationId
 // @access  Private (participant a la conversation)
 const getMessages = asyncHandler(async (req, res) => {
-  const conversation = await Conversation.findById(req.params.conversationId).populate("shop");
+  const conversation = await Conversation.findById(req.params.conversationId)
+    .populate("client", "name phone")
+    .populate({ path: "shop", select: "name logoUrl owner", populate: { path: "owner", select: "phone" } });
   if (!conversation) return res.status(404).json({ message: "Conversation introuvable." });
 
-  const isClient = conversation.client.toString() === req.user._id.toString();
-  const isMerchant = conversation.shop.owner.toString() === req.user._id.toString();
+  const isClient = conversation.client._id.toString() === req.user._id.toString();
+  const isMerchant = conversation.shop.owner._id.toString() === req.user._id.toString();
   if (!isClient && !isMerchant) {
     return res.status(403).json({ message: "Accès non autorisé à cette conversation." });
   }
 
   const messages = await Message.find({ conversation: conversation._id }).sort({ createdAt: 1 });
 
-  // Marquer comme lu pour le lecteur actuel
   if (isClient) conversation.unreadForClient = 0;
   if (isMerchant) conversation.unreadForMerchant = 0;
   await conversation.save();
@@ -60,8 +61,7 @@ const getMessages = asyncHandler(async (req, res) => {
 // @route   POST /api/messages/:conversationId
 // @access  Private (participant a la conversation)
 const sendMessage = asyncHandler(async (req, res) => {
-  const { text } = req.body;
-  const { imageUrl } = req.body;
+  const { text, imageUrl } = req.body;
   if ((!text || !text.trim()) && !imageUrl) return res.status(400).json({ message: "Message vide." });
 
   const conversation = await Conversation.findById(req.params.conversationId).populate("shop");
