@@ -82,7 +82,9 @@ export default function ConversationById() {
 
   if (loading || !conversation) return null;
 
+  const otherUserId = user.role === "client" ? conversation.shop?.owner?._id : conversation.client?._id;
   const title = user.role === "client" ? conversation.shop?.name : conversation.client?.name;
+  const avatarUrl = user.role === "client" ? conversation.shop?.logoUrl : conversation.client?.avatarUrl;
   const phone = user.role === "marchand" ? conversation.client?.phone : conversation.shop?.owner?.phone;
   const waBase = whatsappBase(phone);
 
@@ -91,7 +93,16 @@ export default function ConversationById() {
       <Header />
       <main className="container" style={{ paddingTop: 20, paddingBottom: 20, display: "flex", flexDirection: "column", height: "calc(100vh - 76px)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <h1 style={{ fontSize: 18 }}>{title || "Conversation"}</h1>
+          <a href={otherUserId ? `/profil/${otherUserId}` : "#"} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={title} style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
+            ) : (
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--ink)", color: "var(--white)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>
+                {title?.[0]?.toUpperCase()}
+              </div>
+            )}
+            <h1 style={{ fontSize: 18 }}>{title || "Conversation"}</h1>
+          </a>
           {waBase && (
             <div style={{ display: "flex", gap: 8 }}>
               <a href={waBase} target="_blank" rel="noreferrer" title="Appel audio via WhatsApp" style={{ fontSize: 18 }}>
