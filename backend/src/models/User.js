@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, required: true, trim: true },
     password: { type: String, required: true },
     role: { type: String, enum: ["client", "marchand", "admin"], default: "client" },
+    isActive: { type: Boolean, default: true },
     shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop" },
     address: { type: String, default: "" },
 
