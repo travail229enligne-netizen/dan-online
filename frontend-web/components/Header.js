@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "../lib/auth";
-import { useCart } from "../lib/cart";
 import api from "../lib/api";
 
 export default function Header() {
   const { user, logout } = useAuth();
-  const { count } = useCart();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [unreadNotif, setUnreadNotif] = useState(0);
@@ -98,29 +97,17 @@ export default function Header() {
                 )}
               </a>
             )}
-            <a href="/panier" style={{ color: "var(--white)", position: "relative" }}>
-              <span style={{ fontSize: 20 }}>🛒</span>
-              {count > 0 && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: -8,
-                    right: -10,
-                    background: "var(--terracotta)",
-                    color: "var(--white)",
-                    borderRadius: "50%",
-                    fontSize: 11,
-                    width: 18,
-                    height: 18,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {count}
-                </span>
+            <button
+              onClick={() => setProfileOpen(true)}
+              aria-label="Mon profil"
+              style={{ background: "transparent", color: "var(--white)" }}
+            >
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.name} style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover" }} />
+              ) : (
+                <span style={{ fontSize: 20 }}>👤</span>
               )}
-            </a>
+            </button>
           </div>
         </div>
       </header>
@@ -214,6 +201,7 @@ export default function Header() {
                 </div>
               )}
 
+              {navLink("/panier", "Panier")}
               {navLink("/commandes", "Commandes")}
               {navLink("/favoris", "Favoris")}
               {navLink("/messages", "Messages")}
@@ -246,6 +234,85 @@ export default function Header() {
               </div>
             )}
           </nav>
+        </div>
+      )}
+
+      {profileOpen && (
+        <div
+          onClick={() => setProfileOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.4)",
+            zIndex: 30,
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: 260,
+              height: "100%",
+              background: "var(--white)",
+              padding: "20px 16px",
+              overflowY: "auto",
+            }}
+          >
+            {!user ? (
+              <div style={{ textAlign: "center", paddingTop: 30 }}>
+                <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 12 }}>
+                  Connecte-toi pour accéder à ton compte.
+                </p>
+                <a href="/connexion" className="btn-primary" style={{ display: "inline-block" }}>
+                  Se connecter
+                </a>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.name} style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover" }} />
+                  ) : (
+                    <div style={{ width: 44, height: 44, borderRadius: "50%", background: "var(--ink)", color: "var(--white)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>
+                      {user.name?.[0]?.toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>{user.name}</div>
+                    <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>
+                      {user.role === "marchand" ? "Marchand" : user.role === "admin" ? "Administrateur" : "Client"}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <a href="/compte" style={{ background: "var(--cream)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600 }}>
+                    Voir mon profil
+                  </a>
+                  <a href="/commandes" style={{ background: "var(--cream)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600 }}>
+                    Mes commandes
+                  </a>
+                  {user.role === "marchand" && (
+                    <a href="/marchand/dashboard" style={{ background: "var(--cream)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600 }}>
+                      Tableau de bord marchand
+                    </a>
+                  )}
+                  {user.role === "admin" && (
+                    <a href="/admin/dashboard" style={{ background: "var(--cream)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600 }}>
+                      Espace administrateur
+                    </a>
+                  )}
+                  <button
+                    onClick={logout}
+                    style={{ background: "var(--cream)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: "var(--terracotta-dark)", textAlign: "left" }}
+                  >
+                    Se déconnecter
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
     </>
