@@ -11,12 +11,23 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [unreadNotif, setUnreadNotif] = useState(0);
 
   useEffect(() => {
     if (open && categories.length === 0) {
       api.get("/categories").then((r) => setCategories(r.data)).catch(() => {});
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!user) return;
+    const load = () => {
+      api.get("/notifications").then((r) => setUnreadNotif(r.data.unreadCount)).catch(() => {});
+    };
+    load();
+    const interval = setInterval(load, 15000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const navLink = (href, label) => (
     <a
@@ -62,6 +73,31 @@ export default function Header() {
             <a href="/recherche" aria-label="Rechercher" style={{ color: "var(--white)", fontSize: 20 }}>
               🔍
             </a>
+            {user && (
+              <a href="/notifications" aria-label="Notifications" style={{ color: "var(--white)", position: "relative" }}>
+                <span style={{ fontSize: 20 }}>🔔</span>
+                {unreadNotif > 0 && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: -8,
+                      right: -10,
+                      background: "var(--terracotta)",
+                      color: "var(--white)",
+                      borderRadius: "50%",
+                      fontSize: 11,
+                      width: 18,
+                      height: 18,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {unreadNotif > 9 ? "9+" : unreadNotif}
+                  </span>
+                )}
+              </a>
+            )}
             <a href="/panier" style={{ color: "var(--white)", position: "relative" }}>
               <span style={{ fontSize: 20 }}>🛒</span>
               {count > 0 && (
