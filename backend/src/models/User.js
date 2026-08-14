@@ -6,17 +6,19 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     phone: { type: String, required: true, trim: true },
-    password: { type: String, required: true, minlength: 6 },
-    role: {
-      type: String,
-      enum: ["client", "marchand", "admin"],
-      default: "client",
-    },
+    password: { type: String, required: true },
+    role: { type: String, enum: ["client", "marchand", "admin"], default: "client" },
+    shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop" },
     address: { type: String, default: "" },
+
     avatarUrl: { type: String, default: "" },
-    isActive: { type: Boolean, default: true },
-    // rempli uniquement si role === 'marchand'
-    shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", default: null },
+    bio: { type: String, default: "", maxlength: 200 },
+    locationLabel: { type: String, default: "" },
+    locationMapUrl: { type: String, default: "" },
+    privacy: {
+      showPhone: { type: Boolean, default: false },
+      showLocation: { type: Boolean, default: false },
+    },
   },
   { timestamps: true }
 );
@@ -28,8 +30,8 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-userSchema.methods.matchPassword = function (enteredPassword) {
-  return bcrypt.compare(enteredPassword, this.password);
+userSchema.methods.matchPassword = async function (candidate) {
+  return bcrypt.compare(candidate, this.password);
 };
 
 userSchema.methods.toSafeObject = function () {
