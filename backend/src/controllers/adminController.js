@@ -3,6 +3,7 @@ const Shop = require("../models/Shop");
 const User = require("../models/User");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const { notify } = require("../utils/notify");
 
 // @route   GET /api/admin/shops/pending
 // @access  Private (admin) - boutiques en attente de validation
@@ -31,6 +32,17 @@ const validateShop = asyncHandler(async (req, res) => {
   if (rentAmount !== undefined) shop.rent.amount = rentAmount;
 
   await shop.save();
+
+  await notify(
+    shop.owner,
+    approve ? "shop_validated" : "shop_rejected",
+    approve ? "Boutique validée" : "Boutique refusée",
+    approve
+      ? `Ta boutique "${shop.name}" est maintenant active sur EasyShop.`
+      : `Ta boutique "${shop.name}" n'a pas été validée. Contacte le support pour en savoir plus.`,
+    "/marchand/boutique"
+  );
+
   res.json(shop);
 });
 

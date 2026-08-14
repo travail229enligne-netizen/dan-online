@@ -73,6 +73,14 @@ const sendMessage = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Accès non autorisé à cette conversation." });
   }
 
+  await require("../utils/notify").notify(
+    isClient ? conversation.shop.owner : conversation.client,
+    "message",
+    "Nouveau message",
+    text ? text.trim().slice(0, 80) : "Photo envoyée",
+    `/messages/c/${conversation._id}`
+  );
+
   const message = await Message.create({
     conversation: conversation._id,
     sender: req.user._id,

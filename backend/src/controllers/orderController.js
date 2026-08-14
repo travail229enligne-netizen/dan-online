@@ -3,6 +3,7 @@ const Order = require("../models/Order");
 const Product = require("../models/Product");
 const Shop = require("../models/Shop");
 const { resolveCommissionRate } = require("../utils/commission");
+const { notify } = require("../utils/notify");
 
 // @route   POST /api/orders
 // @access  Private (client) - passe une commande en paiement à la livraison
@@ -58,6 +59,20 @@ const createOrder = asyncHandler(async (req, res) => {
     expectedDeliveryHours: 48,
   });
 
+  const shopIds = [...new Set(orderItems.map((it) => it.shop.toString()))];
+  for (const shopId of shopIds) {
+    const s = await Shop.findById(shopId);
+    if (s) {
+      await notify(
+        s.owner,
+        "new_order",
+        "Nouvelle commande",
+        `Une commande vient d'être passée sur ta boutique.`,
+        "/marchand/commandes"
+      );
+    }
+  }
+
   res.status(201).json(order);
 });
 
@@ -91,9 +106,26 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   if (!order) return res.status(404).json({ message: "Commande introuvable." });
 
   order.status = status;
-  if (status === "delivered") order.paidAt = new Date(); // encaissement COD confirmé
+  if (status === "delivered") order.paidAt = new Date();
 
   await order.save();
+
+  const statusLabels = {
+    confirmed: "confirmée",
+    out_for_delivery: "en cours de livraison",
+    delivered: "livrée",
+    cancelled: "annulée",
+  };
+  if (statusLabels[status]) {
+    await notify(
+      order.client,
+      "order_status",
+      "Commande mise à jour",
+      `Ta commande est maintenant ${statusLabels[status]}.`,
+      "/commandes"
+    );
+  }
+
   res.json(order);
 });
 
