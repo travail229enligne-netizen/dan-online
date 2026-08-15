@@ -34,7 +34,7 @@ const getProducts = asyncHandler(async (req, res) => {
     .populate("category", "name icon")
     .limit(Number(limit))
     .skip((Number(page) - 1) * Number(limit))
-    .sort({ soldCount: -1, createdAt: -1 });
+    .sort({ featuredUntil: -1, soldCount: -1, createdAt: -1 });
 
   const total = await Product.countDocuments(filter);
   res.json({ products, total, page: Number(page), pages: Math.ceil(total / limit) });

@@ -17,6 +17,7 @@ const shopSchema = new mongoose.Schema(
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
     isVerified: { type: Boolean, default: false }, // badge "Vérifié"
     isProfessional: { type: Boolean, default: false }, // badge "Boutique professionnelle" accorde par admin
+    featuredUntil: { type: Date, default: null },
     status: {
       type: String,
       enum: ["pending", "active", "suspended", "closed"],

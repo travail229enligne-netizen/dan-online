@@ -20,6 +20,7 @@ const productSchema = new mongoose.Schema(
     images: [{ type: String }],
     priceTiers: [priceTierSchema], // paliers gros/demi-gros, tries par minQty croissant
     isActive: { type: Boolean, default: true },
+    featuredUntil: { type: Date, default: null },
     soldCount: { type: Number, default: 0 },
   },
   { timestamps: true }

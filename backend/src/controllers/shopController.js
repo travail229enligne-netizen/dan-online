@@ -12,7 +12,7 @@ const getShops = asyncHandler(async (req, res) => {
 
   const shops = await Shop.find(filter)
     .populate("category", "name icon")
-    .sort({ isVerified: -1, rating: -1 });
+    .sort({ featuredUntil: -1, isVerified: -1, rating: -1 });
 
   res.json(shops);
 });
