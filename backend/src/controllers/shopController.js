@@ -7,6 +7,7 @@ const User = require("../models/User");
 const getShops = asyncHandler(async (req, res) => {
   const filter = { status: "active" };
   if (req.query.category) filter.category = req.query.category;
+  if (req.query.city) filter.city = req.query.city;
   if (req.query.search && req.query.search.trim()) filter.name = { $regex: req.query.search.trim(), $options: "i" };
 
   const shops = await Shop.find(filter)
