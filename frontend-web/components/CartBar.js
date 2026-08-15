@@ -92,7 +92,7 @@ export default function CartBar() {
           boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
         }}
       >
-        <button onClick={() => setExpanded(!expanded)} style={{ textAlign: "left", color: "var(--white)" }}>
+        <button onClick={() => setExpanded(!expanded)} style={{ textAlign: "left", color: "var(--white)", background: "transparent", border: "none", padding: 0 }}>
           <div style={{ fontSize: 12, opacity: 0.8 }}>
             {count} article{count > 1 ? "s" : ""} {expanded ? "▼" : "▲"}
           </div>
