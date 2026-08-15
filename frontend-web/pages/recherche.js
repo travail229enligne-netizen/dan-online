@@ -5,6 +5,8 @@ import ProductCard from "../components/ProductCard";
 import api from "../lib/api";
 import { useCart } from "../lib/cart";
 
+const cities = ["Cotonou", "Porto-Novo", "Abomey-Calavi", "Parakou", "Bohicon", "Autre"];
+
 export default function Recherche() {
   const router = useRouter();
   const { addToCart } = useCart();
@@ -18,6 +20,7 @@ export default function Recherche() {
   const [maxPrice, setMaxPrice] = useState("");
   const [wholesale, setWholesale] = useState(false);
   const [location, setLocation] = useState("");
+  const [city, setCity] = useState("");
 
   useEffect(() => {
     if (router.query.q) setQuery(router.query.q);
@@ -34,9 +37,13 @@ export default function Recherche() {
     if (wholesale) params.set("wholesale", "true");
     if (location.trim()) params.set("location", location.trim());
 
+    const shopParams = new URLSearchParams();
+    shopParams.set("search", q);
+    if (city) shopParams.set("city", city);
+
     const [prodRes, shopRes] = await Promise.all([
       api.get(`/products?${params.toString()}`),
-      api.get(`/shops?search=${encodeURIComponent(q)}`),
+      api.get(`/shops?${shopParams.toString()}`),
     ]);
     setProducts(prodRes.data.products);
     setShops(shopRes.data);
@@ -44,7 +51,7 @@ export default function Recherche() {
 
   useEffect(() => {
     if (router.query.q) runSearch(router.query.q);
-  }, [router.query.q, minPrice, maxPrice, wholesale, location]);
+  }, [router.query.q, minPrice, maxPrice, wholesale, location, city]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -56,9 +63,10 @@ export default function Recherche() {
     setMaxPrice("");
     setWholesale(false);
     setLocation("");
+    setCity("");
   };
 
-  const activeFilterCount = [minPrice, maxPrice, wholesale, location].filter(Boolean).length;
+  const activeFilterCount = [minPrice, maxPrice, wholesale, location, city].filter(Boolean).length;
 
   return (
     <>
@@ -111,6 +119,20 @@ export default function Recherche() {
               gap: 12,
             }}
           >
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Ville</div>
+              <select
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                style={{ width: "100%", boxSizing: "border-box", padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 13, background: "var(--white)" }}
+              >
+                <option value="">Toutes les villes</option>
+                {cities.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Prix (FCFA)</div>
               <div style={{ display: "flex", gap: 8 }}>
@@ -186,7 +208,7 @@ export default function Recherche() {
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 14 }}>{shop.name}</div>
                     <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-                      {shop.location?.allee} {shop.location?.numero}
+                      {shop.city} {shop.location?.allee} {shop.location?.numero}
                     </div>
                   </div>
                 </a>

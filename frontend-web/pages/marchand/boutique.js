@@ -13,6 +13,8 @@ const themeOptions = [
   { name: "Violet", value: "#6b3fa0" },
 ];
 
+const cities = ["Cotonou", "Porto-Novo", "Abomey-Calavi", "Parakou", "Bohicon", "Autre"];
+
 export default function Boutique() {
   const router = useRouter();
   const [categories, setCategories] = useState([]);
@@ -21,6 +23,7 @@ export default function Boutique() {
     name: "",
     description: "",
     category: "",
+    city: "",
     allee: "",
     numero: "",
     themeColor: "#c1592b",
@@ -42,6 +45,7 @@ export default function Boutique() {
             name: r.data.name || "",
             description: r.data.description || "",
             category: r.data.category?._id || "",
+            city: r.data.city || "",
             allee: r.data.location?.allee || "",
             numero: r.data.location?.numero || "",
             themeColor: r.data.themeColor || "#c1592b",
@@ -190,6 +194,23 @@ export default function Boutique() {
             {categories.map((c) => (
               <option key={c._id} value={c._id}>
                 {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label style={{ fontSize: 12 }}>
+          Ville
+          <select
+            required
+            value={form.city}
+            onChange={(e) => setForm({ ...form, city: e.target.value })}
+            style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
+          >
+            <option value="">Choisir...</option>
+            {cities.map((c) => (
+              <option key={c} value={c}>
+                {c}
               </option>
             ))}
           </select>
