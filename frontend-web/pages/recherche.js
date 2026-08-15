@@ -5,7 +5,7 @@ import ProductCard from "../components/ProductCard";
 import api from "../lib/api";
 import { useCart } from "../lib/cart";
 
-const cities = ["Cotonou", "Porto-Novo", "Abomey-Calavi", "Parakou", "Bohicon", "Autre"];
+const cities = ["Cotonou", "Porto-Novo", "Abomey-Calavi", "Parakou", "Bohicon"];
 
 export default function Recherche() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function Recherche() {
 
     const shopParams = new URLSearchParams();
     shopParams.set("search", q);
-    if (city) shopParams.set("city", city);
+    if (city.trim()) shopParams.set("city", city.trim());
 
     const [prodRes, shopRes] = await Promise.all([
       api.get(`/products?${params.toString()}`),
@@ -121,16 +121,18 @@ export default function Recherche() {
           >
             <div>
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Ville</div>
-              <select
+              <input
+                list="villes-suggestions"
+                placeholder="ex: Cotonou"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                style={{ width: "100%", boxSizing: "border-box", padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 13, background: "var(--white)" }}
-              >
-                <option value="">Toutes les villes</option>
+                style={{ width: "100%", boxSizing: "border-box", padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 13 }}
+              />
+              <datalist id="villes-suggestions">
                 {cities.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                  <option key={c} value={c} />
                 ))}
-              </select>
+              </datalist>
             </div>
 
             <div>

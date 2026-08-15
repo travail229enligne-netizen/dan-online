@@ -13,7 +13,7 @@ const themeOptions = [
   { name: "Violet", value: "#6b3fa0" },
 ];
 
-const cities = ["Cotonou", "Porto-Novo", "Abomey-Calavi", "Parakou", "Bohicon", "Autre"];
+const cities = ["Cotonou", "Porto-Novo", "Abomey-Calavi", "Parakou", "Bohicon"];
 
 export default function Boutique() {
   const router = useRouter();
@@ -201,19 +201,19 @@ export default function Boutique() {
 
         <label style={{ fontSize: 12 }}>
           Ville
-          <select
+          <input
             required
+            list="villes-suggestions"
+            placeholder="ex: Cotonou"
             value={form.city}
             onChange={(e) => setForm({ ...form, city: e.target.value })}
             style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
-          >
-            <option value="">Choisir...</option>
+          />
+          <datalist id="villes-suggestions">
             {cities.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
+              <option key={c} value={c} />
             ))}
-          </select>
+          </datalist>
         </label>
 
         <div style={{ display: "flex", gap: 10 }}>
