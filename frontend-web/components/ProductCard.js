@@ -10,6 +10,8 @@ export default function ProductCard({ product, onAddToCart, isFavorite: initialF
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState("");
 
+  const isFeatured = product.featuredUntil && new Date(product.featuredUntil) > new Date();
+
   useEffect(() => {
     setIsFav(initialFav);
   }, [initialFav]);
@@ -65,6 +67,24 @@ export default function ProductCard({ product, onAddToCart, isFavorite: initialF
             position: "relative",
           }}
         >
+          {isFeatured && (
+            <div
+              style={{
+                position: "absolute",
+                top: 8,
+                left: 8,
+                background: "var(--ink)",
+                color: "var(--white)",
+                fontSize: 10,
+                fontWeight: 700,
+                padding: "4px 9px",
+                borderRadius: 6,
+                letterSpacing: 0.3,
+              }}
+            >
+              SPONSORISÉ
+            </div>
+          )}
           {user?.role === "client" && (
             <button
               onClick={toggleFavorite}

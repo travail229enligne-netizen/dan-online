@@ -55,6 +55,18 @@ export default function AdminDashboard() {
     }
   };
 
+  const featureShop = async (shopId, isFeatured) => {
+    const days = isFeatured ? 0 : prompt("Mettre en avant pendant combien de jours ?", "7");
+    if (days === null) return;
+    setBusy(shopId);
+    try {
+      await api.put(`/admin/shops/${shopId}/feature`, { days: Number(days) || 0 });
+      load();
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const updateCategoryCommission = async (categoryId, value) => {
     setBusy(categoryId);
     try {
@@ -258,50 +270,72 @@ export default function AdminDashboard() {
 
         <h2 style={{ fontSize: 16, marginBottom: 12 }}>Toutes les boutiques ({allShops.length})</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {allShops.map((shop) => (
-            <div
-              key={shop._id}
-              style={{
-                background: "var(--white)",
-                border: "1px solid var(--line)",
-                borderRadius: "var(--radius-md)",
-                padding: 14,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 14 }}>{shop.name}</div>
-                  <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-                    {shop.owner?.name} - statut : {shop.status}
+          {allShops.map((shop) => {
+            const isFeatured = shop.featuredUntil && new Date(shop.featuredUntil) > new Date();
+            return (
+              <div
+                key={shop._id}
+                style={{
+                  background: "var(--white)",
+                  border: "1px solid var(--line)",
+                  borderRadius: "var(--radius-md)",
+                  padding: 14,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>{shop.name}</div>
+                    <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+                      {shop.owner?.name} - statut : {shop.status}
+                    </div>
+                    {isFeatured && (
+                      <div style={{ fontSize: 11, color: "var(--green-dark)", fontWeight: 600, marginTop: 2 }}>
+                        Sponsorisée jusqu'au {new Date(shop.featuredUntil).toLocaleDateString("fr-FR")}
+                      </div>
+                    )}
                   </div>
+                  <button
+                    style={{
+                      fontSize: 12,
+                      padding: "8px 14px",
+                      borderRadius: 10,
+                      border: "1px solid var(--line)",
+                      color: "var(--terracotta-dark)",
+                      fontWeight: 600,
+                      whiteSpace: "nowrap",
+                    }}
+                    disabled={busy === shop._id}
+                    onClick={() => removeShop(shop._id, shop.name)}
+                  >
+                    Supprimer
+                  </button>
                 </div>
-                <button
-                  style={{
-                    fontSize: 12,
-                    padding: "8px 14px",
-                    borderRadius: 10,
-                    border: "1px solid var(--line)",
-                    color: "var(--terracotta-dark)",
-                    fontWeight: 600,
-                    whiteSpace: "nowrap",
-                  }}
-                  disabled={busy === shop._id}
-                  onClick={() => removeShop(shop._id, shop.name)}
-                >
-                  Supprimer
-                </button>
+                <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                    <input
+                      type="checkbox"
+                      checked={!!shop.isProfessional}
+                      disabled={busy === shop._id}
+                      onChange={() => toggleProfessional(shop._id, shop.isProfessional)}
+                    />
+                    Boutique professionnelle
+                  </label>
+                  <button
+                    onClick={() => featureShop(shop._id, isFeatured)}
+                    disabled={busy === shop._id}
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: isFeatured ? "var(--terracotta-dark)" : "var(--ink)",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    {isFeatured ? "Retirer la mise en avant" : "Mettre en avant"}
+                  </button>
+                </div>
               </div>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
-                <input
-                  type="checkbox"
-                  checked={!!shop.isProfessional}
-                  disabled={busy === shop._id}
-                  onChange={() => toggleProfessional(shop._id, shop.isProfessional)}
-                />
-                Boutique professionnelle
-              </label>
-            </div>
-          ))}
+            );
+          })}
           {allShops.length === 0 && (
             <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune boutique.</p>
           )}
