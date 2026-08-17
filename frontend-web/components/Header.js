@@ -204,6 +204,7 @@ export default function Header() {
               {navLink("/panier", "Panier")}
               {navLink("/commandes", "Commandes")}
               {navLink("/favoris", "Favoris")}
+              {navLink("/favoris-boutiques", "Boutiques suivies")}
               {navLink("/messages", "Messages")}
 
               <a

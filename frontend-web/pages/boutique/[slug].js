@@ -43,6 +43,8 @@ export default function BoutiquePublique() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("recent");
   const [reviews, setReviews] = useState({ reviews: [], average: 0, count: 0 });
+  const [following, setFollowing] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -52,11 +54,33 @@ export default function BoutiquePublique() {
         setShop(r.data);
         api.get(`/reviews/shop/${r.data._id}`).then((rr) => setReviews(rr.data)).catch(() => {});
         api.get(`/collections/shop/${r.data._id}`).then((cr) => setCollections(cr.data)).catch(() => {});
+        if (user?.role === "client") {
+          api.get(`/follows/status/${r.data._id}`).then((fr) => setFollowing(fr.data.following)).catch(() => {});
+        }
         return api.get(`/products?shop=${r.data._id}&limit=50`);
       })
       .then((r) => setProducts(r.data.products))
       .catch(() => setShop(null));
-  }, [slug]);
+  }, [slug, user]);
+
+  const toggleFollow = async () => {
+    if (!user) {
+      router.push("/connexion");
+      return;
+    }
+    setFollowBusy(true);
+    try {
+      if (following) {
+        await api.delete(`/follows/${shop._id}`);
+        setFollowing(false);
+      } else {
+        await api.post(`/follows/${shop._id}`);
+        setFollowing(true);
+      }
+    } finally {
+      setFollowBusy(false);
+    }
+  };
 
   const visibleProducts = useMemo(() => {
     let list = [...products];
@@ -106,9 +130,8 @@ export default function BoutiquePublique() {
 
   const theme = shop.themeColor || "#111111";
   const themeDark = shade(theme, -30);
-  const location = [shop.location?.allee, shop.location?.numero].filter(Boolean).join(", ");
+  const location = [shop.city, shop.location?.allee, shop.location?.numero].filter(Boolean).join(", ");
   const waLink = whatsappLink(shop.owner?.phone, shop.name);
-  const nonEmptyCollections = collections.filter((c) => c.products.length > 0);
 
   return (
     <>
@@ -126,42 +149,45 @@ export default function BoutiquePublique() {
               <h1 style={{ color: "var(--white)", fontSize: 20 }}>{shop.name}</h1>
               <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", display: "inline-block" }} />
             </div>
-            {user?.role === "client" && (
-              <a
-                href={`/messages/${shop._id}`}
-                style={{
-                  background: "rgba(255,255,255,0.18)",
-                  color: "var(--white)",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  padding: "8px 14px",
-                  borderRadius: 20,
-                  border: "1px solid rgba(255,255,255,0.35)",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Message
-              </a>
-            )}
-            {waLink && (
-              <a
-                href={waLink}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  background: "rgba(255,255,255,0.18)",
-                  color: "var(--white)",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  padding: "8px 14px",
-                  borderRadius: 20,
-                  border: "1px solid rgba(255,255,255,0.35)",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Contacter
-              </a>
-            )}
+            <div style={{ display: "flex", gap: 8 }}>
+              {user?.role === "client" && (
+                <button
+                  onClick={toggleFollow}
+                  disabled={followBusy}
+                  style={{
+                    background: following ? "var(--white)" : "rgba(255,255,255,0.18)",
+                    color: following ? theme : "var(--white)",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    padding: "8px 14px",
+                    borderRadius: 20,
+                    border: "1px solid rgba(255,255,255,0.35)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {following ? "Suivi ✓" : "Suivre"}
+                </button>
+              )}
+              {waLink && (
+                <a
+                  href={waLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    background: "rgba(255,255,255,0.18)",
+                    color: "var(--white)",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    padding: "8px 14px",
+                    borderRadius: 20,
+                    border: "1px solid rgba(255,255,255,0.35)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Contacter
+                </a>
+              )}
+            </div>
           </div>
 
           {shop.description && (
@@ -248,7 +274,7 @@ export default function BoutiquePublique() {
       </div>
 
       <main className="container" style={{ paddingTop: 22, paddingBottom: 60 }}>
-        {nonEmptyCollections.length > 0 && (
+        {collections.filter((c) => c.products.length > 0).length > 0 && (
           <div style={{ display: "flex", gap: 8, marginBottom: 18, overflowX: "auto" }}>
             <button
               onClick={() => setActiveTab("all")}
@@ -265,7 +291,7 @@ export default function BoutiquePublique() {
             >
               Tous les produits
             </button>
-            {nonEmptyCollections.map((col) => (
+            {collections.filter((c) => c.products.length > 0).map((col) => (
               <button
                 key={col._id}
                 onClick={() => setActiveTab(col._id)}
