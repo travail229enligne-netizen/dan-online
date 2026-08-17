@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Head from "next/head";
 import Header from "../../components/Header";
 import api from "../../lib/api";
 import { useCart } from "../../lib/cart";
@@ -58,11 +59,28 @@ export default function ProduitDetail() {
     );
   }
 
-  const unitPrice = priceForQty(product, qty);
-  const total = unitPrice * qty;
+  const numericQty = Math.max(1, Number(qty) || 1);
+  const unitPrice = priceForQty(product, numericQty);
+  const total = unitPrice * numericQty;
+
+  const pageTitle = `${product.name} - ${product.price?.toLocaleString("fr-FR")} FCFA | EasyShop`;
+  const pageDescription = product.description
+    ? product.description.slice(0, 155)
+    : `Achetez ${product.name} sur EasyShop, la marketplace du Bénin. Livraison rapide, paiement à la livraison.`;
+  const pageImage = product.images?.[0] || "";
+  const pageUrl = typeof window !== "undefined" ? window.location.href : "";
 
   return (
     <>
+      <Head>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        {pageImage && <meta property="og:image" content={pageImage} />}
+        <meta property="og:type" content="product" />
+        {pageUrl && <link rel="canonical" href={pageUrl} />}
+      </Head>
       <Header />
       <main className="container" style={{ paddingTop: 20, paddingBottom: 60 }}>
         <div
@@ -109,9 +127,9 @@ export default function ProduitDetail() {
           <span style={{ fontSize: 13, fontWeight: 400, color: "var(--ink-soft)" }}> / {product.unit}</span>
         </div>
 
-        {qty > 1 && (
+        {numericQty > 1 && (
           <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
-            Total pour {qty} {product.unit} : <strong style={{ color: "var(--ink)" }}>{total.toLocaleString("fr-FR")} FCFA</strong>
+            Total pour {numericQty} {product.unit} : <strong style={{ color: "var(--ink)" }}>{total.toLocaleString("fr-FR")} FCFA</strong>
           </p>
         )}
 
@@ -169,7 +187,7 @@ export default function ProduitDetail() {
             max={product.stock}
             value={qty}
             onChange={(e) => setQty(e.target.value)}
-            onBlur={() => setQty((v) => Math.max(1, Number(v) || 1))}
+            onBlur={() => setQty((v) => String(Math.max(1, Number(v) || 1)))}
             style={{ width: 70, padding: 8, border: "1px solid var(--line)", borderRadius: 8 }}
           />
         </div>
@@ -179,7 +197,7 @@ export default function ProduitDetail() {
           style={{ width: "100%", padding: 14, fontSize: 15 }}
           disabled={product.stock === 0}
           onClick={() => {
-            addToCart({ ...product, price: unitPrice }, Math.max(1, Number(qty) || 1));
+            addToCart({ ...product, price: unitPrice }, numericQty);
             setAdded(true);
             setTimeout(() => setAdded(false), 2000);
           }}

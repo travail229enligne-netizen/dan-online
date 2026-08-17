@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/router";
+import Head from "next/head";
 import Header from "../../components/Header";
 import ProductCard from "../../components/ProductCard";
 import api from "../../lib/api";
@@ -133,8 +134,24 @@ export default function BoutiquePublique() {
   const location = [shop.city, shop.location?.allee, shop.location?.numero].filter(Boolean).join(", ");
   const waLink = whatsappLink(shop.owner?.phone, shop.name);
 
+  const pageTitle = `${shop.name}${shop.city ? ` à ${shop.city}` : ""} | EasyShop`;
+  const pageDescription = shop.description
+    ? shop.description.slice(0, 155)
+    : `Découvrez les produits de ${shop.name} sur EasyShop, la marketplace du Bénin.`;
+  const pageImage = shop.logoUrl || "";
+  const pageUrl = typeof window !== "undefined" ? window.location.href : "";
+
   return (
     <>
+      <Head>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        {pageImage && <meta property="og:image" content={pageImage} />}
+        <meta property="og:type" content="website" />
+        {pageUrl && <link rel="canonical" href={pageUrl} />}
+      </Head>
       <Header />
 
       <div
