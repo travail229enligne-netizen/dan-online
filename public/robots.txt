@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /marchand/
+Disallow: /admin/
+Disallow: /compte
+Disallow: /commandes
+Disallow: /messages
+Disallow: /panier
+Disallow: /commande
+
+Sitemap: https://dan-online.vercel.app/sitemap.xml
