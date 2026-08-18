@@ -19,8 +19,14 @@ const orderSchema = new mongoose.Schema(
     deliveryPhone: { type: String, required: true },
     paymentMethod: {
       type: String,
-      enum: ["cod"], // Paiement à la livraison uniquement pour le MVP
-      default: "cod",
+      enum: ["kkiapay"],
+      default: "kkiapay",
+    },
+    kkiapayTransactionId: { type: String, default: "" },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed"],
+      default: "pending",
     },
     // SLA de livraison affiché au client
     expectedDeliveryHours: { type: Number, default: 48 },
@@ -33,7 +39,7 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "confirmed", "out_for_delivery", "delivered", "cancelled"],
       default: "pending",
     },
-    paidAt: { type: Date, default: null }, // marqué à la livraison (COD encaissé)
+    paidAt: { type: Date, default: null }, // date de confirmation du paiement Kkiapay
   },
   { timestamps: true }
 );

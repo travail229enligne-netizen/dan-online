@@ -4,15 +4,31 @@ const Product = require("../models/Product");
 const Shop = require("../models/Shop");
 const { resolveCommissionRate } = require("../utils/commission");
 const { notify } = require("../utils/notify");
+const { verifyTransaction } = require("../utils/kkiapay");
 
 // @route   POST /api/orders
-// @access  Private (client) - passe une commande en paiement à la livraison
+// @access  Private (client) - passe une commande apres verification du paiement Kkiapay
 const createOrder = asyncHandler(async (req, res) => {
-  const { items, deliveryAddress, deliveryPhone } = req.body;
+  const { items, deliveryAddress, deliveryPhone, transactionId } = req.body;
   if (!items || items.length === 0) {
     return res.status(400).json({ message: "Le panier est vide." });
   }
+  if (!transactionId) {
+    return res.status(400).json({ message: "Paiement requis avant de passer la commande." });
+  }
 
+  // 1. Verification du paiement aupres de Kkiapay (source de verite serveur)
+  let payment;
+  try {
+    payment = await verifyTransaction(transactionId);
+  } catch (err) {
+    return res.status(400).json({ message: "Impossible de verifier le paiement. Reessayez." });
+  }
+  if (!payment || payment.status !== "SUCCESS") {
+    return res.status(400).json({ message: "Le paiement n'a pas ete confirme." });
+  }
+
+  // 2. Construction de la commande a partir du panier (comme avant)
   let itemsTotal = 0;
   let commissionAmount = 0;
   const orderItems = [];
@@ -44,18 +60,29 @@ const createOrder = asyncHandler(async (req, res) => {
     await product.save();
   }
 
-  const deliveryFee = 0; // à ajuster selon zone de livraison
+  const deliveryFee = 0; // frais de livraison geres separement en especes avec le livreur
   const grandTotal = itemsTotal + deliveryFee;
+
+  // 3. Verification du montant paye (protection contre falsification cote client)
+  const paidAmount = Number(payment.amount);
+  if (Math.abs(paidAmount - grandTotal) > 1) {
+    return res.status(400).json({ message: "Le montant paye ne correspond pas au total de la commande." });
+  }
 
   const order = await Order.create({
     client: req.user._id,
     items: orderItems,
     deliveryAddress,
     deliveryPhone,
+    paymentMethod: "kkiapay",
+    kkiapayTransactionId: transactionId,
+    paymentStatus: "paid",
+    paidAt: new Date(),
     itemsTotal,
     commissionAmount,
     deliveryFee,
     grandTotal,
+    status: "confirmed",
     expectedDeliveryHours: 48,
   });
 
@@ -66,8 +93,8 @@ const createOrder = asyncHandler(async (req, res) => {
       await notify(
         s.owner,
         "new_order",
-        "Nouvelle commande",
-        `Une commande vient d'être passée sur ta boutique.`,
+        "Nouvelle commande payee",
+        `Une commande vient d'etre payee sur ta boutique.`,
         "/marchand/commandes"
       );
     }
@@ -106,7 +133,6 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   if (!order) return res.status(404).json({ message: "Commande introuvable." });
 
   order.status = status;
-  if (status === "delivered") order.paidAt = new Date();
 
   await order.save();
 
