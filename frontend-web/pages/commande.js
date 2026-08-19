@@ -17,8 +17,10 @@ export default function Commande() {
   const [widgetReady, setWidgetReady] = useState(false);
 
   useEffect(() => {
-    const handleSuccess = async (event) => {
-      const transactionId = event.detail?.transactionId;
+    if (!widgetReady || typeof window.addKkiapayListener !== "function") return;
+
+    const handleSuccess = async (response) => {
+      const transactionId = response?.transactionId;
       if (!transactionId) return;
       setSubmitting(true);
       setError("");
@@ -43,13 +45,16 @@ export default function Commande() {
       setSubmitting(false);
     };
 
-    window.addEventListener("success", handleSuccess);
-    window.addEventListener("failed", handleFailed);
+    window.addKkiapayListener("success", handleSuccess);
+    window.addKkiapayListener("failed", handleFailed);
+
     return () => {
-      window.removeEventListener("success", handleSuccess);
-      window.removeEventListener("failed", handleFailed);
+      if (typeof window.removeKkiapayListener === "function") {
+        window.removeKkiapayListener("success", handleSuccess);
+        window.removeKkiapayListener("failed", handleFailed);
+      }
     };
-  }, [items, form]);
+  }, [widgetReady, items, form]);
 
   if (!loading && !user) {
     if (typeof window !== "undefined") router.push("/connexion?next=/commande");
@@ -104,6 +109,12 @@ export default function Commande() {
       <Header />
       <main className="container" style={{ maxWidth: 480, paddingTop: 24, paddingBottom: 60 }}>
         <h1 style={{ fontSize: 22, marginBottom: 20 }}>Finaliser la commande</h1>
+
+        {submitting && (
+          <div style={{ background: "var(--cream)", padding: 12, borderRadius: 8, fontSize: 13, marginBottom: 16, textAlign: "center" }}>
+            Vérification du paiement en cours...
+          </div>
+        )}
 
         <div
           style={{
