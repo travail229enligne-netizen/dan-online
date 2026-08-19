@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import Script from "next/script";
 import Header from "../components/Header";
 import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
@@ -13,29 +14,66 @@ export default function Commande() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(null);
+  const [widgetReady, setWidgetReady] = useState(false);
+
+  useEffect(() => {
+    const handleSuccess = async (event) => {
+      const transactionId = event.detail?.transactionId;
+      if (!transactionId) return;
+      setSubmitting(true);
+      setError("");
+      try {
+        const { data } = await api.post("/orders", {
+          items: items.map((it) => ({ productId: it.productId, quantity: it.quantity })),
+          deliveryAddress: form.deliveryAddress,
+          deliveryPhone: form.deliveryPhone,
+          transactionId,
+        });
+        setSuccess(data);
+        clearCart();
+      } catch (err) {
+        setError(err.response?.data?.message || "Paiement reçu mais impossible de créer la commande. Contacte le support avec ta référence de transaction.");
+      } finally {
+        setSubmitting(false);
+      }
+    };
+
+    const handleFailed = () => {
+      setError("Le paiement a échoué ou a été annulé. Réessaie.");
+      setSubmitting(false);
+    };
+
+    window.addEventListener("success", handleSuccess);
+    window.addEventListener("failed", handleFailed);
+    return () => {
+      window.removeEventListener("success", handleSuccess);
+      window.removeEventListener("failed", handleFailed);
+    };
+  }, [items, form]);
 
   if (!loading && !user) {
     if (typeof window !== "undefined") router.push("/connexion?next=/commande");
     return null;
   }
 
-  const handleSubmit = async (e) => {
+  const handlePay = (e) => {
     e.preventDefault();
     setError("");
-    setSubmitting(true);
-    try {
-      const { data } = await api.post("/orders", {
-        items: items.map((it) => ({ productId: it.productId, quantity: it.quantity })),
-        deliveryAddress: form.deliveryAddress,
-        deliveryPhone: form.deliveryPhone,
-      });
-      setSuccess(data);
-      clearCart();
-    } catch (err) {
-      setError(err.response?.data?.message || "Impossible de valider la commande.");
-    } finally {
-      setSubmitting(false);
+    if (!form.deliveryAddress || !form.deliveryPhone) {
+      setError("Renseigne ton adresse et ton téléphone avant de payer.");
+      return;
     }
+    if (!widgetReady || typeof window.openKkiapayWidget !== "function") {
+      setError("Le module de paiement n'est pas encore chargé, réessaie dans un instant.");
+      return;
+    }
+    window.openKkiapayWidget({
+      amount: total,
+      key: process.env.NEXT_PUBLIC_KKIAPAY_PUBLIC_KEY,
+      sandbox: true,
+      phone: form.deliveryPhone,
+      data: JSON.stringify({ userId: user?._id }),
+    });
   };
 
   if (success) {
@@ -44,9 +82,9 @@ export default function Commande() {
         <Header />
         <main className="container" style={{ paddingTop: 40, paddingBottom: 60, textAlign: "center" }}>
           <div style={{ fontSize: 48 }}>✅</div>
-          <h1 style={{ fontSize: 22, marginTop: 12 }}>Commande confirmée !</h1>
+          <h1 style={{ fontSize: 22, marginTop: 12 }}>Commande confirmée et payée !</h1>
           <p style={{ color: "var(--ink-soft)", marginTop: 8 }}>
-            Total à régler à la livraison : <strong>{success.grandTotal.toLocaleString("fr-FR")} FCFA</strong>
+            Montant payé : <strong>{success.grandTotal.toLocaleString("fr-FR")} FCFA</strong>
           </p>
           <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>Livraison estimée sous 48h.</p>
           <a href="/commandes" className="btn-primary" style={{ display: "inline-block", marginTop: 16 }}>
@@ -59,6 +97,10 @@ export default function Commande() {
 
   return (
     <>
+      <Script
+        src="https://cdn.kkiapay.me/k.js"
+        onLoad={() => setWidgetReady(true)}
+      />
       <Header />
       <main className="container" style={{ maxWidth: 480, paddingTop: 24, paddingBottom: 60 }}>
         <h1 style={{ fontSize: 22, marginBottom: 20 }}>Finaliser la commande</h1>
@@ -85,7 +127,7 @@ export default function Commande() {
         </div>
 
         <form
-          onSubmit={handleSubmit}
+          onSubmit={handlePay}
           style={{
             background: "var(--white)",
             border: "1px solid var(--line)",
@@ -115,11 +157,11 @@ export default function Commande() {
             />
           </label>
           <div style={{ fontSize: 12, background: "var(--cream)", padding: 10, borderRadius: 8 }}>
-            💰 Paiement à la livraison uniquement. Prépare le montant exact si possible.
+            💳 Paiement en ligne sécurisé (Mobile Money) avant expédition. Les frais de livraison sont à régler séparément au livreur.
           </div>
           {error && <p style={{ color: "var(--terracotta-dark)", fontSize: 13 }}>{error}</p>}
           <button className="btn-primary" type="submit" disabled={submitting || items.length === 0}>
-            {submitting ? "Validation..." : "Confirmer la commande"}
+            {submitting ? "Traitement..." : `Payer ${total.toLocaleString("fr-FR")} FCFA`}
           </button>
         </form>
       </main>
