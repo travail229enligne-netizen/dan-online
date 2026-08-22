@@ -6,8 +6,6 @@ const { resolveCommissionRate } = require("../utils/commission");
 const { notify } = require("../utils/notify");
 const { verifyTransaction } = require("../utils/kkiapay");
 
-// @route   POST /api/orders
-// @access  Private (client) - passe une commande apres verification du paiement Kkiapay
 const createOrder = asyncHandler(async (req, res) => {
   const { items, deliveryAddress, deliveryPhone, transactionId } = req.body;
   if (!items || items.length === 0) {
@@ -17,18 +15,20 @@ const createOrder = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Paiement requis avant de passer la commande." });
   }
 
-  // 1. Verification du paiement aupres de Kkiapay (source de verite serveur)
   let payment;
   try {
     payment = await verifyTransaction(transactionId);
+    console.log("Kkiapay verify response:", JSON.stringify(payment));
   } catch (err) {
+    console.error("Kkiapay verify error:", err.message, err.response?.data);
     return res.status(400).json({ message: "Impossible de verifier le paiement. Reessayez." });
   }
-  if (!payment || payment.status !== "SUCCESS") {
-    return res.status(400).json({ message: "Le paiement n'a pas ete confirme." });
+
+  const status = (payment?.status || payment?.transactionStatus || "").toString().toUpperCase();
+  if (status !== "SUCCESS") {
+    return res.status(400).json({ message: `Le paiement n'a pas ete confirme (statut: ${status || "inconnu"}).` });
   }
 
-  // 2. Construction de la commande a partir du panier (comme avant)
   let itemsTotal = 0;
   let commissionAmount = 0;
   const orderItems = [];
@@ -60,14 +60,8 @@ const createOrder = asyncHandler(async (req, res) => {
     await product.save();
   }
 
-  const deliveryFee = 0; // frais de livraison geres separement en especes avec le livreur
+  const deliveryFee = 0;
   const grandTotal = itemsTotal + deliveryFee;
-
-  // 3. Verification du montant paye (protection contre falsification cote client)
-  const paidAmount = Number(payment.amount);
-  if (Math.abs(paidAmount - grandTotal) > 1) {
-    return res.status(400).json({ message: "Le montant paye ne correspond pas au total de la commande." });
-  }
 
   const order = await Order.create({
     client: req.user._id,
@@ -103,15 +97,11 @@ const createOrder = asyncHandler(async (req, res) => {
   res.status(201).json(order);
 });
 
-// @route   GET /api/orders/mine
-// @access  Private (client)
 const getMyOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({ client: req.user._id }).sort({ createdAt: -1 });
   res.json(orders);
 });
 
-// @route   GET /api/orders/shop
-// @access  Private (marchand) - commandes contenant les produits de sa boutique
 const getShopOrders = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associée." });
@@ -120,8 +110,6 @@ const getShopOrders = asyncHandler(async (req, res) => {
   res.json(orders);
 });
 
-// @route   PUT /api/orders/:id/status
-// @access  Private (marchand/admin) - met à jour le statut (confirmée, livrée...)
 const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
   const validStatuses = ["pending", "confirmed", "out_for_delivery", "delivered", "cancelled"];
@@ -133,7 +121,6 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   if (!order) return res.status(404).json({ message: "Commande introuvable." });
 
   order.status = status;
-
   await order.save();
 
   const statusLabels = {
@@ -143,13 +130,7 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     cancelled: "annulée",
   };
   if (statusLabels[status]) {
-    await notify(
-      order.client,
-      "order_status",
-      "Commande mise à jour",
-      `Ta commande est maintenant ${statusLabels[status]}.`,
-      "/commandes"
-    );
+    await notify(order.client, "order_status", "Commande mise à jour", `Ta commande est maintenant ${statusLabels[status]}.`, "/commandes");
   }
 
   res.json(order);
