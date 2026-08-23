@@ -4,7 +4,12 @@ const Notification = require("../models/Notification");
 const getMyNotifications = asyncHandler(async (req, res) => {
   const notifications = await Notification.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(50);
   const unreadCount = await Notification.countDocuments({ user: req.user._id, read: false });
-  res.json({ notifications, unreadCount });
+  const unreadOrders = await Notification.countDocuments({
+    user: req.user._id,
+    read: false,
+    type: { $in: ["new_order", "order_status"] },
+  });
+  res.json({ notifications, unreadCount, unreadOrders });
 });
 
 const markAsRead = asyncHandler(async (req, res) => {
