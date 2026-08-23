@@ -1,3 +1,4 @@
+cat > src/controllers/orderController.js << 'EOF'
 const asyncHandler = require("express-async-handler");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
@@ -93,6 +94,14 @@ const createOrder = asyncHandler(async (req, res) => {
       );
     }
   }
+
+  await notify(
+    req.user._id,
+    "order_status",
+    "Commande confirmee et payee",
+    `Ta commande de ${grandTotal} FCFA a ete confirmee. Livraison estimee sous 48h.`,
+    "/commandes"
+  );
 
   res.status(201).json(order);
 });
