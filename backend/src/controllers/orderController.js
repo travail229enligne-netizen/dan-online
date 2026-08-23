@@ -1,4 +1,3 @@
-cat > src/controllers/orderController.js << 'EOF'
 const asyncHandler = require("express-async-handler");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
