@@ -11,6 +11,7 @@ export default function Header() {
   const [catOpen, setCatOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [unreadNotif, setUnreadNotif] = useState(0);
+  const [unreadOrders, setUnreadOrders] = useState(0);
 
   useEffect(() => {
     if (open && categories.length === 0) {
@@ -21,19 +22,26 @@ export default function Header() {
   useEffect(() => {
     if (!user) return;
     const load = () => {
-      api.get("/notifications").then((r) => setUnreadNotif(r.data.unreadCount)).catch(() => {});
+      api
+        .get("/notifications")
+        .then((r) => {
+          setUnreadNotif(r.data.unreadCount);
+          setUnreadOrders(r.data.unreadOrders || 0);
+        })
+        .catch(() => {});
     };
     load();
     const interval = setInterval(load, 15000);
     return () => clearInterval(interval);
   }, [user]);
 
-  const navLink = (href, label) => (
+  const navLink = (href, label, showDot) => (
     <a
       href={href}
       style={{
         display: "flex",
         alignItems: "center",
+        gap: 8,
         padding: "12px 14px",
         borderRadius: 10,
         fontSize: 14,
@@ -44,6 +52,24 @@ export default function Header() {
       }}
     >
       {label}
+      {showDot && (
+        <span
+          style={{
+            width: 22,
+            height: 22,
+            borderRadius: "50%",
+            background: "red",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            fontSize: 12,
+            fontWeight: 900,
+          }}
+        >
+          !
+        </span>
+      )}
     </a>
   );
 
@@ -202,7 +228,7 @@ export default function Header() {
               )}
 
               {navLink("/panier", "Panier")}
-              {navLink("/commandes", "Commandes")}
+              {navLink("/commandes", "Commandes", unreadOrders > 0)}
               {navLink("/favoris", "Favoris")}
               {navLink("/favoris-boutiques", "Boutiques suivies")}
               {navLink("/messages", "Messages")}

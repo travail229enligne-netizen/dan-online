@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "../lib/auth";
+import api from "../lib/api";
 
 const navItems = [
   { href: "/marchand/dashboard", label: "Tableau de bord", icon: "📊" },
@@ -17,6 +18,24 @@ export default function MerchantLayout({ children, title }) {
   const [open, setOpen] = useState(false);
   const { user, logout } = useAuth();
   const router = useRouter();
+  const [unreadNotif, setUnreadNotif] = useState(0);
+  const [unreadOrders, setUnreadOrders] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const load = () => {
+      api
+        .get("/notifications")
+        .then((r) => {
+          setUnreadNotif(r.data.unreadCount);
+          setUnreadOrders(r.data.unreadOrders || 0);
+        })
+        .catch(() => {});
+    };
+    load();
+    const interval = setInterval(load, 15000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--cream)" }}>
@@ -44,21 +63,46 @@ export default function MerchantLayout({ children, title }) {
             {title || "Espace marchand"}
           </span>
         </div>
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
-            background: "var(--gold)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: 700,
-            fontSize: 13,
-            color: "var(--green-dark)",
-          }}
-        >
-          {user?.name?.[0]?.toUpperCase() || "M"}
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <a href="/notifications" aria-label="Notifications" style={{ color: "var(--white)", position: "relative" }}>
+            <span style={{ fontSize: 20 }}>🔔</span>
+            {unreadNotif > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: -8,
+                  right: -10,
+                  background: "var(--terracotta)",
+                  color: "var(--white)",
+                  borderRadius: "50%",
+                  fontSize: 11,
+                  width: 18,
+                  height: 18,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {unreadNotif > 9 ? "9+" : unreadNotif}
+              </span>
+            )}
+          </a>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              background: "var(--gold)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 700,
+              fontSize: 13,
+              color: "var(--green-dark)",
+            }}
+          >
+            {user?.name?.[0]?.toUpperCase() || "M"}
+          </div>
         </div>
       </header>
 
@@ -93,6 +137,7 @@ export default function MerchantLayout({ children, title }) {
             <div style={{ padding: "12px 8px", flex: 1 }}>
               {navItems.map((item) => {
                 const active = router.pathname === item.href;
+                const showDot = item.href === "/marchand/commandes" && unreadOrders > 0;
                 return (
                   <a
                     key={item.href}
@@ -112,6 +157,17 @@ export default function MerchantLayout({ children, title }) {
                   >
                     <span>{item.icon}</span>
                     {item.label}
+                    {showDot && (
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          background: "var(--terracotta)",
+                          marginLeft: "auto",
+                        }}
+                      />
+                    )}
                   </a>
                 );
               })}
