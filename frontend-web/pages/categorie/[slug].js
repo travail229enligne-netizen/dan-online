@@ -11,6 +11,7 @@ export default function CategoriePage() {
   const { addToCart } = useCart();
   const [category, setCategory] = useState(undefined);
   const [products, setProducts] = useState([]);
+  const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,9 +21,14 @@ export default function CategoriePage() {
       const found = r.data.find((c) => c.slug === slug);
       setCategory(found || null);
       if (found) {
-        api
-          .get(`/products?category=${found._id}&limit=40`)
-          .then((res) => setProducts(res.data.products))
+        Promise.all([
+          api.get(`/products?category=${found._id}&limit=40`),
+          api.get(`/shops?category=${found._id}`),
+        ])
+          .then(([prodRes, shopRes]) => {
+            setProducts(prodRes.data.products);
+            setShops(shopRes.data);
+          })
           .finally(() => setLoading(false));
       } else {
         setLoading(false);
@@ -46,20 +52,60 @@ export default function CategoriePage() {
               {category.icon ? `${category.icon} ` : ""}{category.name}
             </h1>
             <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 20 }}>
-              {products.length} produit{products.length > 1 ? "s" : ""} disponible{products.length > 1 ? "s" : ""}
+              {shops.length} boutique{shops.length > 1 ? "s" : ""} · {products.length} produit{products.length > 1 ? "s" : ""}
             </p>
 
-            {products.length === 0 ? (
-              <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>
-                Aucun produit dans cette catégorie pour l'instant.
-              </p>
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14 }}>
-                {products.map((p) => (
-                  <ProductCard key={p._id} product={p} onAddToCart={(prod) => addToCart(prod, 1)} />
-                ))}
-              </div>
+            {shops.length > 0 && (
+              <section style={{ marginBottom: 28 }}>
+                <h2 style={{ fontSize: 16, marginBottom: 10 }}>Boutiques ({shops.length})</h2>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {shops.map((shop) => (
+                    <a
+                      key={shop._id}
+                      href={`/boutique/${shop.slug}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        background: "var(--white)",
+                        border: "1px solid var(--line)",
+                        borderRadius: "var(--radius-md)",
+                        padding: 12,
+                      }}
+                    >
+                      {shop.logoUrl ? (
+                        <img src={shop.logoUrl} alt={shop.name} style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover" }} />
+                      ) : (
+                        <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--ink)" }} />
+                      )}
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>{shop.name}</div>
+                        <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+                          {shop.city} {shop.location?.allee} {shop.location?.numero}
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </section>
             )}
+
+            <section>
+              <h2 style={{ fontSize: 16, marginBottom: 10 }}>
+                Produits {products.length > 0 && `(${products.length})`}
+              </h2>
+              {products.length === 0 ? (
+                <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>
+                  Aucun produit dans cette catégorie pour l'instant.
+                </p>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14 }}>
+                  {products.map((p) => (
+                    <ProductCard key={p._id} product={p} onAddToCart={(prod) => addToCart(prod, 1)} />
+                  ))}
+                </div>
+              )}
+            </section>
           </>
         )}
       </main>
