@@ -5,6 +5,14 @@ import ProductCard from "../components/ProductCard";
 import api from "../lib/api";
 import { useCart } from "../lib/cart";
 
+const businessIcons = {
+  restaurant: "🍽️",
+  supermarche: "🛒",
+  grossiste: "📦",
+  artisan: "🛠️",
+  boutique: "🏪",
+};
+
 export default function Home() {
   const [shops, setShops] = useState([]);
   const [products, setProducts] = useState([]);
@@ -17,13 +25,14 @@ export default function Home() {
 
   return (
     <>
-      <Header />
+      <Header hideSearchBar />
 
       <main className="container" style={{ paddingBottom: 60 }}>
         <HeroBanner
-          title="Le Marché de Dantokpa chez vous"
-          subtitle="Toutes les allées du plus grand marché du Bénin, livrées chez vous en 48h."
-          onCtaClick={() => window.scrollTo({ top: 600, behavior: "smooth" })}
+          title="Tout ce qui se vend, à portée de main"
+          subtitle="Boutiques, restaurants, supermarchés et artisans du Bénin, livrés chez vous en 48h."
+          secondaryLabel="Voir les boutiques partenaires"
+          onSecondaryClick={() => document.getElementById("boutiques")?.scrollIntoView({ behavior: "smooth" })}
         />
 
         <section id="boutiques" style={{ marginTop: 32 }}>
@@ -69,7 +78,9 @@ export default function Home() {
                   </div>
                 )}
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{shop.name}</div>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>
+                    {businessIcons[shop.businessType] || ""} {shop.name}
+                  </div>
                   <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
                     {shop.location?.allee} {shop.location?.numero}
                   </div>

@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { useAuth } from "../lib/auth";
 import api from "../lib/api";
 
-export default function Header() {
+export default function Header({ hideSearchBar = false }) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -95,9 +95,6 @@ export default function Header() {
             </a>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <a href="/recherche" aria-label="Rechercher" style={{ color: "var(--white)", fontSize: 20 }}>
-              🔍
-            </a>
             {user && (
               <a href="/notifications" aria-label="Notifications" style={{ color: "var(--white)", position: "relative" }}>
                 <span style={{ fontSize: 20 }}>🔔</span>
@@ -136,6 +133,28 @@ export default function Header() {
             </button>
           </div>
         </div>
+
+        {!hideSearchBar && (
+          <div className="container" style={{ marginTop: 12 }}>
+            <a
+              href="/recherche"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(255,255,255,0.15)",
+                border: "1px solid rgba(255,255,255,0.25)",
+                borderRadius: 999,
+                padding: "10px 16px",
+                color: "rgba(255,255,255,0.85)",
+                fontSize: 13,
+              }}
+            >
+              <span>🔍</span>
+              <span>Rechercher un produit, une boutique, un plat...</span>
+            </a>
+          </div>
+        )}
       </header>
 
       {open && (
