@@ -22,6 +22,9 @@ const productSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     featuredUntil: { type: Date, default: null },
     soldCount: { type: Number, default: 0 },
+    // Champs specifiques restaurant (utilises seulement si la boutique est de type "restaurant")
+    prepTimeMinutes: { type: Number, default: null },
+    isDailySpecial: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

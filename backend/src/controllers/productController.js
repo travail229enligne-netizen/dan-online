@@ -30,7 +30,7 @@ const getProducts = asyncHandler(async (req, res) => {
   }
 
   const products = await Product.find(filter)
-    .populate("shop", "name slug isVerified")
+    .populate("shop", "name slug isVerified businessType")
     .populate("category", "name icon")
     .limit(Number(limit))
     .skip((Number(page) - 1) * Number(limit))
@@ -42,7 +42,7 @@ const getProducts = asyncHandler(async (req, res) => {
 
 const getProductById = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id)
-    .populate("shop", "name slug isVerified")
+    .populate("shop", "name slug isVerified businessType")
     .populate("category", "name icon");
   if (!product) return res.status(404).json({ message: "Produit introuvable." });
   res.json(product);
@@ -55,7 +55,7 @@ const createProduct = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Votre boutique n'est pas encore validée par l'administrateur." });
   }
 
-  const { name, description, price, unit, stock, category, images, priceTiers } = req.body;
+  const { name, description, price, unit, stock, category, images, priceTiers, prepTimeMinutes, isDailySpecial } = req.body;
   const product = await Product.create({
     shop: shop._id,
     category,
@@ -66,6 +66,8 @@ const createProduct = asyncHandler(async (req, res) => {
     stock,
     images,
     priceTiers: sanitizeTiers(priceTiers),
+    prepTimeMinutes: prepTimeMinutes ? Number(prepTimeMinutes) : null,
+    isDailySpecial: !!isDailySpecial,
   });
 
   const followers = await Follow.find({ shop: shop._id });
@@ -89,7 +91,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Ce produit ne vous appartient pas." });
   }
 
-  const fields = ["name", "description", "price", "unit", "stock", "category", "images", "isActive"];
+  const fields = ["name", "description", "price", "unit", "stock", "category", "images", "isActive", "prepTimeMinutes", "isDailySpecial"];
   fields.forEach((f) => {
     if (req.body[f] !== undefined) product[f] = req.body[f];
   });

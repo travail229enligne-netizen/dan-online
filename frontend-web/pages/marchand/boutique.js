@@ -15,6 +15,14 @@ const themeOptions = [
 
 const cities = ["Cotonou", "Porto-Novo", "Abomey-Calavi", "Parakou", "Bohicon"];
 
+const businessTypes = [
+  { value: "boutique", label: "Boutique", icon: "🏪" },
+  { value: "restaurant", label: "Restaurant", icon: "🍽️" },
+  { value: "supermarche", label: "Supermarché", icon: "🛒" },
+  { value: "grossiste", label: "Grossiste", icon: "📦" },
+  { value: "artisan", label: "Artisan", icon: "🛠️" },
+];
+
 export default function Boutique() {
   const router = useRouter();
   const [categories, setCategories] = useState([]);
@@ -23,6 +31,7 @@ export default function Boutique() {
     name: "",
     description: "",
     category: "",
+    businessType: "boutique",
     city: "",
     allee: "",
     numero: "",
@@ -45,6 +54,7 @@ export default function Boutique() {
             name: r.data.name || "",
             description: r.data.description || "",
             category: r.data.category?._id || "",
+            businessType: r.data.businessType || "boutique",
             city: r.data.city || "",
             allee: r.data.location?.allee || "",
             numero: r.data.location?.numero || "",
@@ -157,6 +167,30 @@ export default function Boutique() {
           gap: 16,
         }}
       >
+        <div>
+          <div style={{ fontSize: 12, marginBottom: 8 }}>Type de commerce</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {businessTypes.map((bt) => (
+              <button
+                type="button"
+                key={bt.value}
+                onClick={() => setForm({ ...form, businessType: bt.value })}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 10,
+                  border: `2px solid ${form.businessType === bt.value ? "var(--terracotta)" : "var(--line)"}`,
+                  background: form.businessType === bt.value ? "var(--terracotta)" : "var(--white)",
+                  color: form.businessType === bt.value ? "var(--white)" : "var(--ink)",
+                  fontWeight: 600,
+                  fontSize: 12,
+                }}
+              >
+                {bt.icon} {bt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <ImageUpload
           label="Logo de la boutique"
           value={form.logoUrl}

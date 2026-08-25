@@ -8,6 +8,11 @@ const shopSchema = new mongoose.Schema(
     description: { type: String, default: "" },
     logoUrl: { type: String, default: "" },
     themeColor: { type: String, default: "#c1592b" },
+    businessType: {
+      type: String,
+      enum: ["boutique", "restaurant", "supermarche", "grossiste", "artisan"],
+      default: "boutique",
+    },
     // "Allée numérique" = emplacement virtuel, ex: "Allée 3, N°45"
     city: { type: String, default: "" },
     location: {

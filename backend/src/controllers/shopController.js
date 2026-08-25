@@ -39,7 +39,7 @@ const createShop = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Vous possedez deja une boutique." });
   }
 
-  const { name, description, category, allee, numero, themeColor } = req.body;
+  const { name, description, category, businessType, city, allee, numero, themeColor } = req.body;
   const slug = name
     .toLowerCase()
     .normalize("NFD")
@@ -47,12 +47,16 @@ const createShop = asyncHandler(async (req, res) => {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
+  const validBusinessTypes = ["boutique", "restaurant", "supermarche", "grossiste", "artisan"];
+
   const shop = await Shop.create({
     owner: req.user._id,
     name,
     slug: `${slug}-${Date.now().toString().slice(-4)}`,
     description,
     category,
+    businessType: validBusinessTypes.includes(businessType) ? businessType : "boutique",
+    city,
     location: { allee, numero },
     themeColor: themeColor || "#111111",
     status: "pending",
@@ -69,10 +73,16 @@ const updateMyShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
 
-  const fields = ["name", "description", "logoUrl", "category", "themeColor"];
+  const validBusinessTypes = ["boutique", "restaurant", "supermarche", "grossiste", "artisan"];
+  const fields = ["name", "description", "logoUrl", "category", "themeColor", "city"];
   fields.forEach((f) => {
     if (req.body[f] !== undefined) shop[f] = req.body[f];
   });
+
+  if (req.body.businessType !== undefined && validBusinessTypes.includes(req.body.businessType)) {
+    shop.businessType = req.body.businessType;
+  }
+
   if (req.body.allee !== undefined || req.body.numero !== undefined) {
     shop.location.allee = req.body.allee ?? shop.location.allee;
     shop.location.numero = req.body.numero ?? shop.location.numero;

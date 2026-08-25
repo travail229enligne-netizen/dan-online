@@ -3,7 +3,17 @@ import MerchantLayout from "../../components/MerchantLayout";
 import ImageUploadMulti from "../../components/ImageUploadMulti";
 import api from "../../lib/api";
 
-const emptyForm = { name: "", description: "", price: "", stock: "", unit: "unité", images: [], priceTiers: [] };
+const emptyForm = {
+  name: "",
+  description: "",
+  price: "",
+  stock: "",
+  unit: "unité",
+  images: [],
+  priceTiers: [],
+  prepTimeMinutes: "",
+  isDailySpecial: false,
+};
 
 export default function MerchantProduits() {
   const [shop, setShop] = useState(undefined);
@@ -12,6 +22,10 @@ export default function MerchantProduits() {
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(null);
+
+  const isRestaurant = shop?.businessType === "restaurant";
+  const itemLabel = isRestaurant ? "plat" : "produit";
+  const itemLabelCap = isRestaurant ? "Plat" : "Produit";
 
   const loadData = () => {
     api.get("/shops/me").then((r) => {
@@ -34,6 +48,8 @@ export default function MerchantProduits() {
       unit: p.unit,
       images: p.images || [],
       priceTiers: p.priceTiers || [],
+      prepTimeMinutes: p.prepTimeMinutes || "",
+      isDailySpecial: p.isDailySpecial || false,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -70,6 +86,7 @@ export default function MerchantProduits() {
         price: Number(form.price),
         stock: Number(form.stock),
         priceTiers: cleanTiers,
+        prepTimeMinutes: form.prepTimeMinutes ? Number(form.prepTimeMinutes) : null,
       };
 
       if (editingId) {
@@ -80,7 +97,7 @@ export default function MerchantProduits() {
       cancelEdit();
       loadData();
     } catch (err) {
-      setError(err.response?.data?.message || "Erreur lors de l'enregistrement du produit.");
+      setError(err.response?.data?.message || `Erreur lors de l'enregistrement du ${itemLabel}.`);
     }
   };
 
@@ -104,8 +121,8 @@ export default function MerchantProduits() {
   }
 
   return (
-    <MerchantLayout title="Mes produits">
-      <h1 style={{ fontSize: 20, marginBottom: 4 }}>Mes produits</h1>
+    <MerchantLayout title={isRestaurant ? "Mes plats" : "Mes produits"}>
+      <h1 style={{ fontSize: 20, marginBottom: 4 }}>{isRestaurant ? "Mes plats" : "Mes produits"}</h1>
 
       {shop === null && (
         <div style={{
@@ -135,7 +152,7 @@ export default function MerchantProduits() {
           marginTop: 12,
           marginBottom: 4,
         }}>
-          Ta boutique est en attente de validation par l'équipe EasyShop. Tu pourras ajouter des produits une fois validée.
+          Ta boutique est en attente de validation par l'équipe EasyShop. Tu pourras ajouter des {itemLabel}s une fois validée.
         </div>
       )}
 
@@ -143,7 +160,7 @@ export default function MerchantProduits() {
         <>
           <section style={{ marginTop: 24 }}>
             <h2 style={{ fontSize: 16, marginBottom: 12 }}>
-              {editingId ? "Modifier le produit" : "Ajouter un produit"}
+              {editingId ? `Modifier le ${itemLabel}` : `Ajouter un ${itemLabel}`}
             </h2>
             <form
               onSubmit={handleSubmit}
@@ -158,14 +175,14 @@ export default function MerchantProduits() {
               }}
             >
               <ImageUploadMulti
-                label="Photos du produit"
+                label={`Photos du ${itemLabel}`}
                 values={form.images}
                 onChange={(images) => setForm({ ...form, images })}
                 max={5}
               />
 
               <label style={{ fontSize: 12 }}>
-                Nom du produit
+                Nom du {itemLabel}
                 <input
                   required
                   value={form.name}
@@ -215,6 +232,29 @@ export default function MerchantProduits() {
                 </label>
               </div>
 
+              {isRestaurant && (
+                <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+                  <label style={{ fontSize: 12, flex: 1 }}>
+                    Temps de préparation (minutes)
+                    <input
+                      type="number"
+                      placeholder="ex: 20"
+                      value={form.prepTimeMinutes}
+                      onChange={(e) => setForm({ ...form, prepTimeMinutes: e.target.value })}
+                      style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
+                    />
+                  </label>
+                  <label style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, paddingBottom: 10 }}>
+                    <input
+                      type="checkbox"
+                      checked={form.isDailySpecial}
+                      onChange={(e) => setForm({ ...form, isDailySpecial: e.target.checked })}
+                    />
+                    Plat du jour
+                  </label>
+                </div>
+              )}
+
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                   <span style={{ fontSize: 12, fontWeight: 600 }}>Prix par quantité (gros/demi-gros)</span>
@@ -228,7 +268,7 @@ export default function MerchantProduits() {
                 </div>
                 {form.priceTiers.length === 0 && (
                   <p style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-                    Aucun palier. Le produit sera vendu au prix détail quelle que soit la quantité.
+                    Aucun palier. Le {itemLabel} sera vendu au prix détail quelle que soit la quantité.
                   </p>
                 )}
                 {form.priceTiers.map((tier, i) => (
@@ -285,7 +325,9 @@ export default function MerchantProduits() {
           </section>
 
           <section style={{ marginTop: 24 }}>
-            <h2 style={{ fontSize: 16, marginBottom: 12 }}>Mes produits ({products.length})</h2>
+            <h2 style={{ fontSize: 16, marginBottom: 12 }}>
+              {isRestaurant ? "Mes plats" : "Mes produits"} ({products.length})
+            </h2>
             <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)" }}>
               {products.map((p, i) => (
                 <div
@@ -311,8 +353,18 @@ export default function MerchantProduits() {
                       <div style={{ width: 44, height: 44, borderRadius: 8, background: "var(--cream)", border: "1px solid var(--line)" }} />
                     )}
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>{p.name}</div>
-                      <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>Stock: {p.stock} {p.unit}</div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>
+                        {p.name}
+                        {p.isDailySpecial && (
+                          <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, color: "var(--terracotta-dark)" }}>
+                            ⭐ PLAT DU JOUR
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+                        Stock: {p.stock} {p.unit}
+                        {p.prepTimeMinutes ? ` · ${p.prepTimeMinutes} min` : ""}
+                      </div>
                       <div style={{ fontWeight: 700, color: "var(--terracotta-dark)", fontSize: 13 }}>
                         {p.price.toLocaleString("fr-FR")} FCFA
                         {p.priceTiers?.length > 0 && (
@@ -357,7 +409,7 @@ export default function MerchantProduits() {
               ))}
               {products.length === 0 && (
                 <div style={{ padding: 16, fontSize: 13, color: "var(--ink-soft)" }}>
-                  Aucun produit pour l'instant.
+                  Aucun {itemLabel} pour l'instant.
                 </div>
               )}
             </div>
