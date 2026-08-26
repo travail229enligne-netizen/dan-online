@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "../lib/auth";
 import api from "../lib/api";
+import SearchBar from "./SearchBar";
 
 export default function Header({ hideSearchBar = false }) {
   const { user, logout } = useAuth();
@@ -133,29 +134,15 @@ export default function Header({ hideSearchBar = false }) {
             </button>
           </div>
         </div>
-
-        {!hideSearchBar && (
-          <div className="container" style={{ marginTop: 12 }}>
-            <a
-              href="/recherche"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                background: "rgba(255,255,255,0.15)",
-                border: "1px solid rgba(255,255,255,0.25)",
-                borderRadius: 999,
-                padding: "10px 16px",
-                color: "rgba(255,255,255,0.85)",
-                fontSize: 13,
-              }}
-            >
-              <span>🔍</span>
-              <span>Rechercher un produit, une boutique, un plat...</span>
-            </a>
-          </div>
-        )}
       </header>
+
+      {!hideSearchBar && (
+        <div style={{ background: "var(--cream)", borderBottom: "1px solid var(--line)", padding: "12px 0" }}>
+          <div className="container">
+            <SearchBar size="compact" />
+          </div>
+        </div>
+      )}
 
       {open && (
         <div

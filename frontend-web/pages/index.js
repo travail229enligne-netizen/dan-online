@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import HeroBanner from "../components/HeroBanner";
+import SearchBar from "../components/SearchBar";
 import ProductCard from "../components/ProductCard";
 import api from "../lib/api";
 import { useCart } from "../lib/cart";
@@ -30,10 +31,12 @@ export default function Home() {
       <main className="container" style={{ paddingBottom: 60 }}>
         <HeroBanner
           title="Tout ce qui se vend, à portée de main"
-          subtitle="Boutiques, restaurants, supermarchés et artisans du Bénin, livrés chez vous en 48h."
-          secondaryLabel="Voir les boutiques partenaires"
-          onSecondaryClick={() => document.getElementById("boutiques")?.scrollIntoView({ behavior: "smooth" })}
+          subtitle="Découvrez une nouvelle façon de faire vos achats et de vendre en ligne. Retrouvez les produits de commerçants, boutiques, grossistes et supermarchés sur une seule marketplace. Comparez, commandez et faites-vous livrer facilement, partout au Bénin et ailleurs."
         />
+
+        <div style={{ marginTop: 16, marginBottom: 8 }}>
+          <SearchBar size="large" />
+        </div>
 
         <section id="boutiques" style={{ marginTop: 32 }}>
           <h3 style={{ fontSize: 18, marginBottom: 14 }}>Boutiques Partenaires</h3>
