@@ -176,7 +176,7 @@ export default function Header({ hideSearchBar = false }) {
               {navLink("/", "Accueil")}
 
               <a
-                href="/#boutiques"
+                href="/boutiques"
                 style={{
                   display: "flex",
                   alignItems: "center",
