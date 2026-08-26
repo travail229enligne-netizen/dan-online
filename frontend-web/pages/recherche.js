@@ -70,7 +70,7 @@ export default function Recherche() {
 
   return (
     <>
-      <Header />
+      <Header hideSearchBar />
       <main className="container" style={{ paddingTop: 20, paddingBottom: 60, boxSizing: "border-box" }}>
         <form onSubmit={handleSubmit} style={{ marginBottom: 12 }}>
           <input

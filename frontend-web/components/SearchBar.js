@@ -13,14 +13,14 @@ export default function SearchBar({ size = "compact", placeholder = "Rechercher 
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
+    <form onSubmit={handleSubmit} style={{ position: "relative", width: "100%" }}>
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}
         style={{
-          flex: 1,
-          padding: large ? "14px 18px" : "10px 16px",
+          width: "100%",
+          padding: large ? "16px 50px 16px 20px" : "11px 42px 11px 16px",
           borderRadius: 999,
           border: "1px solid var(--line)",
           fontSize: large ? 15 : 13,
@@ -32,14 +32,17 @@ export default function SearchBar({ size = "compact", placeholder = "Rechercher 
         type="submit"
         aria-label="Rechercher"
         style={{
-          width: large ? 50 : 40,
-          height: large ? 50 : 40,
+          position: "absolute",
+          right: large ? 6 : 4,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: large ? 40 : 32,
+          height: large ? 40 : 32,
           borderRadius: "50%",
-          border: "1px solid var(--line)",
-          background: "var(--ink)",
-          color: "var(--white)",
+          border: "none",
+          background: "transparent",
+          color: "var(--ink-soft)",
           fontSize: large ? 18 : 14,
-          flexShrink: 0,
         }}
       >
         🔍

@@ -18,7 +18,7 @@ export default function Panier() {
 
   return (
     <>
-      <Header />
+      <Header hideSearchBar />
       <main className="container" style={{ paddingTop: 24, paddingBottom: 60 }}>
         <h1 style={{ fontSize: 22, marginBottom: 20 }}>Mon panier</h1>
 

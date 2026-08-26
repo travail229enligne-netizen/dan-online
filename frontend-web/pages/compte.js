@@ -45,7 +45,7 @@ export default function Compte() {
   if (!user) {
     return (
       <>
-        <Header />
+        <Header hideSearchBar />
         <main className="container" style={{ paddingTop: 40, textAlign: "center" }}>
           <p style={{ color: "var(--ink-soft)" }}>
             <a href="/connexion" style={{ color: "var(--terracotta-dark)", fontWeight: 600 }}>Connecte-toi</a> pour accéder à ton compte.
@@ -57,7 +57,7 @@ export default function Compte() {
 
   return (
     <>
-      <Header />
+      <Header hideSearchBar />
       <main className="container" style={{ maxWidth: 420, paddingTop: 24, paddingBottom: 60 }}>
         <h1 style={{ fontSize: 22, marginBottom: 20 }}>Mon compte</h1>
 

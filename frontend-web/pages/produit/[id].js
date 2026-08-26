@@ -40,7 +40,7 @@ export default function ProduitDetail() {
   if (product === undefined) {
     return (
       <>
-        <Header />
+        <Header hideSearchBar />
         <main className="container" style={{ paddingTop: 40 }}>
           <p style={{ color: "var(--ink-soft)" }}>Chargement...</p>
         </main>
@@ -51,7 +51,7 @@ export default function ProduitDetail() {
   if (!product) {
     return (
       <>
-        <Header />
+        <Header hideSearchBar />
         <main className="container" style={{ paddingTop: 40, textAlign: "center" }}>
           <p style={{ color: "var(--ink-soft)" }}>Produit introuvable.</p>
         </main>
@@ -81,7 +81,7 @@ export default function ProduitDetail() {
         <meta property="og:type" content="product" />
         {pageUrl && <link rel="canonical" href={pageUrl} />}
       </Head>
-      <Header />
+      <Header hideSearchBar />
       <main className="container" style={{ paddingTop: 20, paddingBottom: 60 }}>
         <div
           style={{

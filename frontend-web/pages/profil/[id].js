@@ -18,7 +18,7 @@ export default function ProfilPublic() {
   if (!profile) {
     return (
       <>
-        <Header />
+        <Header hideSearchBar />
         <main className="container" style={{ paddingTop: 40, textAlign: "center" }}>
           <p style={{ color: "var(--ink-soft)" }}>Profil introuvable.</p>
         </main>
@@ -28,7 +28,7 @@ export default function ProfilPublic() {
 
   return (
     <>
-      <Header />
+      <Header hideSearchBar />
       <main className="container" style={{ maxWidth: 420, paddingTop: 30, paddingBottom: 60 }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 20 }}>
           {profile.avatarUrl ? (

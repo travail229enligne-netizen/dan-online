@@ -33,7 +33,7 @@ export default function Inscription() {
 
   return (
     <>
-      <Header />
+      <Header hideSearchBar />
       <main className="container" style={{ maxWidth: 420, paddingTop: 40, paddingBottom: 60 }}>
         <h1 style={{ fontSize: 22, marginBottom: 20 }}>Créer un compte</h1>
         <form

@@ -90,7 +90,7 @@ export default function ConversationById() {
 
   return (
     <>
-      <Header />
+      <Header hideSearchBar />
       <main className="container" style={{ paddingTop: 20, paddingBottom: 20, display: "flex", flexDirection: "column", height: "calc(100vh - 76px)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <a href={otherUserId ? `/profil/${otherUserId}` : "#"} style={{ display: "flex", alignItems: "center", gap: 10 }}>

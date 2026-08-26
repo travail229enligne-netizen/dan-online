@@ -83,7 +83,7 @@ export default function Commandes() {
   if (!user) {
     return (
       <>
-        <Header />
+        <Header hideSearchBar />
         <main className="container" style={{ paddingTop: 40, textAlign: "center" }}>
           <p style={{ color: "var(--ink-soft)" }}>Connecte-toi pour voir tes commandes.</p>
         </main>
@@ -93,7 +93,7 @@ export default function Commandes() {
 
   return (
     <>
-      <Header />
+      <Header hideSearchBar />
       <main className="container" style={{ paddingTop: 20, paddingBottom: 60 }}>
         <h1 style={{ fontSize: 20, marginBottom: 16 }}>Mes commandes</h1>
 

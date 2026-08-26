@@ -93,7 +93,7 @@ export default function AdminDashboard() {
   if (!user || user.role !== "admin") {
     return (
       <>
-        <Header />
+        <Header hideSearchBar />
         <main className="container" style={{ paddingTop: 40, textAlign: "center" }}>
           <p style={{ color: "var(--ink-soft)" }}>Accès réservé aux administrateurs.</p>
         </main>
@@ -103,7 +103,7 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <Header />
+      <Header hideSearchBar />
       <main className="container" style={{ paddingTop: 24, paddingBottom: 60 }}>
         <h1 style={{ fontSize: 22, marginBottom: 20 }}>Espace administrateur</h1>
 

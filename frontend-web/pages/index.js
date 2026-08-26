@@ -39,7 +39,10 @@ export default function Home() {
         </div>
 
         <section id="boutiques" style={{ marginTop: 32 }}>
-          <h3 style={{ fontSize: 18, marginBottom: 14 }}>Boutiques Partenaires</h3>
+          <a href="/boutiques" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14 }}>
+            <h3 style={{ fontSize: 18, color: "var(--ink)" }}>Boutiques Partenaires</h3>
+            <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>Voir tout →</span>
+          </a>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
             {shops.map((shop) => (
               <a
@@ -114,7 +117,10 @@ export default function Home() {
         </section>
 
         <section style={{ marginTop: 32 }}>
-          <h3 style={{ fontSize: 18, marginBottom: 14 }}>Produits Populaires</h3>
+          <a href="/produits" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14 }}>
+            <h3 style={{ fontSize: 18, color: "var(--ink)" }}>Produits Populaires</h3>
+            <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>Voir tout →</span>
+          </a>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14 }}>
             {products.map((p) => (
               <ProductCard key={p._id} product={p} onAddToCart={(prod) => addToCart(prod, 1)} />

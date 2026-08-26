@@ -84,7 +84,7 @@ export default function Commande() {
   if (success) {
     return (
       <>
-        <Header />
+        <Header hideSearchBar />
         <main className="container" style={{ paddingTop: 40, paddingBottom: 60, textAlign: "center" }}>
           <div style={{ fontSize: 48 }}>✅</div>
           <h1 style={{ fontSize: 22, marginTop: 12 }}>Commande confirmée et payée !</h1>
@@ -106,7 +106,7 @@ export default function Commande() {
         src="https://cdn.kkiapay.me/k.js"
         onLoad={() => setWidgetReady(true)}
       />
-      <Header />
+      <Header hideSearchBar />
       <main className="container" style={{ maxWidth: 480, paddingTop: 24, paddingBottom: 60 }}>
         <h1 style={{ fontSize: 22, marginBottom: 20 }}>Finaliser la commande</h1>
 

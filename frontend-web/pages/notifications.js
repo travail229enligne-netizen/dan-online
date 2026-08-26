@@ -32,7 +32,7 @@ export default function Notifications() {
   if (!user) {
     return (
       <>
-        <Header />
+        <Header hideSearchBar />
         <main className="container" style={{ paddingTop: 40, textAlign: "center" }}>
           <p style={{ color: "var(--ink-soft)" }}>Connecte-toi pour voir tes notifications.</p>
         </main>
@@ -44,7 +44,7 @@ export default function Notifications() {
 
   return (
     <>
-      <Header />
+      <Header hideSearchBar />
       <main className="container" style={{ paddingTop: 20, paddingBottom: 60 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <h1 style={{ fontSize: 20 }}>Notifications</h1>
