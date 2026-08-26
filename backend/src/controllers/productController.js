@@ -1,4 +1,5 @@
 const asyncHandler = require("express-async-handler");
+const { parse } = require("csv-parse/sync");
 const Product = require("../models/Product");
 const Shop = require("../models/Shop");
 const Follow = require("../models/Follow");
@@ -113,4 +114,85 @@ const deleteProduct = asyncHandler(async (req, res) => {
   res.json({ message: "Produit supprimé." });
 });
 
-module.exports = { getProducts, getProductById, createProduct, updateProduct, deleteProduct };
+// @route   POST /api/products/import
+// @access  Private (marchand, boutique de type supermarche uniquement)
+// Attend un body JSON: { csv: "nom,prix,stock,unite\n..." }
+const importProductsCSV = asyncHandler(async (req, res) => {
+  const shop = await Shop.findOne({ owner: req.user._id });
+  if (!shop) return res.status(400).json({ message: "Créez d'abord votre boutique." });
+  if (shop.status !== "active") {
+    return res.status(403).json({ message: "Votre boutique n'est pas encore validée par l'administrateur." });
+  }
+  if (shop.businessType !== "supermarche") {
+    return res.status(403).json({ message: "L'import en masse est reserve aux boutiques de type supermarche." });
+  }
+
+  const { csv } = req.body;
+  if (!csv || !csv.trim()) {
+    return res.status(400).json({ message: "Aucun contenu CSV recu." });
+  }
+
+  let rows;
+  try {
+    rows = parse(csv, {
+      columns: true,
+      skip_empty_lines: true,
+      trim: true,
+    });
+  } catch (err) {
+    return res.status(400).json({ message: `CSV invalide: ${err.message}` });
+  }
+
+  if (rows.length === 0) {
+    return res.status(400).json({ message: "Le fichier ne contient aucune ligne de produit." });
+  }
+  if (rows.length > 500) {
+    return res.status(400).json({ message: "Maximum 500 produits par import." });
+  }
+
+  const created = [];
+  const errors = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const lineNum = i + 2; // +2: en-tete + index base 1
+
+    const name = (row.nom || row.name || "").trim();
+    const price = Number(row.prix || row.price);
+    const stock = Number(row.stock || 0);
+    const unit = (row.unite || row.unit || "unité").trim();
+    const description = (row.description || "").trim();
+
+    if (!name) {
+      errors.push(`Ligne ${lineNum}: nom manquant.`);
+      continue;
+    }
+    if (!price || price <= 0) {
+      errors.push(`Ligne ${lineNum} (${name}): prix invalide.`);
+      continue;
+    }
+
+    try {
+      const product = await Product.create({
+        shop: shop._id,
+        name,
+        description,
+        price,
+        unit,
+        stock: isNaN(stock) ? 0 : stock,
+      });
+      created.push(product.name);
+    } catch (err) {
+      errors.push(`Ligne ${lineNum} (${name}): ${err.message}`);
+    }
+  }
+
+  res.status(201).json({
+    message: `${created.length} produit(s) importe(s) sur ${rows.length}.`,
+    createdCount: created.length,
+    totalRows: rows.length,
+    errors,
+  });
+});
+
+module.exports = { getProducts, getProductById, createProduct, updateProduct, deleteProduct, importProductsCSV };

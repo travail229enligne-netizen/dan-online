@@ -7,6 +7,7 @@ const navItems = [
   { href: "/marchand/dashboard", label: "Tableau de bord", icon: "📊" },
   { href: "/marchand/boutique", label: "Ma boutique", icon: "🏪" },
   { href: "/marchand/produits", label: "Produits", icon: "📦" },
+  { href: "/marchand/import", label: "Import CSV", icon: "📥" },
   { href: "/marchand/portefeuille", label: "Portefeuille", icon: "💰" },
   { href: "/marchand/collections", label: "Collections", icon: "🗂️" },
   { href: "/messages", label: "Messages", icon: "💬" },
