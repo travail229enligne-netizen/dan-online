@@ -164,7 +164,7 @@ export default function MerchantLayout({ children, title }) {
                           width: 8,
                           height: 8,
                           borderRadius: "50%",
-                          background: "var(--terracotta)",
+                          background: active ? "var(--white)" : "var(--terracotta)",
                           marginLeft: "auto",
                         }}
                       />

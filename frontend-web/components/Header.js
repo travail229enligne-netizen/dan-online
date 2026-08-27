@@ -56,20 +56,13 @@ export default function Header({ hideSearchBar = false }) {
       {showDot && (
         <span
           style={{
-            width: 22,
-            height: 22,
+            width: 8,
+            height: 8,
             borderRadius: "50%",
-            background: "red",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "white",
-            fontSize: 12,
-            fontWeight: 900,
+            background: "var(--terracotta)",
+            display: "inline-block",
           }}
-        >
-          !
-        </span>
+        />
       )}
     </a>
   );
