@@ -173,6 +173,57 @@ const getMyShopStats = asyncHandler(async (req, res) => {
   });
 });
 
+// @route   GET /api/shops/me/couriers
+// @access  Private (marchand)
+const getMyCouriers = asyncHandler(async (req, res) => {
+  const shop = await Shop.findOne({ owner: req.user._id });
+  if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
+  res.json(shop.couriers);
+});
+
+// @route   POST /api/shops/me/couriers
+// @access  Private (marchand)
+const addCourier = asyncHandler(async (req, res) => {
+  const { phone, name } = req.body;
+  if (!phone || !phone.trim()) {
+    return res.status(400).json({ message: "Numero de telephone requis." });
+  }
+
+  const shop = await Shop.findOne({ owner: req.user._id });
+  if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
+
+  const courierUser = await User.findOne({ phone: phone.trim() });
+  if (!courierUser) {
+    return res.status(404).json({ message: "Aucun compte EasyShop n'est associe a ce numero. Le livreur doit d'abord creer un compte." });
+  }
+
+  const alreadyAdded = shop.couriers.some((c) => c.user.toString() === courierUser._id.toString());
+  if (alreadyAdded) {
+    return res.status(400).json({ message: "Ce livreur est deja dans ta liste." });
+  }
+
+  shop.couriers.push({
+    user: courierUser._id,
+    name: name && name.trim() ? name.trim() : courierUser.name,
+    phone: phone.trim(),
+  });
+  await shop.save();
+
+  res.status(201).json(shop.couriers);
+});
+
+// @route   DELETE /api/shops/me/couriers/:userId
+// @access  Private (marchand)
+const removeCourier = asyncHandler(async (req, res) => {
+  const shop = await Shop.findOne({ owner: req.user._id });
+  if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
+
+  shop.couriers = shop.couriers.filter((c) => c.user.toString() !== req.params.userId);
+  await shop.save();
+
+  res.json(shop.couriers);
+});
+
 module.exports = {
   getShops,
   getMyShop,
@@ -183,4 +234,7 @@ module.exports = {
   closeMyShop,
   reopenMyShop,
   getMyShopStats,
+  getMyCouriers,
+  addCourier,
+  removeCourier,
 };

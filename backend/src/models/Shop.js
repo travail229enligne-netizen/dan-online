@@ -8,6 +8,15 @@ const deliveryZoneSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const courierSchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    name: { type: String, required: true, trim: true },
+    phone: { type: String, required: true, trim: true },
+  },
+  { timestamps: true }
+);
+
 const shopSchema = new mongoose.Schema(
   {
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
@@ -28,6 +37,7 @@ const shopSchema = new mongoose.Schema(
       numero: { type: String, default: "" },
     },
     deliveryZones: [deliveryZoneSchema], // tarifs de livraison par ville
+    couriers: [courierSchema], // livreurs ajoutes par le marchand
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
     isVerified: { type: Boolean, default: false }, // badge "Vérifié"
     isProfessional: { type: Boolean, default: false }, // badge "Boutique professionnelle" accorde par admin

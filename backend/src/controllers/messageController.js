@@ -2,23 +2,19 @@ const asyncHandler = require("express-async-handler");
 const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
 const Shop = require("../models/Shop");
+const { notify } = require("../utils/notify");
 
 // @route   GET /api/messages/conversations
-// @access  Private (client ou marchand) - liste ses conversations
+// @access  Private (client, marchand ou livreur) - liste ses conversations
 const getConversations = asyncHandler(async (req, res) => {
-  let filter = {};
-  if (req.user.role === "client") {
-    filter = { client: req.user._id };
-  } else if (req.user.role === "marchand") {
-    const shop = await Shop.findOne({ owner: req.user._id });
-    if (!shop) return res.json([]);
-    filter = { shop: shop._id };
-  } else {
-    return res.status(403).json({ message: "Accès non autorisé." });
-  }
+  const shop = await Shop.findOne({ owner: req.user._id });
 
-  const conversations = await Conversation.find(filter)
+  const orConditions = [{ client: req.user._id }, { courier: req.user._id }];
+  if (shop) orConditions.push({ shop: shop._id });
+
+  const conversations = await Conversation.find({ $or: orConditions })
     .populate("client", "name")
+    .populate("courier", "name")
     .populate("shop", "name logoUrl")
     .sort({ lastMessageAt: -1 });
 
@@ -28,10 +24,51 @@ const getConversations = asyncHandler(async (req, res) => {
 // @route   POST /api/messages/start/:shopId
 // @access  Private (client) - demarre ou recupere une conversation avec une boutique
 const startConversation = asyncHandler(async (req, res) => {
-  let conversation = await Conversation.findOne({ client: req.user._id, shop: req.params.shopId });
+  let conversation = await Conversation.findOne({ type: "client_shop", client: req.user._id, shop: req.params.shopId });
   if (!conversation) {
-    conversation = await Conversation.create({ client: req.user._id, shop: req.params.shopId });
+    conversation = await Conversation.create({ type: "client_shop", client: req.user._id, shop: req.params.shopId });
   }
+  res.json(conversation);
+});
+
+// @route   POST /api/messages/start-courier
+// @access  Private (marchand) - demarre ou recupere une conversation avec un livreur, pour une commande donnee
+// body: { courierId, orderId, initialMessage }
+const startCourierConversation = asyncHandler(async (req, res) => {
+  const { courierId, orderId, initialMessage } = req.body;
+  if (!courierId) return res.status(400).json({ message: "Livreur requis." });
+
+  const shop = await Shop.findOne({ owner: req.user._id });
+  if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
+
+  const isKnownCourier = shop.couriers.some((c) => c.user.toString() === courierId);
+  if (!isKnownCourier) {
+    return res.status(400).json({ message: "Ce livreur n'est pas dans ta liste. Ajoute-le d'abord." });
+  }
+
+  let conversation = await Conversation.findOne({ type: "shop_courier", shop: shop._id, courier: courierId });
+  if (!conversation) {
+    conversation = await Conversation.create({ type: "shop_courier", shop: shop._id, courier: courierId, order: orderId || null });
+  } else if (orderId) {
+    conversation.order = orderId;
+    await conversation.save();
+  }
+
+  if (initialMessage && initialMessage.trim()) {
+    const message = await Message.create({
+      conversation: conversation._id,
+      sender: req.user._id,
+      senderRole: "marchand",
+      text: initialMessage.trim(),
+    });
+    conversation.lastMessage = initialMessage.trim();
+    conversation.lastMessageAt = new Date();
+    conversation.unreadForClient += 1; // reutilise ce compteur pour le livreur
+    await conversation.save();
+
+    await notify(courierId, "message", "Nouvelle commande a livrer", initialMessage.trim().slice(0, 80), `/messages/c/${conversation._id}`);
+  }
+
   res.json(conversation);
 });
 
@@ -40,18 +77,20 @@ const startConversation = asyncHandler(async (req, res) => {
 const getMessages = asyncHandler(async (req, res) => {
   const conversation = await Conversation.findById(req.params.conversationId)
     .populate("client", "name phone")
+    .populate("courier", "name phone")
     .populate({ path: "shop", select: "name logoUrl owner", populate: { path: "owner", select: "phone" } });
   if (!conversation) return res.status(404).json({ message: "Conversation introuvable." });
 
-  const isClient = conversation.client._id.toString() === req.user._id.toString();
+  const isClient = conversation.client && conversation.client._id.toString() === req.user._id.toString();
+  const isCourier = conversation.courier && conversation.courier._id.toString() === req.user._id.toString();
   const isMerchant = conversation.shop.owner._id.toString() === req.user._id.toString();
-  if (!isClient && !isMerchant) {
+  if (!isClient && !isCourier && !isMerchant) {
     return res.status(403).json({ message: "Accès non autorisé à cette conversation." });
   }
 
   const messages = await Message.find({ conversation: conversation._id }).sort({ createdAt: 1 });
 
-  if (isClient) conversation.unreadForClient = 0;
+  if (isClient || isCourier) conversation.unreadForClient = 0;
   if (isMerchant) conversation.unreadForMerchant = 0;
   await conversation.save();
 
@@ -67,14 +106,18 @@ const sendMessage = asyncHandler(async (req, res) => {
   const conversation = await Conversation.findById(req.params.conversationId).populate("shop");
   if (!conversation) return res.status(404).json({ message: "Conversation introuvable." });
 
-  const isClient = conversation.client.toString() === req.user._id.toString();
+  const isClient = conversation.client && conversation.client.toString() === req.user._id.toString();
+  const isCourier = conversation.courier && conversation.courier.toString() === req.user._id.toString();
   const isMerchant = conversation.shop.owner.toString() === req.user._id.toString();
-  if (!isClient && !isMerchant) {
+  if (!isClient && !isCourier && !isMerchant) {
     return res.status(403).json({ message: "Accès non autorisé à cette conversation." });
   }
 
-  await require("../utils/notify").notify(
-    isClient ? conversation.shop.owner : conversation.client,
+  const senderRole = isCourier ? "livreur" : isClient ? "client" : "marchand";
+  const recipient = isMerchant ? (conversation.client || conversation.courier) : conversation.shop.owner;
+
+  await notify(
+    recipient,
     "message",
     "Nouveau message",
     text ? text.trim().slice(0, 80) : "Photo envoyée",
@@ -84,18 +127,18 @@ const sendMessage = asyncHandler(async (req, res) => {
   const message = await Message.create({
     conversation: conversation._id,
     sender: req.user._id,
-    senderRole: isClient ? "client" : "marchand",
+    senderRole,
     text: text ? text.trim() : "",
     imageUrl: imageUrl || "",
   });
 
   conversation.lastMessage = text && text.trim() ? text.trim() : "Photo envoyée";
   conversation.lastMessageAt = new Date();
-  if (isClient) conversation.unreadForMerchant += 1;
+  if (isClient || isCourier) conversation.unreadForMerchant += 1;
   if (isMerchant) conversation.unreadForClient += 1;
   await conversation.save();
 
   res.status(201).json(message);
 });
 
-module.exports = { getConversations, startConversation, getMessages, sendMessage };
+module.exports = { getConversations, startConversation, startCourierConversation, getMessages, sendMessage };
