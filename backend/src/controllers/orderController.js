@@ -48,7 +48,6 @@ const createOrder = asyncHandler(async (req, res) => {
     await product.save();
   }
 
-  // Calcul des frais de livraison par boutique, selon la ville choisie
   let deliveryFee = 0;
   const shopDeliveryFees = [];
   const isSelfDelivery = !!selfDelivery;
@@ -161,6 +160,26 @@ const getShopOrders = asyncHandler(async (req, res) => {
   res.json(orders);
 });
 
+// @route   GET /api/orders/:id
+// @access  Private (marchand proprietaire de la boutique concernee, ou client de la commande)
+const getOrderById = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id).populate("client", "name phone");
+  if (!order) return res.status(404).json({ message: "Commande introuvable." });
+
+  const isClient = order.client._id.toString() === req.user._id.toString();
+  let isMerchant = false;
+  if (req.user.role === "marchand") {
+    const shop = await Shop.findOne({ owner: req.user._id });
+    isMerchant = shop && order.items.some((it) => it.shop.toString() === shop._id.toString());
+  }
+
+  if (!isClient && !isMerchant && req.user.role !== "admin") {
+    return res.status(403).json({ message: "Accès non autorisé à cette commande." });
+  }
+
+  res.json(order);
+});
+
 const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
   const validStatuses = ["pending", "confirmed", "out_for_delivery", "delivered", "cancelled"];
@@ -191,4 +210,4 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   res.json(order);
 });
 
-module.exports = { createOrder, getMyOrders, getShopOrders, updateOrderStatus };
+module.exports = { createOrder, getMyOrders, getShopOrders, getOrderById, updateOrderStatus };

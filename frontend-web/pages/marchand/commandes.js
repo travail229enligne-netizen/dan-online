@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import MerchantLayout from "../../components/MerchantLayout";
 import api from "../../lib/api";
 
@@ -10,19 +11,8 @@ const statusLabels = {
   cancelled: "Annulée",
 };
 
-const nextStatus = {
-  pending: "confirmed",
-  confirmed: "out_for_delivery",
-  out_for_delivery: "delivered",
-};
-
-const nextLabel = {
-  pending: "Confirmer",
-  confirmed: "Marquer en livraison",
-  out_for_delivery: "Marquer livrée",
-};
-
 export default function MarchandCommandes() {
+  const router = useRouter();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(null);
@@ -38,12 +28,20 @@ export default function MarchandCommandes() {
     load();
   }, []);
 
-  const advance = async (order) => {
-    const status = nextStatus[order.status];
-    if (!status) return;
+  const handleConfirm = async (order) => {
     setUpdating(order._id);
     try {
-      await api.put(`/orders/${order._id}/status`, { status });
+      await api.put(`/orders/${order._id}/status`, { status: "confirmed" });
+      load();
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleMarkDelivered = async (order) => {
+    setUpdating(order._id);
+    try {
+      await api.put(`/orders/${order._id}/status`, { status: "delivered" });
       load();
     } finally {
       setUpdating(null);
@@ -52,7 +50,7 @@ export default function MarchandCommandes() {
 
   return (
     <MerchantLayout title="Commandes">
-      <h1 style={{ fontSize: 20, marginBottom: 16 }}>Commandes reçues</h1>
+      <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, marginBottom: 16 }}>Commandes reçues</h1>
 
       {loading && <p style={{ color: "var(--ink-soft)" }}>Chargement...</p>}
       {!loading && orders.length === 0 && (
@@ -68,6 +66,7 @@ export default function MarchandCommandes() {
               border: "1px solid var(--line)",
               borderRadius: "var(--radius-md)",
               padding: 14,
+              boxSizing: "border-box",
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
@@ -87,14 +86,36 @@ export default function MarchandCommandes() {
             <div style={{ marginTop: 6, fontWeight: 700, color: "var(--terracotta-dark)" }}>
               {o.grandTotal.toLocaleString("fr-FR")} FCFA
             </div>
-            {nextStatus[o.status] && (
+
+            {o.status === "pending" && (
               <button
                 className="btn-primary"
-                style={{ marginTop: 10, fontSize: 12, padding: "8px 14px" }}
-                onClick={() => advance(o)}
+                style={{ marginTop: 10, fontSize: 13, padding: "10px 16px" }}
+                onClick={() => handleConfirm(o)}
                 disabled={updating === o._id}
               >
-                {updating === o._id ? "..." : nextLabel[o.status]}
+                {updating === o._id ? "..." : "Confirmer"}
+              </button>
+            )}
+
+            {o.status === "confirmed" && (
+              <button
+                className="btn-primary"
+                style={{ marginTop: 10, fontSize: 13, padding: "10px 16px" }}
+                onClick={() => router.push(`/marchand/commande-livraison/${o._id}`)}
+              >
+                Marquer en livraison
+              </button>
+            )}
+
+            {o.status === "out_for_delivery" && (
+              <button
+                className="btn-primary"
+                style={{ marginTop: 10, fontSize: 13, padding: "10px 16px" }}
+                onClick={() => handleMarkDelivered(o)}
+                disabled={updating === o._id}
+              >
+                {updating === o._id ? "..." : "Marquer livrée"}
               </button>
             )}
           </div>
