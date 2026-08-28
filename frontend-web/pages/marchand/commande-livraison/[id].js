@@ -19,12 +19,6 @@ export default function CommandeLivraison() {
     api.get("/shops/me/couriers").then((r) => setCouriers(r.data)).catch(() => setCouriers([]));
   }, [id]);
 
-  const buildSummary = () => {
-    if (!order) return "";
-    const lines = order.items.map((it) => `${it.quantity}x ${it.name}`).join(", ");
-    return `Nouvelle livraison a effectuer :\n${lines}\nTotal : ${order.grandTotal.toLocaleString("fr-FR")} FCFA\nAdresse : ${order.deliveryAddress}\nVille : ${order.deliveryCity || "-"}\nTéléphone client : ${order.deliveryPhone}\nMode de paiement : ${order.paymentMethod === "kkiapay" ? "déjà payé en ligne" : "à encaisser en espèces à la livraison"}`;
-  };
-
   const handleSend = async () => {
     if (!selectedCourier) {
       setError("Choisis un livreur avant d'envoyer.");
@@ -36,11 +30,9 @@ export default function CommandeLivraison() {
       const { data } = await api.post("/messages/start-courier", {
         courierId: selectedCourier,
         orderId: order._id,
-        initialMessage: buildSummary(),
       });
-      await api.put(`/orders/${order._id}/status`, { status: "out_for_delivery" });
       setSent(true);
-      setTimeout(() => router.push(`/messages/c/${data._id}`), 1200);
+      setTimeout(() => router.push(`/messages/c/${data._id}`), 1000);
     } catch (err) {
       setError(err.response?.data?.message || "Impossible de contacter ce livreur.");
     } finally {
@@ -66,38 +58,53 @@ export default function CommandeLivraison() {
 
   return (
     <MerchantLayout title="Bilan de la commande">
-      <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, marginBottom: 16 }}>
-        Envoyer cette commande à un livreur
+      <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, marginBottom: 4 }}>
+        Bilan de la commande
       </h1>
+      <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 20 }}>
+        Choisis un livreur pour lui transmettre cette commande.
+      </p>
 
       <div
         style={{
           background: "var(--white)",
           border: "1px solid var(--line)",
           borderRadius: "var(--radius-md)",
-          padding: 18,
+          overflow: "hidden",
           marginBottom: 20,
           boxSizing: "border-box",
         }}
       >
-        {order.items.map((it, i) => (
-          <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 6 }}>
-            <span>{it.quantity}× {it.name}</span>
-            <span>{(it.price * it.quantity).toLocaleString("fr-FR")} FCFA</span>
+        <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--line)", background: "var(--cream)" }}>
+          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--ink-soft)" }}>
+            Articles
+          </span>
+        </div>
+        <div style={{ padding: 18 }}>
+          {order.items.map((it, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 8 }}>
+              <span>{it.quantity}× {it.name}</span>
+              <span style={{ fontWeight: 600 }}>{(it.price * it.quantity).toLocaleString("fr-FR")} FCFA</span>
+            </div>
+          ))}
+          <div style={{ borderTop: "1px solid var(--line)", marginTop: 8, paddingTop: 10, display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 15 }}>
+            <span>Total</span>
+            <span style={{ color: "var(--terracotta-dark)" }}>{order.grandTotal.toLocaleString("fr-FR")} FCFA</span>
           </div>
-        ))}
-        <div style={{ borderTop: "1px solid var(--line)", marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
-          <span>Total</span>
-          <span style={{ color: "var(--terracotta-dark)" }}>{order.grandTotal.toLocaleString("fr-FR")} FCFA</span>
         </div>
 
-        <div style={{ marginTop: 14, fontSize: 13, color: "var(--ink-soft)", lineHeight: 1.7 }}>
+        <div style={{ padding: "14px 18px", borderTop: "1px solid var(--line)", background: "var(--cream)" }}>
+          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--ink-soft)" }}>
+            Livraison
+          </span>
+        </div>
+        <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 8, fontSize: 14 }}>
           <div>📍 {order.deliveryAddress}{order.deliveryCity ? `, ${order.deliveryCity}` : ""}</div>
           <div>📞 {order.deliveryPhone}</div>
-          <div>
+          <div style={{ fontWeight: 600, color: order.paymentMethod === "kkiapay" ? "var(--green-dark)" : "var(--terracotta-dark)" }}>
             {order.paymentMethod === "kkiapay"
-              ? "💳 Déjà payé en ligne"
-              : `💵 À encaisser : ${order.grandTotal.toLocaleString("fr-FR")} FCFA en espèces`}
+              ? "💳 Déjà réglée en ligne"
+              : `💵 À encaisser : ${order.grandTotal.toLocaleString("fr-FR")} FCFA`}
           </div>
         </div>
       </div>

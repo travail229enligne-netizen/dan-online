@@ -58,68 +58,93 @@ export default function MarchandCommandes() {
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {orders.map((o) => (
-          <div
-            key={o._id}
-            style={{
-              background: "var(--white)",
-              border: "1px solid var(--line)",
-              borderRadius: "var(--radius-md)",
-              padding: 14,
-              boxSizing: "border-box",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-              <span style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-                {new Date(o.createdAt).toLocaleDateString("fr-FR")} — {o.deliveryPhone}
-              </span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "var(--green-deep)" }}>
-                {statusLabels[o.status] || o.status}
-              </span>
-            </div>
-            {o.items.map((it, i) => (
-              <div key={i} style={{ fontSize: 13 }}>
-                {it.quantity}× {it.name}
+        {orders.map((o) => {
+          const hasCourier = !!o.assignedCourier;
+          const waitingProof = hasCourier && o.courierStatus === "available" && !o.deliveryProofUrl;
+          const canMarkDelivered = o.status === "out_for_delivery" && (!hasCourier || !!o.deliveryProofUrl);
+
+          return (
+            <div
+              key={o._id}
+              style={{
+                background: "var(--white)",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--radius-md)",
+                padding: 14,
+                boxSizing: "border-box",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+                  {new Date(o.createdAt).toLocaleDateString("fr-FR")} — {o.deliveryPhone}
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--green-deep)" }}>
+                  {statusLabels[o.status] || o.status}
+                </span>
               </div>
-            ))}
-            <div style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 4 }}>{o.deliveryAddress}</div>
-            <div style={{ marginTop: 6, fontWeight: 700, color: "var(--terracotta-dark)" }}>
-              {o.grandTotal.toLocaleString("fr-FR")} FCFA
+              {o.items.map((it, i) => (
+                <div key={i} style={{ fontSize: 13 }}>
+                  {it.quantity}× {it.name}
+                </div>
+              ))}
+              <div style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 4 }}>{o.deliveryAddress}</div>
+              <div style={{ marginTop: 6, fontWeight: 700, color: "var(--terracotta-dark)" }}>
+                {o.grandTotal.toLocaleString("fr-FR")} FCFA
+              </div>
+
+              {hasCourier && o.status === "out_for_delivery" && (
+                <div style={{ fontSize: 12, marginTop: 8, color: "var(--ink-soft)" }}>
+                  {o.courierStatus === "pending" && "⏳ En attente de réponse du livreur"}
+                  {o.courierStatus === "unavailable" && "❌ Livreur indisponible — contacte-en un autre"}
+                  {waitingProof && "🚴 Livreur en route — en attente de la preuve de livraison"}
+                  {o.deliveryProofUrl && "✅ Preuve de livraison reçue"}
+                </div>
+              )}
+
+              {o.status === "pending" && (
+                <button
+                  className="btn-primary"
+                  style={{ marginTop: 10, fontSize: 13, padding: "10px 16px" }}
+                  onClick={() => handleConfirm(o)}
+                  disabled={updating === o._id}
+                >
+                  {updating === o._id ? "..." : "Confirmer"}
+                </button>
+              )}
+
+              {o.status === "confirmed" && (
+                <button
+                  className="btn-primary"
+                  style={{ marginTop: 10, fontSize: 13, padding: "10px 16px" }}
+                  onClick={() => router.push(`/marchand/commande-livraison/${o._id}`)}
+                >
+                  Marquer en livraison
+                </button>
+              )}
+
+              {o.courierStatus === "unavailable" && (
+                <button
+                  className="btn-primary"
+                  style={{ marginTop: 10, fontSize: 13, padding: "10px 16px" }}
+                  onClick={() => router.push(`/marchand/commande-livraison/${o._id}`)}
+                >
+                  Contacter un autre livreur
+                </button>
+              )}
+
+              {canMarkDelivered && (
+                <button
+                  className="btn-primary"
+                  style={{ marginTop: 10, fontSize: 13, padding: "10px 16px" }}
+                  onClick={() => handleMarkDelivered(o)}
+                  disabled={updating === o._id}
+                >
+                  {updating === o._id ? "..." : "Marquer livrée"}
+                </button>
+              )}
             </div>
-
-            {o.status === "pending" && (
-              <button
-                className="btn-primary"
-                style={{ marginTop: 10, fontSize: 13, padding: "10px 16px" }}
-                onClick={() => handleConfirm(o)}
-                disabled={updating === o._id}
-              >
-                {updating === o._id ? "..." : "Confirmer"}
-              </button>
-            )}
-
-            {o.status === "confirmed" && (
-              <button
-                className="btn-primary"
-                style={{ marginTop: 10, fontSize: 13, padding: "10px 16px" }}
-                onClick={() => router.push(`/marchand/commande-livraison/${o._id}`)}
-              >
-                Marquer en livraison
-              </button>
-            )}
-
-            {o.status === "out_for_delivery" && (
-              <button
-                className="btn-primary"
-                style={{ marginTop: 10, fontSize: 13, padding: "10px 16px" }}
-                onClick={() => handleMarkDelivered(o)}
-                disabled={updating === o._id}
-              >
-                {updating === o._id ? "..." : "Marquer livrée"}
-              </button>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </MerchantLayout>
   );

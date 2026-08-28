@@ -125,10 +125,10 @@ const createOrder = asyncHandler(async (req, res) => {
       await notify(
         s.owner,
         "new_order",
-        method === "kkiapay" ? "Nouvelle commande payee" : "Nouvelle commande (paiement a la livraison)",
+        method === "kkiapay" ? "Nouvelle commande payée" : "Nouvelle commande à préparer",
         method === "kkiapay"
-          ? "Une commande vient d'etre payee sur ta boutique."
-          : "Une commande vient d'etre passee sur ta boutique. Le client paiera a la livraison.",
+          ? "Une nouvelle commande vient d'être réglée en ligne sur votre boutique."
+          : "Une nouvelle commande vient d'être passée sur votre boutique. Le règlement se fera à la livraison.",
         "/marchand/commandes"
       );
     }
@@ -137,10 +137,10 @@ const createOrder = asyncHandler(async (req, res) => {
   await notify(
     req.user._id,
     "order_status",
-    "Commande confirmee",
+    "Merci pour votre commande",
     method === "kkiapay"
-      ? `Ta commande de ${grandTotal} FCFA a ete confirmee. Livraison estimee sous 48h.`
-      : `Ta commande de ${grandTotal} FCFA a ete confirmee. Prevois le montant en especes pour le livreur. Livraison estimee sous 48h.`,
+      ? `Votre commande de ${grandTotal.toLocaleString("fr-FR")} FCFA a bien été enregistrée et réglée. Livraison estimée sous 48h.`
+      : `Votre commande de ${grandTotal.toLocaleString("fr-FR")} FCFA a bien été enregistrée. Merci de prévoir le montant en espèces pour le livreur. Livraison estimée sous 48h.`,
     "/commandes"
   );
 
@@ -160,21 +160,95 @@ const getShopOrders = asyncHandler(async (req, res) => {
   res.json(orders);
 });
 
-// @route   GET /api/orders/:id
-// @access  Private (marchand proprietaire de la boutique concernee, ou client de la commande)
 const getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id).populate("client", "name phone");
   if (!order) return res.status(404).json({ message: "Commande introuvable." });
 
   const isClient = order.client._id.toString() === req.user._id.toString();
+  const isCourier = order.assignedCourier && order.assignedCourier.toString() === req.user._id.toString();
   let isMerchant = false;
   if (req.user.role === "marchand") {
     const shop = await Shop.findOne({ owner: req.user._id });
     isMerchant = shop && order.items.some((it) => it.shop.toString() === shop._id.toString());
   }
 
-  if (!isClient && !isMerchant && req.user.role !== "admin") {
+  if (!isClient && !isMerchant && !isCourier && req.user.role !== "admin") {
     return res.status(403).json({ message: "Accès non autorisé à cette commande." });
+  }
+
+  res.json(order);
+});
+
+// @route   PUT /api/orders/:id/courier-response
+// @access  Private (livreur assigne)
+const respondAsCourier = asyncHandler(async (req, res) => {
+  const { available } = req.body;
+  const order = await Order.findById(req.params.id).populate("items.shop");
+  if (!order) return res.status(404).json({ message: "Commande introuvable." });
+
+  if (!order.assignedCourier || order.assignedCourier.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ message: "Tu n'es pas le livreur assigné à cette commande." });
+  }
+
+  order.courierStatus = available ? "available" : "unavailable";
+  if (available) {
+    order.status = "out_for_delivery";
+  }
+  await order.save();
+
+  const shopOwners = [...new Set(order.items.map((it) => it.shop.owner.toString()))];
+  for (const ownerId of shopOwners) {
+    await notify(
+      ownerId,
+      "order_status",
+      available ? "Livreur disponible" : "Livreur indisponible",
+      available
+        ? "Le livreur a confirmé sa disponibilité. La commande est maintenant en cours de livraison."
+        : "Le livreur contacté n'est pas disponible. Merci d'en contacter un autre.",
+      "/marchand/commandes"
+    );
+  }
+
+  if (available) {
+    await notify(
+      order.client,
+      "order_status",
+      "Votre commande est en route",
+      "Un livreur a été assigné et votre commande est maintenant en cours de livraison.",
+      "/commandes"
+    );
+  }
+
+  res.json(order);
+});
+
+// @route   PUT /api/orders/:id/delivery-proof
+// @access  Private (livreur assigne ou client)
+const submitDeliveryProof = asyncHandler(async (req, res) => {
+  const { imageUrl } = req.body;
+  if (!imageUrl) return res.status(400).json({ message: "Image requise." });
+
+  const order = await Order.findById(req.params.id).populate("items.shop");
+  if (!order) return res.status(404).json({ message: "Commande introuvable." });
+
+  const isCourier = order.assignedCourier && order.assignedCourier.toString() === req.user._id.toString();
+  const isClient = order.client.toString() === req.user._id.toString();
+  if (!isCourier && !isClient) {
+    return res.status(403).json({ message: "Accès non autorisé." });
+  }
+
+  order.deliveryProofUrl = imageUrl;
+  await order.save();
+
+  const shopOwners = [...new Set(order.items.map((it) => it.shop.owner.toString()))];
+  for (const ownerId of shopOwners) {
+    await notify(
+      ownerId,
+      "order_status",
+      "Preuve de livraison reçue",
+      "La preuve de livraison a été envoyée. Vous pouvez maintenant marquer la commande comme livrée.",
+      "/marchand/commandes"
+    );
   }
 
   res.json(order);
@@ -204,10 +278,18 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     cancelled: "annulée",
   };
   if (statusLabels[status]) {
-    await notify(order.client, "order_status", "Commande mise à jour", `Ta commande est maintenant ${statusLabels[status]}.`, "/commandes");
+    await notify(order.client, "order_status", "Mise à jour de votre commande", `Votre commande est maintenant ${statusLabels[status]}.`, "/commandes");
   }
 
   res.json(order);
 });
 
-module.exports = { createOrder, getMyOrders, getShopOrders, getOrderById, updateOrderStatus };
+module.exports = {
+  createOrder,
+  getMyOrders,
+  getShopOrders,
+  getOrderById,
+  respondAsCourier,
+  submitDeliveryProof,
+  updateOrderStatus,
+};

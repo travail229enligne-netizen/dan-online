@@ -26,8 +26,15 @@ const orderSchema = new mongoose.Schema(
     deliveryAddress: { type: String, required: true },
     deliveryPhone: { type: String, required: true },
     deliveryCity: { type: String, default: "" },
-    selfDelivery: { type: Boolean, default: false }, // client gere lui-meme la livraison
-    shopDeliveryFees: [shopDeliveryFeeSchema], // detail des frais de livraison par boutique
+    selfDelivery: { type: Boolean, default: false },
+    shopDeliveryFees: [shopDeliveryFeeSchema],
+    assignedCourier: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    courierStatus: {
+      type: String,
+      enum: ["none", "pending", "available", "unavailable"],
+      default: "none",
+    },
+    deliveryProofUrl: { type: String, default: "" },
     paymentMethod: {
       type: String,
       enum: ["kkiapay", "cod"],
@@ -39,7 +46,6 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "paid", "failed"],
       default: "pending",
     },
-    // SLA de livraison affiché au client
     expectedDeliveryHours: { type: Number, default: 48 },
     itemsTotal: { type: Number, required: true },
     commissionAmount: { type: Number, required: true, default: 0 },
@@ -50,7 +56,7 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "confirmed", "out_for_delivery", "delivered", "cancelled"],
       default: "pending",
     },
-    paidAt: { type: Date, default: null }, // date de confirmation du paiement (en ligne ou a la livraison)
+    paidAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

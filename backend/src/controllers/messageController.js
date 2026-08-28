@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
 const Shop = require("../models/Shop");
+const Order = require("../models/Order");
 const { notify } = require("../utils/notify");
 
 // @route   GET /api/messages/conversations
@@ -32,11 +33,11 @@ const startConversation = asyncHandler(async (req, res) => {
 });
 
 // @route   POST /api/messages/start-courier
-// @access  Private (marchand) - demarre ou recupere une conversation avec un livreur, pour une commande donnee
-// body: { courierId, orderId, initialMessage }
+// @access  Private (marchand) - demarre/recupere une conversation avec un livreur et lui assigne une commande
+// body: { courierId, orderId }
 const startCourierConversation = asyncHandler(async (req, res) => {
-  const { courierId, orderId, initialMessage } = req.body;
-  if (!courierId) return res.status(400).json({ message: "Livreur requis." });
+  const { courierId, orderId } = req.body;
+  if (!courierId || !orderId) return res.status(400).json({ message: "Livreur et commande requis." });
 
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
@@ -46,28 +47,36 @@ const startCourierConversation = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Ce livreur n'est pas dans ta liste. Ajoute-le d'abord." });
   }
 
+  const order = await Order.findById(orderId);
+  if (!order) return res.status(404).json({ message: "Commande introuvable." });
+
   let conversation = await Conversation.findOne({ type: "shop_courier", shop: shop._id, courier: courierId });
   if (!conversation) {
-    conversation = await Conversation.create({ type: "shop_courier", shop: shop._id, courier: courierId, order: orderId || null });
-  } else if (orderId) {
+    conversation = await Conversation.create({ type: "shop_courier", shop: shop._id, courier: courierId, order: orderId });
+  } else {
     conversation.order = orderId;
     await conversation.save();
   }
 
-  if (initialMessage && initialMessage.trim()) {
-    const message = await Message.create({
-      conversation: conversation._id,
-      sender: req.user._id,
-      senderRole: "marchand",
-      text: initialMessage.trim(),
-    });
-    conversation.lastMessage = initialMessage.trim();
-    conversation.lastMessageAt = new Date();
-    conversation.unreadForClient += 1; // reutilise ce compteur pour le livreur
-    await conversation.save();
+  order.assignedCourier = courierId;
+  order.courierStatus = "pending";
+  await order.save();
 
-    await notify(courierId, "message", "Nouvelle commande a livrer", initialMessage.trim().slice(0, 80), `/messages/c/${conversation._id}`);
-  }
+  const message = await Message.create({
+    conversation: conversation._id,
+    sender: req.user._id,
+    senderRole: "marchand",
+    kind: "order_summary",
+    order: order._id,
+    text: "",
+  });
+
+  conversation.lastMessage = "📦 Nouvelle commande à livrer";
+  conversation.lastMessageAt = new Date();
+  conversation.unreadForClient += 1; // reutilise ce compteur pour le livreur
+  await conversation.save();
+
+  await notify(courierId, "message", "Nouvelle commande à livrer", "Une boutique t'a envoyé une commande à livrer.", `/messages/c/${conversation._id}`);
 
   res.json(conversation);
 });
@@ -88,7 +97,9 @@ const getMessages = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Accès non autorisé à cette conversation." });
   }
 
-  const messages = await Message.find({ conversation: conversation._id }).sort({ createdAt: 1 });
+  const messages = await Message.find({ conversation: conversation._id })
+    .populate("order")
+    .sort({ createdAt: 1 });
 
   if (isClient || isCourier) conversation.unreadForClient = 0;
   if (isMerchant) conversation.unreadForMerchant = 0;
