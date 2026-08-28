@@ -119,18 +119,32 @@ export default function Commandes() {
                     <span style={{ fontSize: 12, color: "var(--ink-soft)" }}>
                       {new Date(order.createdAt).toLocaleDateString("fr-FR")}
                     </span>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        padding: "3px 10px",
-                        borderRadius: 20,
-                        background: order.status === "delivered" ? "#e8f5ee" : "var(--cream)",
-                        color: order.status === "delivered" ? "var(--green-dark)" : "var(--ink-soft)",
-                      }}
-                    >
-                      {statusLabels[order.status] || order.status}
-                    </span>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 600,
+                          padding: "3px 9px",
+                          borderRadius: 20,
+                          background: "var(--cream)",
+                          color: "var(--ink-soft)",
+                        }}
+                      >
+                        {order.paymentMethod === "kkiapay" ? "💳 Payé en ligne" : "💵 À la livraison"}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          padding: "3px 10px",
+                          borderRadius: 20,
+                          background: order.status === "delivered" ? "#e8f5ee" : "var(--cream)",
+                          color: order.status === "delivered" ? "var(--green-dark)" : "var(--ink-soft)",
+                        }}
+                      >
+                        {statusLabels[order.status] || order.status}
+                      </span>
+                    </div>
                   </div>
 
                   {order.items.map((it) => (
@@ -144,6 +158,12 @@ export default function Commandes() {
                     <span>Total</span>
                     <span>{order.grandTotal.toLocaleString("fr-FR")} FCFA</span>
                   </div>
+
+                  {order.paymentMethod === "cod" && order.status !== "delivered" && order.status !== "cancelled" && (
+                    <div style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 6 }}>
+                      Prévois {order.grandTotal.toLocaleString("fr-FR")} FCFA en espèces pour le livreur.
+                    </div>
+                  )}
 
                   {order.status === "delivered" && (
                     <div style={{ marginTop: 10 }}>

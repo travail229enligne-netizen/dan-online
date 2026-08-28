@@ -19,8 +19,8 @@ const orderSchema = new mongoose.Schema(
     deliveryPhone: { type: String, required: true },
     paymentMethod: {
       type: String,
-      enum: ["kkiapay"],
-      default: "kkiapay",
+      enum: ["kkiapay", "cod"],
+      default: "cod",
     },
     kkiapayTransactionId: { type: String, default: "" },
     paymentStatus: {
@@ -39,7 +39,7 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "confirmed", "out_for_delivery", "delivered", "cancelled"],
       default: "pending",
     },
-    paidAt: { type: Date, default: null }, // date de confirmation du paiement Kkiapay
+    paidAt: { type: Date, default: null }, // date de confirmation du paiement (en ligne ou a la livraison)
   },
   { timestamps: true }
 );

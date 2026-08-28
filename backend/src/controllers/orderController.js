@@ -7,26 +7,36 @@ const { notify } = require("../utils/notify");
 const { verifyTransaction } = require("../utils/kkiapay");
 
 const createOrder = asyncHandler(async (req, res) => {
-  const { items, deliveryAddress, deliveryPhone, transactionId } = req.body;
+  const { items, deliveryAddress, deliveryPhone, transactionId, paymentMethod } = req.body;
   if (!items || items.length === 0) {
     return res.status(400).json({ message: "Le panier est vide." });
   }
-  if (!transactionId) {
-    return res.status(400).json({ message: "Paiement requis avant de passer la commande." });
-  }
 
-  let payment;
-  try {
-    payment = await verifyTransaction(transactionId);
-    console.log("Kkiapay verify response:", JSON.stringify(payment));
-  } catch (err) {
-    console.error("Kkiapay verify error:", err.message, err.response?.data);
-    return res.status(400).json({ message: "Impossible de verifier le paiement. Reessayez." });
-  }
+  const method = paymentMethod === "kkiapay" ? "kkiapay" : "cod";
+  let paymentStatus = "pending";
+  let paidAt = null;
 
-  const status = (payment?.status || payment?.transactionStatus || "").toString().toUpperCase();
-  if (status !== "SUCCESS") {
-    return res.status(400).json({ message: `Le paiement n'a pas ete confirme (statut: ${status || "inconnu"}).` });
+  if (method === "kkiapay") {
+    if (!transactionId) {
+      return res.status(400).json({ message: "Transaction de paiement manquante." });
+    }
+
+    let payment;
+    try {
+      payment = await verifyTransaction(transactionId);
+      console.log("Kkiapay verify response:", JSON.stringify(payment));
+    } catch (err) {
+      console.error("Kkiapay verify error:", err.message, err.response?.data);
+      return res.status(400).json({ message: "Impossible de verifier le paiement. Reessayez." });
+    }
+
+    const status = (payment?.status || payment?.transactionStatus || "").toString().toUpperCase();
+    if (status !== "SUCCESS") {
+      return res.status(400).json({ message: `Le paiement n'a pas ete confirme (statut: ${status || "inconnu"}).` });
+    }
+
+    paymentStatus = "paid";
+    paidAt = new Date();
   }
 
   let itemsTotal = 0;
@@ -68,10 +78,10 @@ const createOrder = asyncHandler(async (req, res) => {
     items: orderItems,
     deliveryAddress,
     deliveryPhone,
-    paymentMethod: "kkiapay",
-    kkiapayTransactionId: transactionId,
-    paymentStatus: "paid",
-    paidAt: new Date(),
+    paymentMethod: method,
+    kkiapayTransactionId: method === "kkiapay" ? transactionId : "",
+    paymentStatus,
+    paidAt,
     itemsTotal,
     commissionAmount,
     deliveryFee,
@@ -87,8 +97,10 @@ const createOrder = asyncHandler(async (req, res) => {
       await notify(
         s.owner,
         "new_order",
-        "Nouvelle commande payee",
-        `Une commande vient d'etre payee sur ta boutique.`,
+        method === "kkiapay" ? "Nouvelle commande payee" : "Nouvelle commande (paiement a la livraison)",
+        method === "kkiapay"
+          ? "Une commande vient d'etre payee sur ta boutique."
+          : "Une commande vient d'etre passee sur ta boutique. Le client paiera a la livraison.",
         "/marchand/commandes"
       );
     }
@@ -97,8 +109,10 @@ const createOrder = asyncHandler(async (req, res) => {
   await notify(
     req.user._id,
     "order_status",
-    "Commande confirmee et payee",
-    `Ta commande de ${grandTotal} FCFA a ete confirmee. Livraison estimee sous 48h.`,
+    "Commande confirmee",
+    method === "kkiapay"
+      ? `Ta commande de ${grandTotal} FCFA a ete confirmee. Livraison estimee sous 48h.`
+      : `Ta commande de ${grandTotal} FCFA a ete confirmee. Prevois le montant en especes pour le livreur. Livraison estimee sous 48h.`,
     "/commandes"
   );
 
@@ -129,6 +143,10 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   if (!order) return res.status(404).json({ message: "Commande introuvable." });
 
   order.status = status;
+  if (status === "delivered" && order.paymentMethod === "cod" && order.paymentStatus !== "paid") {
+    order.paymentStatus = "paid";
+    order.paidAt = new Date();
+  }
   await order.save();
 
   const statusLabels = {
