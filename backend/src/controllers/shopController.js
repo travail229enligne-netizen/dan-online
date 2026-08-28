@@ -2,6 +2,13 @@ const asyncHandler = require("express-async-handler");
 const Shop = require("../models/Shop");
 const User = require("../models/User");
 
+function sanitizeZones(zones) {
+  if (!Array.isArray(zones)) return [];
+  return zones
+    .filter((z) => z && z.city && z.city.trim() && z.price >= 0)
+    .map((z) => ({ city: z.city.trim(), price: Number(z.price) }));
+}
+
 // @route   GET /api/shops
 // @access  Public - liste des boutiques partenaires verifiees
 const getShops = asyncHandler(async (req, res) => {
@@ -24,6 +31,14 @@ const getMyShop = asyncHandler(async (req, res) => {
   res.json(shop || null);
 });
 
+// @route   GET /api/shops/by-id/:id
+// @access  Public - utilise notamment pour calculer les frais de livraison au checkout
+const getShopById = asyncHandler(async (req, res) => {
+  const shop = await Shop.findById(req.params.id).select("name slug deliveryZones businessType");
+  if (!shop) return res.status(404).json({ message: "Boutique introuvable." });
+  res.json(shop);
+});
+
 // @route   GET /api/shops/:slug
 // @access  Public
 const getShopBySlug = asyncHandler(async (req, res) => {
@@ -39,7 +54,7 @@ const createShop = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Vous possedez deja une boutique." });
   }
 
-  const { name, description, category, businessType, city, allee, numero, themeColor } = req.body;
+  const { name, description, category, businessType, city, allee, numero, themeColor, deliveryZones } = req.body;
   const slug = name
     .toLowerCase()
     .normalize("NFD")
@@ -58,6 +73,7 @@ const createShop = asyncHandler(async (req, res) => {
     businessType: validBusinessTypes.includes(businessType) ? businessType : "boutique",
     city,
     location: { allee, numero },
+    deliveryZones: sanitizeZones(deliveryZones),
     themeColor: themeColor || "#111111",
     status: "pending",
   });
@@ -81,6 +97,10 @@ const updateMyShop = asyncHandler(async (req, res) => {
 
   if (req.body.businessType !== undefined && validBusinessTypes.includes(req.body.businessType)) {
     shop.businessType = req.body.businessType;
+  }
+
+  if (req.body.deliveryZones !== undefined) {
+    shop.deliveryZones = sanitizeZones(req.body.deliveryZones);
   }
 
   if (req.body.allee !== undefined || req.body.numero !== undefined) {
@@ -156,6 +176,7 @@ const getMyShopStats = asyncHandler(async (req, res) => {
 module.exports = {
   getShops,
   getMyShop,
+  getShopById,
   getShopBySlug,
   createShop,
   updateMyShop,

@@ -2,6 +2,7 @@ const express = require("express");
 const {
   getShops,
   getMyShop,
+  getShopById,
   getShopBySlug,
   createShop,
   updateMyShop,
@@ -19,6 +20,7 @@ router.get("/me", protect, authorize("marchand"), getMyShop);
 router.get("/me/stats", protect, authorize("marchand"), getMyShopStats);
 router.put("/me/close", protect, authorize("marchand"), closeMyShop);
 router.put("/me/reopen", protect, authorize("marchand"), reopenMyShop);
+router.get("/by-id/:id", getShopById);
 router.get("/:slug", getShopBySlug);
 router.post("/", protect, authorize("marchand"), createShop);
 router.put("/me", protect, authorize("marchand"), updateMyShop);

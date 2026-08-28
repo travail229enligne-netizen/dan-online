@@ -11,12 +11,23 @@ const orderItemSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const shopDeliveryFeeSchema = new mongoose.Schema(
+  {
+    shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", required: true },
+    fee: { type: Number, required: true, default: 0 },
+  },
+  { _id: false }
+);
+
 const orderSchema = new mongoose.Schema(
   {
     client: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     items: [orderItemSchema],
     deliveryAddress: { type: String, required: true },
     deliveryPhone: { type: String, required: true },
+    deliveryCity: { type: String, default: "" },
+    selfDelivery: { type: Boolean, default: false }, // client gere lui-meme la livraison
+    shopDeliveryFees: [shopDeliveryFeeSchema], // detail des frais de livraison par boutique
     paymentMethod: {
       type: String,
       enum: ["kkiapay", "cod"],

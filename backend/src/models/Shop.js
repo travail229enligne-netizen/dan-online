@@ -1,5 +1,13 @@
 const mongoose = require("mongoose");
 
+const deliveryZoneSchema = new mongoose.Schema(
+  {
+    city: { type: String, required: true, trim: true },
+    price: { type: Number, required: true, min: 0 },
+  },
+  { _id: false }
+);
+
 const shopSchema = new mongoose.Schema(
   {
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
@@ -19,6 +27,7 @@ const shopSchema = new mongoose.Schema(
       allee: { type: String, default: "" },
       numero: { type: String, default: "" },
     },
+    deliveryZones: [deliveryZoneSchema], // tarifs de livraison par ville
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
     isVerified: { type: Boolean, default: false }, // badge "Vérifié"
     isProfessional: { type: Boolean, default: false }, // badge "Boutique professionnelle" accorde par admin

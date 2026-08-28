@@ -37,6 +37,7 @@ export default function Boutique() {
     numero: "",
     themeColor: "#c1592b",
     logoUrl: "",
+    deliveryZones: [],
   });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -60,22 +61,43 @@ export default function Boutique() {
             numero: r.data.location?.numero || "",
             themeColor: r.data.themeColor || "#c1592b",
             logoUrl: r.data.logoUrl || "",
+            deliveryZones: r.data.deliveryZones || [],
           });
         }
       })
       .catch(() => setExistingShop(null));
   }, []);
 
+  const addZone = () => {
+    setForm({ ...form, deliveryZones: [...form.deliveryZones, { city: "", price: "" }] });
+  };
+
+  const updateZone = (index, field, value) => {
+    const zones = [...form.deliveryZones];
+    zones[index] = { ...zones[index], [field]: value };
+    setForm({ ...form, deliveryZones: zones });
+  };
+
+  const removeZone = (index) => {
+    setForm({ ...form, deliveryZones: form.deliveryZones.filter((_, i) => i !== index) });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSaving(true);
     try {
+      const cleanZones = form.deliveryZones
+        .filter((z) => z.city && z.city.trim() && z.price !== "")
+        .map((z) => ({ city: z.city.trim(), price: Number(z.price) }));
+
+      const payload = { ...form, deliveryZones: cleanZones };
+
       let result;
       if (existingShop) {
-        result = await api.put("/shops/me", form);
+        result = await api.put("/shops/me", payload);
       } else {
-        result = await api.post("/shops", form);
+        result = await api.post("/shops", payload);
       }
       setExistingShop(result.data);
       setSaved(true);
@@ -269,6 +291,50 @@ export default function Boutique() {
               style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
             />
           </label>
+        </div>
+
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <span style={{ fontSize: 12, fontWeight: 600 }}>Tarifs de livraison par ville</span>
+            <button
+              type="button"
+              onClick={addZone}
+              style={{ fontSize: 12, color: "var(--ink)", fontWeight: 600, textDecoration: "underline" }}
+            >
+              + Ajouter une ville
+            </button>
+          </div>
+          {form.deliveryZones.length === 0 && (
+            <p style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+              Aucune ville configurée. Sans tarif, la livraison sera à 0 FCFA pour toutes les villes.
+            </p>
+          )}
+          {form.deliveryZones.map((zone, i) => (
+            <div key={i} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
+              <input
+                list="villes-suggestions"
+                placeholder="Ville"
+                value={zone.city}
+                onChange={(e) => updateZone(i, "city", e.target.value)}
+                style={{ flex: 1, padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 12 }}
+              />
+              <input
+                type="number"
+                placeholder="Prix (FCFA)"
+                value={zone.price}
+                onChange={(e) => updateZone(i, "price", e.target.value)}
+                style={{ flex: 1, padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 12 }}
+              />
+              <button
+                type="button"
+                onClick={() => removeZone(i)}
+                aria-label="Retirer cette ville"
+                style={{ fontSize: 16, color: "var(--terracotta-dark)", padding: "0 6px" }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
         </div>
 
         <div>

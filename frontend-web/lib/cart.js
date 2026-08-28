@@ -35,6 +35,7 @@ export function CartProvider({ children }) {
           productId: product._id,
           name: product.name,
           price: product.price,
+          shopId: product.shop?._id || "",
           shopName: product.shop?.name || "",
           image: product.images?.[0] || "",
           quantity,
@@ -42,16 +43,13 @@ export function CartProvider({ children }) {
       ];
     });
   };
-
   const removeFromCart = (productId) => {
     setItems((prev) => prev.filter((it) => it.productId !== productId));
   };
-
   const updateQuantity = (productId, quantity) => {
     if (quantity <= 0) return removeFromCart(productId);
     setItems((prev) => prev.map((it) => (it.productId === productId ? { ...it, quantity } : it)));
   };
-
   const clearCart = () => setItems([]);
 
   const count = items.reduce((sum, it) => sum + it.quantity, 0);
@@ -65,5 +63,4 @@ export function CartProvider({ children }) {
     </CartContext.Provider>
   );
 }
-
 export const useCart = () => useContext(CartContext);

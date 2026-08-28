@@ -7,14 +7,74 @@ const { notify } = require("../utils/notify");
 const { verifyTransaction } = require("../utils/kkiapay");
 
 const createOrder = asyncHandler(async (req, res) => {
-  const { items, deliveryAddress, deliveryPhone, transactionId, paymentMethod } = req.body;
+  const { items, deliveryAddress, deliveryPhone, deliveryCity, selfDelivery, transactionId, paymentMethod } = req.body;
   if (!items || items.length === 0) {
     return res.status(400).json({ message: "Le panier est vide." });
   }
 
   const method = paymentMethod === "kkiapay" ? "kkiapay" : "cod";
+
+  let itemsTotal = 0;
+  let commissionAmount = 0;
+  const orderItems = [];
+  const shopCache = {};
+
+  for (const it of items) {
+    const product = await Product.findById(it.productId).populate("shop");
+    if (!product || !product.isActive) {
+      return res.status(400).json({ message: `Produit indisponible : ${it.productId}` });
+    }
+    if (product.stock < it.quantity) {
+      return res.status(400).json({ message: `Stock insuffisant pour ${product.name}.` });
+    }
+
+    const lineTotal = product.price * it.quantity;
+    itemsTotal += lineTotal;
+    const rate = await resolveCommissionRate(product.shop._id, product.category);
+    commissionAmount += (lineTotal * rate) / 100;
+
+    orderItems.push({
+      product: product._id,
+      shop: product.shop._id,
+      name: product.name,
+      price: product.price,
+      quantity: it.quantity,
+    });
+
+    shopCache[product.shop._id.toString()] = product.shop;
+
+    product.stock -= it.quantity;
+    product.soldCount += it.quantity;
+    await product.save();
+  }
+
+  // Calcul des frais de livraison par boutique, selon la ville choisie
+  let deliveryFee = 0;
+  const shopDeliveryFees = [];
+  const isSelfDelivery = !!selfDelivery;
+
+  if (!isSelfDelivery) {
+    for (const shopId of Object.keys(shopCache)) {
+      const shop = shopCache[shopId];
+      let fee = 0;
+      if (deliveryCity && Array.isArray(shop.deliveryZones)) {
+        const zone = shop.deliveryZones.find(
+          (z) => z.city.toLowerCase() === deliveryCity.trim().toLowerCase()
+        );
+        if (zone) fee = zone.price;
+      }
+      shopDeliveryFees.push({ shop: shopId, fee });
+      deliveryFee += fee;
+    }
+  } else {
+    for (const shopId of Object.keys(shopCache)) {
+      shopDeliveryFees.push({ shop: shopId, fee: 0 });
+    }
+  }
+
   let paymentStatus = "pending";
   let paidAt = null;
+  const grandTotal = itemsTotal + deliveryFee;
 
   if (method === "kkiapay") {
     if (!transactionId) {
@@ -39,45 +99,14 @@ const createOrder = asyncHandler(async (req, res) => {
     paidAt = new Date();
   }
 
-  let itemsTotal = 0;
-  let commissionAmount = 0;
-  const orderItems = [];
-
-  for (const it of items) {
-    const product = await Product.findById(it.productId).populate("shop");
-    if (!product || !product.isActive) {
-      return res.status(400).json({ message: `Produit indisponible : ${it.productId}` });
-    }
-    if (product.stock < it.quantity) {
-      return res.status(400).json({ message: `Stock insuffisant pour ${product.name}.` });
-    }
-
-    const lineTotal = product.price * it.quantity;
-    itemsTotal += lineTotal;
-    const rate = await resolveCommissionRate(product.shop._id, product.category);
-    commissionAmount += (lineTotal * rate) / 100;
-
-    orderItems.push({
-      product: product._id,
-      shop: product.shop._id,
-      name: product.name,
-      price: product.price,
-      quantity: it.quantity,
-    });
-
-    product.stock -= it.quantity;
-    product.soldCount += it.quantity;
-    await product.save();
-  }
-
-  const deliveryFee = 0;
-  const grandTotal = itemsTotal + deliveryFee;
-
   const order = await Order.create({
     client: req.user._id,
     items: orderItems,
     deliveryAddress,
     deliveryPhone,
+    deliveryCity: deliveryCity || "",
+    selfDelivery: isSelfDelivery,
+    shopDeliveryFees,
     paymentMethod: method,
     kkiapayTransactionId: method === "kkiapay" ? transactionId : "",
     paymentStatus,
@@ -90,9 +119,9 @@ const createOrder = asyncHandler(async (req, res) => {
     expectedDeliveryHours: 48,
   });
 
-  const shopIds = [...new Set(orderItems.map((it) => it.shop.toString()))];
+  const shopIds = Object.keys(shopCache);
   for (const shopId of shopIds) {
-    const s = await Shop.findById(shopId);
+    const s = shopCache[shopId];
     if (s) {
       await notify(
         s.owner,

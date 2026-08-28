@@ -6,16 +6,57 @@ import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
 import api from "../lib/api";
 
+const cities = ["Cotonou", "Porto-Novo", "Abomey-Calavi", "Parakou", "Bohicon"];
+
 export default function Commande() {
   const { items, total, clearCart } = useCart();
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [form, setForm] = useState({ deliveryAddress: user?.address || "", deliveryPhone: user?.phone || "" });
+  const [form, setForm] = useState({
+    deliveryAddress: user?.address || "",
+    deliveryPhone: user?.phone || "",
+    deliveryCity: "",
+  });
+  const [selfDelivery, setSelfDelivery] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [shopFees, setShopFees] = useState([]); // [{ shopId, shopName, fee }]
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(null);
   const [widgetReady, setWidgetReady] = useState(false);
+
+  const shopIds = [...new Set(items.map((it) => it.shopId).filter(Boolean))];
+
+  // Recalcule les frais de livraison a chaque changement de ville
+  useEffect(() => {
+    if (selfDelivery || !form.deliveryCity.trim() || shopIds.length === 0) {
+      setShopFees([]);
+      return;
+    }
+    let cancelled = false;
+    Promise.all(
+      shopIds.map((id) =>
+        api
+          .get(`/shops/by-id/${id}`)
+          .then((r) => ({ shopId: id, shopName: r.data.name, fee: findZoneFee(r.data.deliveryZones, form.deliveryCity) }))
+          .catch(() => ({ shopId: id, shopName: "", fee: 0 }))
+      )
+    ).then((results) => {
+      if (!cancelled) setShopFees(results);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [form.deliveryCity, selfDelivery, items.length]);
+
+  const findZoneFee = (zones, city) => {
+    if (!Array.isArray(zones)) return 0;
+    const zone = zones.find((z) => z.city.toLowerCase() === city.trim().toLowerCase());
+    return zone ? zone.price : 0;
+  };
+
+  const totalDeliveryFee = selfDelivery ? 0 : shopFees.reduce((sum, s) => sum + s.fee, 0);
+  const grandTotal = total + totalDeliveryFee;
 
   useEffect(() => {
     if (!widgetReady || typeof window.addKkiapayListener !== "function") return;
@@ -30,6 +71,8 @@ export default function Commande() {
           items: items.map((it) => ({ productId: it.productId, quantity: it.quantity })),
           deliveryAddress: form.deliveryAddress,
           deliveryPhone: form.deliveryPhone,
+          deliveryCity: form.deliveryCity,
+          selfDelivery,
           transactionId,
           paymentMethod: "kkiapay",
         });
@@ -54,7 +97,7 @@ export default function Commande() {
         window.removeKkiapayListener("failed", handleFailed);
       }
     };
-  }, [widgetReady, items, form]);
+  }, [widgetReady, items, form, selfDelivery]);
 
   if (!loading && !user) {
     if (typeof window !== "undefined") router.push("/connexion?next=/commande");
@@ -69,6 +112,8 @@ export default function Commande() {
         items: items.map((it) => ({ productId: it.productId, quantity: it.quantity })),
         deliveryAddress: form.deliveryAddress,
         deliveryPhone: form.deliveryPhone,
+        deliveryCity: form.deliveryCity,
+        selfDelivery,
         paymentMethod: "cod",
       });
       setSuccess(data);
@@ -87,6 +132,10 @@ export default function Commande() {
       setError("Renseigne ton adresse et ton téléphone avant de continuer.");
       return;
     }
+    if (!selfDelivery && !form.deliveryCity.trim()) {
+      setError("Renseigne ta ville pour calculer les frais de livraison, ou coche que tu gères ta propre livraison.");
+      return;
+    }
 
     if (paymentMethod === "cod") {
       handleCodOrder();
@@ -98,7 +147,7 @@ export default function Commande() {
       return;
     }
     window.openKkiapayWidget({
-      amount: total,
+      amount: grandTotal,
       key: process.env.NEXT_PUBLIC_KKIAPAY_PUBLIC_KEY,
       sandbox: true,
       phone: form.deliveryPhone,
@@ -154,9 +203,26 @@ export default function Commande() {
               <span>{(it.price * it.quantity).toLocaleString("fr-FR")} FCFA</span>
             </div>
           ))}
+
+          <div style={{ borderTop: "1px solid var(--line)", marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+            <span>Sous-total produits</span>
+            <span>{total.toLocaleString("fr-FR")} FCFA</span>
+          </div>
+
+          {!selfDelivery && shopFees.length > 0 && (
+            <div style={{ marginTop: 6 }}>
+              {shopFees.map((s) => (
+                <div key={s.shopId} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--ink-soft)" }}>
+                  <span>Livraison — {s.shopName}</span>
+                  <span>{s.fee > 0 ? `${s.fee.toLocaleString("fr-FR")} FCFA` : "Non desservi"}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div style={{ borderTop: "1px solid var(--line)", marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
             <span>Total</span>
-            <span style={{ color: "var(--terracotta-dark)" }}>{total.toLocaleString("fr-FR")} FCFA</span>
+            <span style={{ color: "var(--terracotta-dark)" }}>{grandTotal.toLocaleString("fr-FR")} FCFA</span>
           </div>
         </div>
 
@@ -181,6 +247,34 @@ export default function Commande() {
               style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
             />
           </label>
+
+          <label style={{ fontSize: 12 }}>
+            Ville de livraison
+            <input
+              required={!selfDelivery}
+              disabled={selfDelivery}
+              list="villes-suggestions"
+              placeholder="ex: Cotonou"
+              value={form.deliveryCity}
+              onChange={(e) => setForm({ ...form, deliveryCity: e.target.value })}
+              style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
+            />
+            <datalist id="villes-suggestions">
+              {cities.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          </label>
+
+          <label style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
+            <input
+              type="checkbox"
+              checked={selfDelivery}
+              onChange={(e) => setSelfDelivery(e.target.checked)}
+            />
+            Je m'occupe moi-même de la livraison (pas de frais de livraison)
+          </label>
+
           <label style={{ fontSize: 12 }}>
             Téléphone de contact
             <input
@@ -235,7 +329,7 @@ export default function Commande() {
             </div>
           ) : (
             <div style={{ fontSize: 12, background: "var(--cream)", padding: 10, borderRadius: 8 }}>
-              💳 Paiement en ligne sécurisé (Mobile Money) avant expédition. Les frais de livraison sont à régler séparément au livreur.
+              💳 Paiement en ligne sécurisé (Mobile Money) avant expédition.
             </div>
           )}
 
