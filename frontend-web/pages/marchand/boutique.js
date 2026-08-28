@@ -23,6 +23,53 @@ const businessTypes = [
   { value: "artisan", label: "Artisan", icon: "🛠️" },
 ];
 
+const inputStyle = {
+  width: "100%",
+  padding: 12,
+  marginTop: 6,
+  border: "1px solid var(--line)",
+  borderRadius: 10,
+  fontSize: 15,
+  boxSizing: "border-box",
+};
+
+function Eyebrow({ children }) {
+  return (
+    <div
+      style={{
+        fontSize: 12,
+        fontWeight: 700,
+        letterSpacing: "0.06em",
+        textTransform: "uppercase",
+        color: "var(--ink-soft)",
+        marginBottom: 14,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Section({ children }) {
+  return (
+    <div
+      style={{
+        background: "var(--white)",
+        border: "1px solid var(--line)",
+        borderRadius: "var(--radius-md)",
+        padding: 18,
+        display: "flex",
+        flexDirection: "column",
+        gap: 16,
+        boxSizing: "border-box",
+        width: "100%",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function Boutique() {
   const router = useRouter();
   const [categories, setCategories] = useState([]);
@@ -127,250 +174,289 @@ export default function Boutique() {
 
   return (
     <MerchantLayout title="Ma boutique">
-      <h1 style={{ fontSize: 20, marginBottom: 4 }}>
-        {existingShop ? "Paramètres de ma boutique" : "Créer ma boutique"}
-      </h1>
+      <div style={{ width: "100%", maxWidth: "100%", overflowX: "hidden", boxSizing: "border-box" }}>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, marginBottom: 4 }}>
+          {existingShop ? "Paramètres de ma boutique" : "Créer ma boutique"}
+        </h1>
 
-      {existingShop && existingShop.status === "active" && (
-        <a
-          href={`/boutique/${existingShop.slug}`}
-          target="_blank"
-          rel="noreferrer"
-          style={{
-            display: "inline-block",
-            marginBottom: 10,
-            fontSize: 13,
-            color: "var(--terracotta-dark)",
-            fontWeight: 600,
-          }}
-        >
-          Voir ma boutique en ligne
-        </a>
-      )}
-
-      <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 18 }}>
-        {existingShop
-          ? existingShop.status === "pending"
-            ? "En attente de validation par l'équipe EasyShop."
-            : existingShop.status === "closed"
-            ? "Ta boutique est fermée et n'apparaît plus publiquement."
-            : "Boutique active sur le marché."
-          : "Renseigne les informations de ton emplacement virtuel."}
-      </p>
-
-      {existingShop && existingShop.status !== "pending" && (
-        <button
-          onClick={toggleClose}
-          disabled={closing}
-          style={{
-            marginBottom: 20,
-            fontSize: 13,
-            padding: "10px 16px",
-            borderRadius: 10,
-            border: "1px solid var(--line)",
-            background: "var(--white)",
-            color: existingShop.status === "active" ? "var(--terracotta-dark)" : "var(--green-dark)",
-            fontWeight: 600,
-          }}
-        >
-          {existingShop.status === "active" ? "Fermer ma boutique" : "Rouvrir ma boutique"}
-        </button>
-      )}
-
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          background: "var(--white)",
-          border: "1px solid var(--line)",
-          borderRadius: "var(--radius-md)",
-          padding: 18,
-          display: "flex",
-          flexDirection: "column",
-          gap: 16,
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 12, marginBottom: 8 }}>Type de commerce</div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {businessTypes.map((bt) => (
-              <button
-                type="button"
-                key={bt.value}
-                onClick={() => setForm({ ...form, businessType: bt.value })}
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: 10,
-                  border: `2px solid ${form.businessType === bt.value ? "var(--terracotta)" : "var(--line)"}`,
-                  background: form.businessType === bt.value ? "var(--terracotta)" : "var(--white)",
-                  color: form.businessType === bt.value ? "var(--white)" : "var(--ink)",
-                  fontWeight: 600,
-                  fontSize: 12,
-                }}
-              >
-                {bt.icon} {bt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <ImageUpload
-          label="Logo de la boutique"
-          value={form.logoUrl}
-          onChange={(url) => setForm({ ...form, logoUrl: url })}
-        />
-
-        <label style={{ fontSize: 12 }}>
-          Nom de la boutique
-          <input
-            required
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
-          />
-        </label>
-
-        <label style={{ fontSize: 12 }}>
-          Description
-          <textarea
-            rows={3}
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8, fontFamily: "inherit" }}
-          />
-        </label>
-
-        <label style={{ fontSize: 12 }}>
-          Catégorie principale
-          <select
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
-            style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
+        {existingShop && existingShop.status === "active" && (
+          <a
+            href={`/boutique/${existingShop.slug}`}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              display: "inline-block",
+              marginBottom: 10,
+              fontSize: 13,
+              color: "var(--terracotta-dark)",
+              fontWeight: 600,
+            }}
           >
-            <option value="">Choisir...</option>
-            {categories.map((c) => (
-              <option key={c._id} value={c._id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            Voir ma boutique en ligne
+          </a>
+        )}
 
-        <label style={{ fontSize: 12 }}>
-          Ville
-          <input
-            required
-            list="villes-suggestions"
-            placeholder="ex: Cotonou"
-            value={form.city}
-            onChange={(e) => setForm({ ...form, city: e.target.value })}
-            style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
-          />
-          <datalist id="villes-suggestions">
-            {cities.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
-        </label>
+        <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 20 }}>
+          {existingShop
+            ? existingShop.status === "pending"
+              ? "En attente de validation par l'équipe EasyShop."
+              : existingShop.status === "closed"
+              ? "Ta boutique est fermée et n'apparaît plus publiquement."
+              : "Boutique active sur le marché."
+            : "Renseigne les informations de ton emplacement virtuel."}
+        </p>
 
-        <div style={{ display: "flex", gap: 10 }}>
-          <label style={{ fontSize: 12, flex: 1 }}>
-            Allée
-            <input
-              placeholder="Allée 3"
-              value={form.allee}
-              onChange={(e) => setForm({ ...form, allee: e.target.value })}
-              style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
+        {existingShop && existingShop.status !== "pending" && (
+          <button
+            onClick={toggleClose}
+            disabled={closing}
+            style={{
+              marginBottom: 20,
+              fontSize: 14,
+              padding: "12px 18px",
+              borderRadius: 10,
+              border: "1px solid var(--line)",
+              background: "var(--white)",
+              color: existingShop.status === "active" ? "var(--terracotta-dark)" : "var(--green-dark)",
+              fontWeight: 600,
+            }}
+          >
+            {existingShop.status === "active" ? "Fermer ma boutique" : "Rouvrir ma boutique"}
+          </button>
+        )}
+
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+            width: "100%",
+            boxSizing: "border-box",
+          }}
+        >
+          <Section>
+            <Eyebrow>Type de commerce</Eyebrow>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {businessTypes.map((bt) => (
+                <button
+                  type="button"
+                  key={bt.value}
+                  onClick={() => setForm({ ...form, businessType: bt.value })}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 10,
+                    border: `2px solid ${form.businessType === bt.value ? "var(--terracotta)" : "var(--line)"}`,
+                    background: form.businessType === bt.value ? "var(--terracotta)" : "var(--white)",
+                    color: form.businessType === bt.value ? "var(--white)" : "var(--ink)",
+                    fontWeight: 600,
+                    fontSize: 13,
+                  }}
+                >
+                  {bt.icon} {bt.label}
+                </button>
+              ))}
+            </div>
+          </Section>
+
+          <Section>
+            <Eyebrow>Identité de la boutique</Eyebrow>
+
+            <ImageUpload
+              label="Logo de la boutique"
+              value={form.logoUrl}
+              onChange={(url) => setForm({ ...form, logoUrl: url })}
             />
-          </label>
-          <label style={{ fontSize: 12, flex: 1 }}>
-            Numéro
-            <input
-              placeholder="N°45"
-              value={form.numero}
-              onChange={(e) => setForm({ ...form, numero: e.target.value })}
-              style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
-            />
-          </label>
-        </div>
 
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <span style={{ fontSize: 12, fontWeight: 600 }}>Tarifs de livraison par ville</span>
-            <button
-              type="button"
-              onClick={addZone}
-              style={{ fontSize: 12, color: "var(--ink)", fontWeight: 600, textDecoration: "underline" }}
-            >
-              + Ajouter une ville
-            </button>
-          </div>
-          {form.deliveryZones.length === 0 && (
-            <p style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-              Aucune ville configurée. Sans tarif, la livraison sera à 0 FCFA pour toutes les villes.
-            </p>
-          )}
-          {form.deliveryZones.map((zone, i) => (
-            <div key={i} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
+            <label style={{ fontSize: 13, fontWeight: 600 }}>
+              Nom de la boutique
               <input
+                required
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={{ fontSize: 13, fontWeight: 600 }}>
+              Description
+              <textarea
+                rows={3}
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                style={{ ...inputStyle, fontFamily: "inherit", resize: "vertical" }}
+              />
+            </label>
+
+            <label style={{ fontSize: 13, fontWeight: 600 }}>
+              Catégorie principale
+              <select
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                style={inputStyle}
+              >
+                <option value="">Choisir...</option>
+                {categories.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </Section>
+
+          <Section>
+            <Eyebrow>Localisation</Eyebrow>
+
+            <label style={{ fontSize: 13, fontWeight: 600 }}>
+              Ville
+              <input
+                required
                 list="villes-suggestions"
-                placeholder="Ville"
-                value={zone.city}
-                onChange={(e) => updateZone(i, "city", e.target.value)}
-                style={{ flex: 1, padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 12 }}
+                placeholder="ex: Cotonou"
+                value={form.city}
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
+                style={inputStyle}
               />
-              <input
-                type="number"
-                placeholder="Prix (FCFA)"
-                value={zone.price}
-                onChange={(e) => updateZone(i, "price", e.target.value)}
-                style={{ flex: 1, padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 12 }}
-              />
+              <datalist id="villes-suggestions">
+                {cities.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+            </label>
+
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <label style={{ fontSize: 13, fontWeight: 600, flex: "1 1 120px", minWidth: 0 }}>
+                Allée
+                <input
+                  placeholder="Allée 3"
+                  value={form.allee}
+                  onChange={(e) => setForm({ ...form, allee: e.target.value })}
+                  style={inputStyle}
+                />
+              </label>
+              <label style={{ fontSize: 13, fontWeight: 600, flex: "1 1 120px", minWidth: 0 }}>
+                Numéro
+                <input
+                  placeholder="N°45"
+                  value={form.numero}
+                  onChange={(e) => setForm({ ...form, numero: e.target.value })}
+                  style={inputStyle}
+                />
+              </label>
+            </div>
+          </Section>
+
+          <Section>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <Eyebrow>Tarifs de livraison par ville</Eyebrow>
               <button
                 type="button"
-                onClick={() => removeZone(i)}
-                aria-label="Retirer cette ville"
-                style={{ fontSize: 16, color: "var(--terracotta-dark)", padding: "0 6px" }}
+                onClick={addZone}
+                style={{ fontSize: 13, color: "var(--ink)", fontWeight: 700, textDecoration: "underline", marginTop: -14 }}
               >
-                ×
+                + Ajouter
               </button>
             </div>
-          ))}
-        </div>
-
-        <div>
-          <div style={{ fontSize: 12, marginBottom: 8 }}>Couleur de la vitrine</div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            {themeOptions.map((t) => (
-              <button
-                type="button"
-                key={t.value}
-                onClick={() => setForm({ ...form, themeColor: t.value })}
-                title={t.name}
+            {form.deliveryZones.length === 0 && (
+              <p style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: -8 }}>
+                Aucune ville configurée. Sans tarif, la livraison sera à 0 FCFA pour toutes les villes.
+              </p>
+            )}
+            {form.deliveryZones.map((zone, i) => (
+              <div
+                key={i}
                 style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: "50%",
-                  background: t.value,
-                  border: form.themeColor === t.value ? "3px solid var(--ink)" : "3px solid transparent",
+                  display: "flex",
+                  gap: 8,
+                  alignItems: "center",
+                  background: "var(--cream)",
+                  borderRadius: 10,
+                  padding: 10,
+                  boxSizing: "border-box",
+                  width: "100%",
                 }}
-              />
+              >
+                <input
+                  list="villes-suggestions"
+                  placeholder="Ville"
+                  value={zone.city}
+                  onChange={(e) => updateZone(i, "city", e.target.value)}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    padding: 10,
+                    border: "1px solid var(--line)",
+                    borderRadius: 8,
+                    fontSize: 14,
+                    boxSizing: "border-box",
+                    background: "var(--white)",
+                  }}
+                />
+                <input
+                  type="number"
+                  placeholder="Prix"
+                  value={zone.price}
+                  onChange={(e) => updateZone(i, "price", e.target.value)}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    padding: 10,
+                    border: "1px solid var(--line)",
+                    borderRadius: 8,
+                    fontSize: 14,
+                    boxSizing: "border-box",
+                    background: "var(--white)",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeZone(i)}
+                  aria-label="Retirer cette ville"
+                  style={{ fontSize: 18, color: "var(--terracotta-dark)", padding: "0 8px", fontWeight: 700, flexShrink: 0 }}
+                >
+                  ×
+                </button>
+              </div>
             ))}
-          </div>
-        </div>
+          </Section>
 
-        {error && <p style={{ color: "var(--terracotta-dark)", fontSize: 13 }}>{error}</p>}
-        {saved && <p style={{ color: "var(--green-dark)", fontSize: 13 }}>Boutique enregistrée !</p>}
+          <Section>
+            <Eyebrow>Apparence de la vitrine</Eyebrow>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              {themeOptions.map((t) => (
+                <button
+                  type="button"
+                  key={t.value}
+                  onClick={() => setForm({ ...form, themeColor: t.value })}
+                  title={t.name}
+                  style={{
+                    width: 42,
+                    height: 42,
+                    borderRadius: "50%",
+                    background: t.value,
+                    border: form.themeColor === t.value ? "3px solid var(--ink)" : "3px solid transparent",
+                    flexShrink: 0,
+                  }}
+                />
+              ))}
+            </div>
+          </Section>
 
-        <button className="btn-primary" type="submit" disabled={saving}>
-          {saving ? "Enregistrement..." : existingShop ? "Enregistrer les modifications" : "Créer ma boutique"}
-        </button>
-      </form>
+          {error && <p style={{ color: "var(--terracotta-dark)", fontSize: 14 }}>{error}</p>}
+          {saved && <p style={{ color: "var(--green-dark)", fontSize: 14 }}>Boutique enregistrée !</p>}
 
-      {!existingShop && (
-        <p style={{ fontSize: 12, color: "var(--ink-soft)", textAlign: "center", marginTop: 10 }}>
-          Ta boutique sera visible dès sa validation par l'équipe.
-        </p>
-      )}
+          <button className="btn-primary" type="submit" disabled={saving} style={{ fontSize: 15, padding: 14 }}>
+            {saving ? "Enregistrement..." : existingShop ? "Enregistrer les modifications" : "Créer ma boutique"}
+          </button>
+        </form>
+
+        {!existingShop && (
+          <p style={{ fontSize: 13, color: "var(--ink-soft)", textAlign: "center", marginTop: 12 }}>
+            Ta boutique sera visible dès sa validation par l'équipe.
+          </p>
+        )}
+      </div>
     </MerchantLayout>
   );
 }
