@@ -2,9 +2,11 @@ const asyncHandler = require("express-async-handler");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const Shop = require("../models/Shop");
+const User = require("../models/User");
 const { resolveCommissionRate } = require("../utils/commission");
 const { notify } = require("../utils/notify");
 const { verifyTransaction } = require("../utils/kkiapay");
+const { sendEmail } = require("../utils/email");
 
 const createOrder = asyncHandler(async (req, res) => {
   const { items, deliveryAddress, deliveryPhone, deliveryCity, selfDelivery, transactionId, paymentMethod } = req.body;
@@ -144,6 +146,30 @@ const createOrder = asyncHandler(async (req, res) => {
     "/commandes"
   );
 
+  const client = await User.findById(req.user._id);
+  if (client?.email) {
+    const itemsHtml = orderItems.map((it) => `<li>${it.quantity} × ${it.name} — ${(it.price * it.quantity).toLocaleString("fr-FR")} FCFA</li>`).join("");
+    const paymentLine = method === "kkiapay"
+      ? "Votre paiement en ligne a bien été confirmé."
+      : `Merci de prévoir <strong>${grandTotal.toLocaleString("fr-FR")} FCFA</strong> en espèces pour le livreur.`;
+
+    await sendEmail(
+      client.email,
+      "Confirmation de votre commande EasyShop",
+      `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #111;">
+          <h2 style="color: #111;">Merci pour votre commande, ${client.name} !</h2>
+          <p>Votre commande a bien été enregistrée et est en cours de préparation.</p>
+          <ul style="padding-left: 18px;">${itemsHtml}</ul>
+          <p style="font-weight: bold; font-size: 16px;">Total : ${grandTotal.toLocaleString("fr-FR")} FCFA</p>
+          <p>${paymentLine}</p>
+          <p style="color: #666; font-size: 13px;">Livraison estimée sous 48h à l'adresse : ${deliveryAddress}${deliveryCity ? `, ${deliveryCity}` : ""}.</p>
+          <p style="color: #666; font-size: 13px;">Merci de votre confiance,<br/>L'équipe EasyShop</p>
+        </div>
+      `
+    );
+  }
+
   res.status(201).json(order);
 });
 
@@ -179,8 +205,6 @@ const getOrderById = asyncHandler(async (req, res) => {
   res.json(order);
 });
 
-// @route   PUT /api/orders/:id/courier-response
-// @access  Private (livreur assigne)
 const respondAsCourier = asyncHandler(async (req, res) => {
   const { available } = req.body;
   const order = await Order.findById(req.params.id).populate("items.shop");
@@ -222,8 +246,6 @@ const respondAsCourier = asyncHandler(async (req, res) => {
   res.json(order);
 });
 
-// @route   PUT /api/orders/:id/delivery-proof
-// @access  Private (livreur assigne ou client)
 const submitDeliveryProof = asyncHandler(async (req, res) => {
   const { imageUrl } = req.body;
   if (!imageUrl) return res.status(400).json({ message: "Image requise." });
