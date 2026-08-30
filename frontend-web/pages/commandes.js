@@ -105,6 +105,8 @@ export default function Commandes() {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {orders.map((order) => {
               const shopIds = [...new Set(order.items.map((it) => it.shop))];
+              const canPayNow = order.paymentMethod === "kkiapay" && order.paymentStatus !== "paid" && order.status === "out_for_delivery";
+
               return (
                 <div
                   key={order._id}
@@ -113,6 +115,7 @@ export default function Commandes() {
                     border: "1px solid var(--line)",
                     borderRadius: "var(--radius-md)",
                     padding: 14,
+                    boxSizing: "border-box",
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -130,7 +133,7 @@ export default function Commandes() {
                           color: "var(--ink-soft)",
                         }}
                       >
-                        {order.paymentMethod === "kkiapay" ? "💳 Payé en ligne" : "💵 À la livraison"}
+                        {order.paymentMethod === "kkiapay" ? "💳 Mobile Money" : "💵 Espèces"}
                       </span>
                       <span
                         style={{
@@ -162,6 +165,28 @@ export default function Commandes() {
                   {order.paymentMethod === "cod" && order.status !== "delivered" && order.status !== "cancelled" && (
                     <div style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 6 }}>
                       Prévois {order.grandTotal.toLocaleString("fr-FR")} FCFA en espèces pour le livreur.
+                    </div>
+                  )}
+
+                  {order.paymentMethod === "kkiapay" && order.paymentStatus !== "paid" && !canPayNow && order.status !== "delivered" && order.status !== "cancelled" && (
+                    <div style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 6 }}>
+                      Tu pourras régler en ligne dès que ton livreur sera en route.
+                    </div>
+                  )}
+
+                  {canPayNow && (
+                    <a
+                      href={`/payer-commande/${order._id}`}
+                      className="btn-primary"
+                      style={{ display: "block", textAlign: "center", marginTop: 10, fontSize: 13, padding: "10px 16px" }}
+                    >
+                      💳 Payer en ligne maintenant
+                    </a>
+                  )}
+
+                  {order.paymentMethod === "kkiapay" && order.paymentStatus === "paid" && (
+                    <div style={{ fontSize: 11, color: "var(--green-dark)", fontWeight: 600, marginTop: 6 }}>
+                      ✅ Payé le {order.paidAt ? new Date(order.paidAt).toLocaleDateString("fr-FR") : ""}
                     </div>
                   )}
 

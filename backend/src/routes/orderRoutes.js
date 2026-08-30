@@ -4,6 +4,7 @@ const {
   getMyOrders,
   getShopOrders,
   getOrderById,
+  payOrder,
   respondAsCourier,
   submitDeliveryProof,
   updateOrderStatus,
@@ -17,6 +18,7 @@ router.post("/", protect, authorize("client"), createOrder);
 router.get("/mine", protect, authorize("client"), getMyOrders);
 router.get("/shop", protect, authorize("marchand"), getShopOrders);
 router.get("/:id", protect, getOrderById);
+router.put("/:id/pay", protect, authorize("client"), payOrder);
 router.put("/:id/courier-response", protect, respondAsCourier);
 router.put("/:id/delivery-proof", protect, submitDeliveryProof);
 router.put("/:id/status", protect, authorize("marchand", "admin"), updateOrderStatus);

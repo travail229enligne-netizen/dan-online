@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import Script from "next/script";
 import Header from "../components/Header";
 import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
@@ -19,15 +18,13 @@ export default function Commande() {
   });
   const [selfDelivery, setSelfDelivery] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cod");
-  const [shopFees, setShopFees] = useState([]); // [{ shopId, shopName, fee }]
+  const [shopFees, setShopFees] = useState([]);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(null);
-  const [widgetReady, setWidgetReady] = useState(false);
 
   const shopIds = [...new Set(items.map((it) => it.shopId).filter(Boolean))];
 
-  // Recalcule les frais de livraison a chaque changement de ville
   useEffect(() => {
     if (selfDelivery || !form.deliveryCity.trim() || shopIds.length === 0) {
       setShopFees([]);
@@ -58,74 +55,12 @@ export default function Commande() {
   const totalDeliveryFee = selfDelivery ? 0 : shopFees.reduce((sum, s) => sum + s.fee, 0);
   const grandTotal = total + totalDeliveryFee;
 
-  useEffect(() => {
-    if (!widgetReady || typeof window.addKkiapayListener !== "function") return;
-
-    const handleSuccess = async (response) => {
-      const transactionId = response?.transactionId;
-      if (!transactionId) return;
-      setSubmitting(true);
-      setError("");
-      try {
-        const { data } = await api.post("/orders", {
-          items: items.map((it) => ({ productId: it.productId, quantity: it.quantity })),
-          deliveryAddress: form.deliveryAddress,
-          deliveryPhone: form.deliveryPhone,
-          deliveryCity: form.deliveryCity,
-          selfDelivery,
-          transactionId,
-          paymentMethod: "kkiapay",
-        });
-        setSuccess(data);
-        clearCart();
-      } catch (err) {
-        setError(err.response?.data?.message || "Paiement reçu mais impossible de créer la commande. Contacte le support avec ta référence de transaction.");
-      } finally {
-        setSubmitting(false);
-      }
-    };
-
-    const handleFailed = () => {
-      setError("Le paiement a échoué ou a été annulé. Réessaie.");
-      setSubmitting(false);
-    };
-    window.addKkiapayListener("success", handleSuccess);
-    window.addKkiapayListener("failed", handleFailed);
-    return () => {
-      if (typeof window.removeKkiapayListener === "function") {
-        window.removeKkiapayListener("success", handleSuccess);
-        window.removeKkiapayListener("failed", handleFailed);
-      }
-    };
-  }, [widgetReady, items, form, selfDelivery]);
-
   if (!loading && !user) {
     if (typeof window !== "undefined") router.push("/connexion?next=/commande");
     return null;
   }
 
-  const handleCodOrder = async () => {
-    setSubmitting(true);
-    setError("");
-    try {
-      const { data } = await api.post("/orders", {
-        items: items.map((it) => ({ productId: it.productId, quantity: it.quantity })),
-        deliveryAddress: form.deliveryAddress,
-        deliveryPhone: form.deliveryPhone,
-        deliveryCity: form.deliveryCity,
-        selfDelivery,
-        paymentMethod: "cod",
-      });
-      setSuccess(data);
-      clearCart();
-    } catch (err) {
-      setError(err.response?.data?.message || "Impossible de créer la commande.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     if (!form.deliveryAddress || !form.deliveryPhone) {
@@ -137,22 +72,23 @@ export default function Commande() {
       return;
     }
 
-    if (paymentMethod === "cod") {
-      handleCodOrder();
-      return;
+    setSubmitting(true);
+    try {
+      const { data } = await api.post("/orders", {
+        items: items.map((it) => ({ productId: it.productId, quantity: it.quantity })),
+        deliveryAddress: form.deliveryAddress,
+        deliveryPhone: form.deliveryPhone,
+        deliveryCity: form.deliveryCity,
+        selfDelivery,
+        paymentMethod,
+      });
+      setSuccess(data);
+      clearCart();
+    } catch (err) {
+      setError(err.response?.data?.message || "Impossible de créer la commande.");
+    } finally {
+      setSubmitting(false);
     }
-
-    if (!widgetReady || typeof window.openKkiapayWidget !== "function") {
-      setError("Le module de paiement n'est pas encore chargé, réessaie dans un instant.");
-      return;
-    }
-    window.openKkiapayWidget({
-      amount: grandTotal,
-      key: process.env.NEXT_PUBLIC_KKIAPAY_PUBLIC_KEY,
-      sandbox: true,
-      phone: form.deliveryPhone,
-      data: JSON.stringify({ userId: user?._id }),
-    });
   };
 
   if (success) {
@@ -163,10 +99,13 @@ export default function Commande() {
           <div style={{ fontSize: 48 }}>✅</div>
           <h1 style={{ fontSize: 22, marginTop: 12 }}>Commande confirmée !</h1>
           <p style={{ color: "var(--ink-soft)", marginTop: 8 }}>
-            {success.paymentMethod === "kkiapay" ? "Montant payé" : "Montant à régler au livreur"} :{" "}
-            <strong>{success.grandTotal.toLocaleString("fr-FR")} FCFA</strong>
+            Total : <strong>{success.grandTotal.toLocaleString("fr-FR")} FCFA</strong>
           </p>
-          <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>Livraison estimée sous 48h.</p>
+          <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>
+            {success.paymentMethod === "kkiapay"
+              ? "Tu pourras régler en ligne dès que ton livreur sera en route."
+              : "Prévois le montant en espèces pour le livreur."}
+          </p>
           <a href="/commandes" className="btn-primary" style={{ display: "inline-block", marginTop: 16 }}>
             Voir mes commandes
           </a>
@@ -177,7 +116,6 @@ export default function Commande() {
 
   return (
     <>
-      <Script src="https://cdn.kkiapay.me/k.js" onLoad={() => setWidgetReady(true)} />
       <Header hideSearchBar />
       <main className="container" style={{ maxWidth: 480, paddingTop: 24, paddingBottom: 60 }}>
         <h1 style={{ fontSize: 22, marginBottom: 20 }}>Finaliser la commande</h1>
@@ -195,6 +133,7 @@ export default function Commande() {
             borderRadius: "var(--radius-md)",
             padding: 16,
             marginBottom: 16,
+            boxSizing: "border-box",
           }}
         >
           {items.map((it) => (
@@ -236,6 +175,7 @@ export default function Commande() {
             display: "flex",
             flexDirection: "column",
             gap: 14,
+            boxSizing: "border-box",
           }}
         >
           <label style={{ fontSize: 12 }}>
@@ -244,7 +184,7 @@ export default function Commande() {
               required
               value={form.deliveryAddress}
               onChange={(e) => setForm({ ...form, deliveryAddress: e.target.value })}
-              style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
+              style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8, boxSizing: "border-box" }}
             />
           </label>
 
@@ -257,7 +197,7 @@ export default function Commande() {
               placeholder="ex: Cotonou"
               value={form.deliveryCity}
               onChange={(e) => setForm({ ...form, deliveryCity: e.target.value })}
-              style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
+              style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8, boxSizing: "border-box" }}
             />
             <datalist id="villes-suggestions">
               {cities.map((c) => (
@@ -281,7 +221,7 @@ export default function Commande() {
               required
               value={form.deliveryPhone}
               onChange={(e) => setForm({ ...form, deliveryPhone: e.target.value })}
-              style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
+              style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8, boxSizing: "border-box" }}
             />
           </label>
 
@@ -302,7 +242,7 @@ export default function Commande() {
                   fontSize: 13,
                 }}
               >
-                💵 À la livraison
+                💵 Espèces
               </button>
               <button
                 type="button"
@@ -318,7 +258,7 @@ export default function Commande() {
                   fontSize: 13,
                 }}
               >
-                💳 En ligne
+                💳 Mobile Money
               </button>
             </div>
           </div>
@@ -329,14 +269,14 @@ export default function Commande() {
             </div>
           ) : (
             <div style={{ fontSize: 12, background: "var(--cream)", padding: 10, borderRadius: 8 }}>
-              💳 Paiement en ligne sécurisé (Mobile Money) avant expédition.
+              💳 Tu pourras régler en ligne dès que ton livreur sera en route avec ta commande.
             </div>
           )}
 
           {error && <p style={{ color: "var(--terracotta-dark)", fontSize: 13 }}>{error}</p>}
 
           <button className="btn-primary" type="submit" disabled={submitting || items.length === 0}>
-            {submitting ? "Traitement..." : paymentMethod === "cod" ? "Confirmer la commande" : "Payer maintenant"}
+            {submitting ? "Traitement..." : "Confirmer la commande"}
           </button>
         </form>
       </main>

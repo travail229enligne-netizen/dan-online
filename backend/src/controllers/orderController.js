@@ -9,7 +9,7 @@ const { verifyTransaction } = require("../utils/kkiapay");
 const { sendEmail } = require("../utils/email");
 
 const createOrder = asyncHandler(async (req, res) => {
-  const { items, deliveryAddress, deliveryPhone, deliveryCity, selfDelivery, transactionId, paymentMethod } = req.body;
+  const { items, deliveryAddress, deliveryPhone, deliveryCity, selfDelivery, paymentMethod } = req.body;
   if (!items || items.length === 0) {
     return res.status(400).json({ message: "Le panier est vide." });
   }
@@ -73,33 +73,9 @@ const createOrder = asyncHandler(async (req, res) => {
     }
   }
 
-  let paymentStatus = "pending";
-  let paidAt = null;
   const grandTotal = itemsTotal + deliveryFee;
 
-  if (method === "kkiapay") {
-    if (!transactionId) {
-      return res.status(400).json({ message: "Transaction de paiement manquante." });
-    }
-
-    let payment;
-    try {
-      payment = await verifyTransaction(transactionId);
-      console.log("Kkiapay verify response:", JSON.stringify(payment));
-    } catch (err) {
-      console.error("Kkiapay verify error:", err.message, err.response?.data);
-      return res.status(400).json({ message: "Impossible de verifier le paiement. Reessayez." });
-    }
-
-    const status = (payment?.status || payment?.transactionStatus || "").toString().toUpperCase();
-    if (status !== "SUCCESS") {
-      return res.status(400).json({ message: `Le paiement n'a pas ete confirme (statut: ${status || "inconnu"}).` });
-    }
-
-    paymentStatus = "paid";
-    paidAt = new Date();
-  }
-
+  // Le paiement en ligne se fait desormais au moment de la livraison, pas a la commande.
   const order = await Order.create({
     client: req.user._id,
     items: orderItems,
@@ -109,9 +85,7 @@ const createOrder = asyncHandler(async (req, res) => {
     selfDelivery: isSelfDelivery,
     shopDeliveryFees,
     paymentMethod: method,
-    kkiapayTransactionId: method === "kkiapay" ? transactionId : "",
-    paymentStatus,
-    paidAt,
+    paymentStatus: "pending",
     itemsTotal,
     commissionAmount,
     deliveryFee,
@@ -127,10 +101,10 @@ const createOrder = asyncHandler(async (req, res) => {
       await notify(
         s.owner,
         "new_order",
-        method === "kkiapay" ? "Nouvelle commande payée" : "Nouvelle commande à préparer",
+        "Nouvelle commande à préparer",
         method === "kkiapay"
-          ? "Une nouvelle commande vient d'être réglée en ligne sur votre boutique."
-          : "Une nouvelle commande vient d'être passée sur votre boutique. Le règlement se fera à la livraison.",
+          ? "Une nouvelle commande vient d'être passée. Le client paiera en ligne au moment de la livraison."
+          : "Une nouvelle commande vient d'être passée sur votre boutique. Le règlement se fera en espèces à la livraison.",
         "/marchand/commandes"
       );
     }
@@ -141,7 +115,7 @@ const createOrder = asyncHandler(async (req, res) => {
     "order_status",
     "Merci pour votre commande",
     method === "kkiapay"
-      ? `Votre commande de ${grandTotal.toLocaleString("fr-FR")} FCFA a bien été enregistrée et réglée. Livraison estimée sous 48h.`
+      ? `Votre commande de ${grandTotal.toLocaleString("fr-FR")} FCFA a bien été enregistrée. Vous pourrez régler en ligne dès que le livreur sera en route.`
       : `Votre commande de ${grandTotal.toLocaleString("fr-FR")} FCFA a bien été enregistrée. Merci de prévoir le montant en espèces pour le livreur. Livraison estimée sous 48h.`,
     "/commandes"
   );
@@ -150,7 +124,7 @@ const createOrder = asyncHandler(async (req, res) => {
   if (client?.email) {
     const itemsHtml = orderItems.map((it) => `<li>${it.quantity} × ${it.name} — ${(it.price * it.quantity).toLocaleString("fr-FR")} FCFA</li>`).join("");
     const paymentLine = method === "kkiapay"
-      ? "Votre paiement en ligne a bien été confirmé."
+      ? "Vous pourrez régler en ligne dès que le livreur sera en route avec votre commande."
       : `Merci de prévoir <strong>${grandTotal.toLocaleString("fr-FR")} FCFA</strong> en espèces pour le livreur.`;
 
     await sendEmail(
@@ -205,6 +179,47 @@ const getOrderById = asyncHandler(async (req, res) => {
   res.json(order);
 });
 
+// @route   PUT /api/orders/:id/pay
+// @access  Private (client, proprietaire de la commande) - paiement en ligne, une fois le livreur en route
+const payOrder = asyncHandler(async (req, res) => {
+  const { transactionId } = req.body;
+  if (!transactionId) return res.status(400).json({ message: "Transaction de paiement manquante." });
+
+  const order = await Order.findById(req.params.id);
+  if (!order) return res.status(404).json({ message: "Commande introuvable." });
+
+  if (order.client.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ message: "Cette commande ne vous appartient pas." });
+  }
+  if (order.paymentMethod !== "kkiapay") {
+    return res.status(400).json({ message: "Cette commande n'utilise pas le paiement en ligne." });
+  }
+  if (order.paymentStatus === "paid") {
+    return res.status(400).json({ message: "Cette commande est déjà payée." });
+  }
+
+  let payment;
+  try {
+    payment = await verifyTransaction(transactionId);
+    console.log("Kkiapay verify response:", JSON.stringify(payment));
+  } catch (err) {
+    console.error("Kkiapay verify error:", err.message, err.response?.data);
+    return res.status(400).json({ message: "Impossible de vérifier le paiement. Réessayez." });
+  }
+
+  const status = (payment?.status || payment?.transactionStatus || "").toString().toUpperCase();
+  if (status !== "SUCCESS") {
+    return res.status(400).json({ message: `Le paiement n'a pas été confirmé (statut: ${status || "inconnu"}).` });
+  }
+
+  order.paymentStatus = "paid";
+  order.paidAt = new Date();
+  order.kkiapayTransactionId = transactionId;
+  await order.save();
+
+  res.json(order);
+});
+
 const respondAsCourier = asyncHandler(async (req, res) => {
   const { available } = req.body;
   const order = await Order.findById(req.params.id).populate("items.shop");
@@ -238,7 +253,9 @@ const respondAsCourier = asyncHandler(async (req, res) => {
       order.client,
       "order_status",
       "Votre commande est en route",
-      "Un livreur a été assigné et votre commande est maintenant en cours de livraison.",
+      order.paymentMethod === "kkiapay"
+        ? "Un livreur a été assigné à votre commande. Vous pouvez maintenant régler en ligne."
+        : "Un livreur a été assigné et votre commande est maintenant en cours de livraison.",
       "/commandes"
     );
   }
@@ -246,6 +263,8 @@ const respondAsCourier = asyncHandler(async (req, res) => {
   res.json(order);
 });
 
+// @route   PUT /api/orders/:id/delivery-proof
+// @access  Private (livreur assigne ou client)
 const submitDeliveryProof = asyncHandler(async (req, res) => {
   const { imageUrl } = req.body;
   if (!imageUrl) return res.status(400).json({ message: "Image requise." });
@@ -257,6 +276,10 @@ const submitDeliveryProof = asyncHandler(async (req, res) => {
   const isClient = order.client.toString() === req.user._id.toString();
   if (!isCourier && !isClient) {
     return res.status(403).json({ message: "Accès non autorisé." });
+  }
+
+  if (order.paymentMethod === "kkiapay" && order.paymentStatus !== "paid") {
+    return res.status(400).json({ message: "Le client doit d'abord régler en ligne avant l'envoi de la preuve de livraison." });
   }
 
   order.deliveryProofUrl = imageUrl;
@@ -311,6 +334,7 @@ module.exports = {
   getMyOrders,
   getShopOrders,
   getOrderById,
+  payOrder,
   respondAsCourier,
   submitDeliveryProof,
   updateOrderStatus,

@@ -15,6 +15,8 @@ function whatsappBase(phone) {
 function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, responding, uploadingProof }) {
   if (!order) return null;
 
+  const paymentBlocking = order.paymentMethod === "kkiapay" && order.paymentStatus !== "paid";
+
   return (
     <div
       style={{
@@ -43,8 +45,12 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
         <div style={{ marginTop: 8, color: "var(--ink-soft)", lineHeight: 1.6 }}>
           <div>📍 {order.deliveryAddress}{order.deliveryCity ? `, ${order.deliveryCity}` : ""}</div>
           <div>📞 {order.deliveryPhone}</div>
-          <div style={{ fontWeight: 600, color: order.paymentMethod === "kkiapay" ? "var(--green-dark)" : "var(--terracotta-dark)" }}>
-            {order.paymentMethod === "kkiapay" ? "💳 Déjà réglée en ligne" : `💵 À encaisser : ${order.grandTotal.toLocaleString("fr-FR")} FCFA`}
+          <div style={{ fontWeight: 600, color: order.paymentMethod === "kkiapay" && order.paymentStatus === "paid" ? "var(--green-dark)" : "var(--terracotta-dark)" }}>
+            {order.paymentMethod === "kkiapay"
+              ? order.paymentStatus === "paid"
+                ? "💳 Réglée en ligne"
+                : "💳 À régler en ligne par le client (Mobile Money)"
+              : `💵 À encaisser : ${order.grandTotal.toLocaleString("fr-FR")} FCFA`}
           </div>
         </div>
 
@@ -75,14 +81,27 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
         )}
 
         {isCourier && order.courierStatus === "available" && !order.deliveryProofUrl && (
-          <button
-            className="btn-primary"
-            onClick={onSubmitProof}
-            disabled={uploadingProof}
-            style={{ width: "100%", marginTop: 12, fontSize: 13, padding: 10 }}
-          >
-            {uploadingProof ? "Envoi de la preuve..." : "🏁 Terminer la course"}
-          </button>
+          <>
+            {paymentBlocking ? (
+              <p style={{ marginTop: 12, fontSize: 12, color: "var(--terracotta-dark)", fontWeight: 600 }}>
+                ⏳ En attente du paiement en ligne du client avant de pouvoir valider la livraison.
+              </p>
+            ) : (
+              <>
+                <p style={{ marginTop: 12, fontSize: 11, color: "var(--ink-soft)" }}>
+                  Prends une photo montrant le colis remis {order.paymentMethod === "kkiapay" ? "et la preuve de paiement du client" : ""}.
+                </p>
+                <button
+                  className="btn-primary"
+                  onClick={onSubmitProof}
+                  disabled={uploadingProof}
+                  style={{ width: "100%", marginTop: 6, fontSize: 13, padding: 10 }}
+                >
+                  {uploadingProof ? "Envoi de la preuve..." : "🏁 Terminer la course"}
+                </button>
+              </>
+            )}
+          </>
         )}
 
         {order.deliveryProofUrl && (
@@ -205,8 +224,8 @@ export default function ConversationById() {
       await api.put(`/orders/${orderId}/delivery-proof`, { imageUrl: url });
       await api.post(`/messages/${id}`, { text: "📸 Preuve de livraison envoyée.", imageUrl: url });
       load();
-    } catch {
-      // ignore
+    } catch (err) {
+      alert(err.response?.data?.message || "Impossible d'envoyer la preuve.");
     } finally {
       setUploadingProof(false);
       if (proofFileRef.current) proofFileRef.current.value = "";
@@ -229,10 +248,21 @@ export default function ConversationById() {
   const waBase = whatsappBase(phone);
 
   return (
-    <>
+    <div style={{ display: "flex", flexDirection: "column", height: "100dvh", boxSizing: "border-box" }}>
       <Header hideSearchBar />
-      <main className="container" style={{ paddingTop: 20, paddingBottom: 20, display: "flex", flexDirection: "column", height: "calc(100vh - 76px)", boxSizing: "border-box" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+      <main
+        className="container"
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          paddingTop: 16,
+          paddingBottom: 12,
+          boxSizing: "border-box",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexShrink: 0 }}>
           <a href={otherUserId ? `/profil/${otherUserId}` : "#"} style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {avatarUrl ? (
               <img src={avatarUrl} alt={title} style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
@@ -255,7 +285,7 @@ export default function ConversationById() {
           )}
         </div>
 
-        <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, paddingBottom: 10 }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, paddingBottom: 10 }}>
           {messages.map((m) => {
             const isMine = m.senderRole === user.role;
 
@@ -314,7 +344,7 @@ export default function ConversationById() {
           }}
         />
 
-        <form onSubmit={handleSend} style={{ display: "flex", gap: 8, paddingTop: 8, borderTop: "1px solid var(--line)", alignItems: "center" }}>
+        <form onSubmit={handleSend} style={{ display: "flex", gap: 8, paddingTop: 8, borderTop: "1px solid var(--line)", alignItems: "center", flexShrink: 0 }}>
           <input
             ref={fileRef}
             type="file"
@@ -342,6 +372,6 @@ export default function ConversationById() {
           </button>
         </form>
       </main>
-    </>
+    </div>
   );
 }
