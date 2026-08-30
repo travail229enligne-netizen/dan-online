@@ -13,7 +13,53 @@ function whatsappBase(phone) {
 }
 
 function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, responding, uploadingProof }) {
-  if (!order) return null;
+  if (!order) {
+    return (
+      <div
+        style={{
+          background: "var(--white)",
+          border: "1px solid var(--line)",
+          borderRadius: 14,
+          overflow: "hidden",
+          maxWidth: "90%",
+          alignSelf: "flex-start",
+        }}
+      >
+        <div style={{ padding: "10px 14px", background: "var(--cream)" }}>
+          <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-soft)" }}>
+            📦 Commande à livrer
+          </span>
+        </div>
+        <div style={{ padding: 14, fontSize: 12, color: "var(--ink-soft)" }}>
+          Chargement du bilan de commande...
+        </div>
+      </div>
+    );
+  }
+
+  if (!Array.isArray(order.items) || order.items.length === 0) {
+    return (
+      <div
+        style={{
+          background: "var(--white)",
+          border: "1px solid var(--line)",
+          borderRadius: 14,
+          overflow: "hidden",
+          maxWidth: "90%",
+          alignSelf: "flex-start",
+        }}
+      >
+        <div style={{ padding: "10px 14px", background: "var(--cream)" }}>
+          <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-soft)" }}>
+            📦 Commande à livrer
+          </span>
+        </div>
+        <div style={{ padding: 14, fontSize: 12, color: "var(--ink-soft)" }}>
+          Détails de cette commande indisponibles (commande ancienne ou supprimée).
+        </div>
+      </div>
+    );
+  }
 
   const paymentBlocking = order.paymentMethod === "kkiapay" && order.paymentStatus !== "paid";
 
@@ -40,7 +86,7 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
           </div>
         ))}
         <div style={{ borderTop: "1px solid var(--line)", marginTop: 6, paddingTop: 6, fontWeight: 700 }}>
-          Total : <span style={{ color: "var(--terracotta-dark)" }}>{order.grandTotal.toLocaleString("fr-FR")} FCFA</span>
+          Total : <span style={{ color: "var(--terracotta-dark)" }}>{(order.grandTotal || 0).toLocaleString("fr-FR")} FCFA</span>
         </div>
         <div style={{ marginTop: 8, color: "var(--ink-soft)", lineHeight: 1.6 }}>
           <div>📍 {order.deliveryAddress}{order.deliveryCity ? `, ${order.deliveryCity}` : ""}</div>
@@ -50,7 +96,7 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
               ? order.paymentStatus === "paid"
                 ? "💳 Réglée en ligne"
                 : "💳 À régler en ligne par le client (Mobile Money)"
-              : `💵 À encaisser : ${order.grandTotal.toLocaleString("fr-FR")} FCFA`}
+              : `💵 À encaisser : ${(order.grandTotal || 0).toLocaleString("fr-FR")} FCFA`}
           </div>
         </div>
 
@@ -105,14 +151,36 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
         )}
 
         {order.deliveryProofUrl && (
-          <div style={{ marginTop: 12 }}>
-            <p style={{ fontSize: 12, color: "var(--green-dark)", fontWeight: 600, marginBottom: 6 }}>
-              ✅ Preuve de livraison envoyée
-            </p>
-            <img src={order.deliveryProofUrl} alt="Preuve de livraison" style={{ width: "100%", borderRadius: 8 }} />
+          <div style={{ marginTop: 12, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }}>
+            <div style={{ padding: "6px 10px", background: "#e8f5ee", fontSize: 11, fontWeight: 700, color: "var(--green-dark)" }}>
+              ✅ Preuve de livraison
+            </div>
+            <img src={order.deliveryProofUrl} alt="Preuve de livraison" style={{ width: "100%", display: "block" }} />
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ImageBubble({ url, caption, isMine }) {
+  return (
+    <div
+      style={{
+        alignSelf: isMine ? "flex-end" : "flex-start",
+        maxWidth: "75%",
+        borderRadius: 14,
+        overflow: "hidden",
+        border: "1px solid var(--line)",
+        background: "var(--white)",
+      }}
+    >
+      <img src={url} alt={caption || "Image"} style={{ width: "100%", display: "block", maxHeight: 320, objectFit: "cover" }} />
+      {caption && (
+        <div style={{ padding: "8px 12px", fontSize: 12, color: isMine ? "var(--white)" : "var(--ink)", background: isMine ? "var(--ink)" : "var(--white)" }}>
+          {caption}
+        </div>
+      )}
     </div>
   );
 }
@@ -285,7 +353,7 @@ export default function ConversationById() {
           )}
         </div>
 
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, paddingBottom: 10 }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, paddingBottom: 10 }}>
           {messages.map((m) => {
             const isMine = m.senderRole === user.role;
 
@@ -304,6 +372,10 @@ export default function ConversationById() {
               );
             }
 
+            if (m.imageUrl) {
+              return <ImageBubble key={m._id} url={m.imageUrl} caption={m.text} isMine={isMine} />;
+            }
+
             return (
               <div
                 key={m._id}
@@ -318,9 +390,6 @@ export default function ConversationById() {
                   fontSize: 13,
                 }}
               >
-                {m.imageUrl && (
-                  <img src={m.imageUrl} alt="Image" style={{ maxWidth: "100%", borderRadius: 8, marginBottom: m.text ? 6 : 0, display: "block" }} />
-                )}
                 {m.text}
               </div>
             );
