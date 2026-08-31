@@ -15,7 +15,7 @@ function whatsappBase(phone) {
 function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, responding, uploadingProof }) {
   if (!order) {
     return (
-      <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", maxWidth: "90%", alignSelf: "flex-start" }}>
+      <div style={{ flexShrink: 0, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", maxWidth: "90%", alignSelf: "flex-start" }}>
         <div style={{ padding: "10px 14px", background: "var(--cream)" }}>
           <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-soft)" }}>
             📦 Commande à livrer
@@ -28,7 +28,7 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
 
   if (!Array.isArray(order.items) || order.items.length === 0) {
     return (
-      <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", maxWidth: "90%", alignSelf: "flex-start" }}>
+      <div style={{ flexShrink: 0, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", maxWidth: "90%", alignSelf: "flex-start" }}>
         <div style={{ padding: "10px 14px", background: "var(--cream)" }}>
           <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-soft)" }}>
             📦 Commande à livrer
@@ -42,7 +42,7 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
   }
 
   return (
-    <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", maxWidth: "90%", alignSelf: "flex-start" }}>
+    <div style={{ flexShrink: 0, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", maxWidth: "90%", alignSelf: "flex-start" }}>
       <div style={{ padding: "10px 14px", background: "var(--cream)", borderBottom: "1px solid var(--line)" }}>
         <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-soft)" }}>
           📦 Commande à livrer
@@ -117,7 +117,7 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
 
 function ImageBubble({ url, caption, isMine }) {
   return (
-    <div style={{ alignSelf: isMine ? "flex-end" : "flex-start", maxWidth: "75%", borderRadius: 14, overflow: "hidden", border: "1px solid var(--line)", background: "var(--white)" }}>
+    <div style={{ flexShrink: 0, alignSelf: isMine ? "flex-end" : "flex-start", maxWidth: "75%", borderRadius: 14, overflow: "hidden", border: "1px solid var(--line)", background: "var(--white)" }}>
       <img src={url} alt={caption || "Image"} style={{ width: "100%", display: "block", maxHeight: 320, objectFit: "cover" }} />
       {caption && (
         <div style={{ padding: "8px 12px", fontSize: 12, color: isMine ? "var(--white)" : "var(--ink)", background: isMine ? "var(--ink)" : "var(--white)" }}>
@@ -256,9 +256,11 @@ export default function ConversationById() {
   const waBase = whatsappBase(phone);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100dvh", boxSizing: "border-box" }}>
-      <Header hideSearchBar />
-      <main className="container" style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", paddingTop: 16, paddingBottom: 12, boxSizing: "border-box" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100dvh", boxSizing: "border-box", overflow: "hidden" }}>
+      <div style={{ flexShrink: 0 }}>
+        <Header hideSearchBar />
+      </div>
+      <main className="container" style={{ flex: "1 1 0%", minHeight: 0, display: "flex", flexDirection: "column", paddingTop: 16, paddingBottom: 12, boxSizing: "border-box", overflow: "hidden" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexShrink: 0 }}>
           <a href={otherUserId ? `/profil/${otherUserId}` : "#"} style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {avatarUrl ? (
@@ -278,7 +280,7 @@ export default function ConversationById() {
           )}
         </div>
 
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, paddingBottom: 10 }}>
+        <div style={{ flex: "1 1 0%", minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", display: "flex", flexDirection: "column", gap: 10, paddingBottom: 10 }}>
           {messages.map((m) => {
             const isMine = m.senderRole === user.role;
 
@@ -302,7 +304,7 @@ export default function ConversationById() {
             }
 
             return (
-              <div key={m._id} style={{ alignSelf: isMine ? "flex-end" : "flex-start", background: isMine ? "var(--ink)" : "var(--white)", color: isMine ? "var(--white)" : "var(--ink)", border: isMine ? "none" : "1px solid var(--line)", borderRadius: 14, padding: "8px 12px", maxWidth: "75%", fontSize: 13 }}>
+              <div key={m._id} style={{ flexShrink: 0, alignSelf: isMine ? "flex-end" : "flex-start", background: isMine ? "var(--ink)" : "var(--white)", color: isMine ? "var(--white)" : "var(--ink)", border: isMine ? "none" : "1px solid var(--line)", borderRadius: 14, padding: "8px 12px", maxWidth: "75%", fontSize: 13 }}>
                 {m.text}
               </div>
             );
@@ -310,7 +312,7 @@ export default function ConversationById() {
           {messages.length === 0 && (
             <p style={{ fontSize: 13, color: "var(--ink-soft)", textAlign: "center", marginTop: 20 }}>Aucun message pour l'instant.</p>
           )}
-          <div ref={bottomRef} />
+          <div ref={bottomRef} style={{ flexShrink: 0 }} />
         </div>
 
         <input
@@ -326,11 +328,11 @@ export default function ConversationById() {
 
         <form onSubmit={handleSend} style={{ display: "flex", gap: 8, paddingTop: 8, borderTop: "1px solid var(--line)", alignItems: "center", flexShrink: 0 }}>
           <input ref={fileRef} type="file" accept="image/*" onChange={handleImagePick} style={{ display: "none" }} />
-          <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Envoyer une image" style={{ fontSize: 20, padding: "6px 8px" }}>
+          <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Envoyer une image" style={{ fontSize: 20, padding: "6px 8px", flexShrink: 0 }}>
             {uploading ? "..." : "📷"}
           </button>
-          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Écris un message..." style={{ flex: 1, padding: 10, border: "1px solid var(--line)", borderRadius: 20, fontSize: 13, boxSizing: "border-box" }} />
-          <button className="btn-primary" disabled={sending || !text.trim()} style={{ borderRadius: 20, padding: "10px 18px" }}>Envoyer</button>
+          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Écris un message..." style={{ flex: 1, minWidth: 0, padding: 10, border: "1px solid var(--line)", borderRadius: 20, fontSize: 13, boxSizing: "border-box" }} />
+          <button className="btn-primary" disabled={sending || !text.trim()} style={{ borderRadius: 20, padding: "10px 18px", flexShrink: 0 }}>Envoyer</button>
         </form>
       </main>
     </div>
