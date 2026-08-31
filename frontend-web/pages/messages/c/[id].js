@@ -15,40 +15,20 @@ function whatsappBase(phone) {
 function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, responding, uploadingProof }) {
   if (!order) {
     return (
-      <div
-        style={{
-          background: "var(--white)",
-          border: "1px solid var(--line)",
-          borderRadius: 14,
-          overflow: "hidden",
-          maxWidth: "90%",
-          alignSelf: "flex-start",
-        }}
-      >
+      <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", maxWidth: "90%", alignSelf: "flex-start" }}>
         <div style={{ padding: "10px 14px", background: "var(--cream)" }}>
           <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-soft)" }}>
             📦 Commande à livrer
           </span>
         </div>
-        <div style={{ padding: 14, fontSize: 12, color: "var(--ink-soft)" }}>
-          Chargement du bilan de commande...
-        </div>
+        <div style={{ padding: 14, fontSize: 12, color: "var(--ink-soft)" }}>Chargement du bilan de commande...</div>
       </div>
     );
   }
 
   if (!Array.isArray(order.items) || order.items.length === 0) {
     return (
-      <div
-        style={{
-          background: "var(--white)",
-          border: "1px solid var(--line)",
-          borderRadius: 14,
-          overflow: "hidden",
-          maxWidth: "90%",
-          alignSelf: "flex-start",
-        }}
-      >
+      <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", maxWidth: "90%", alignSelf: "flex-start" }}>
         <div style={{ padding: "10px 14px", background: "var(--cream)" }}>
           <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-soft)" }}>
             📦 Commande à livrer
@@ -61,19 +41,8 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
     );
   }
 
-  const paymentBlocking = order.paymentMethod === "kkiapay" && order.paymentStatus !== "paid";
-
   return (
-    <div
-      style={{
-        background: "var(--white)",
-        border: "1px solid var(--line)",
-        borderRadius: 14,
-        overflow: "hidden",
-        maxWidth: "90%",
-        alignSelf: "flex-start",
-      }}
-    >
+    <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", maxWidth: "90%", alignSelf: "flex-start" }}>
       <div style={{ padding: "10px 14px", background: "var(--cream)", borderBottom: "1px solid var(--line)" }}>
         <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-soft)" }}>
           📦 Commande à livrer
@@ -95,26 +64,17 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
             {order.paymentMethod === "kkiapay"
               ? order.paymentStatus === "paid"
                 ? "💳 Réglée en ligne"
-                : "💳 À régler en ligne par le client (Mobile Money)"
+                : "💳 Le client réglera en ligne après la livraison"
               : `💵 À encaisser : ${(order.grandTotal || 0).toLocaleString("fr-FR")} FCFA`}
           </div>
         </div>
 
         {isCourier && order.courierStatus === "pending" && (
           <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-            <button
-              className="btn-primary"
-              onClick={() => onRespond(true)}
-              disabled={responding}
-              style={{ flex: 1, fontSize: 13, padding: 10 }}
-            >
+            <button className="btn-primary" onClick={() => onRespond(true)} disabled={responding} style={{ flex: 1, fontSize: 13, padding: 10 }}>
               {responding ? "..." : "✅ Disponible"}
             </button>
-            <button
-              onClick={() => onRespond(false)}
-              disabled={responding}
-              style={{ flex: 1, fontSize: 13, padding: 10, borderRadius: 10, border: "1px solid var(--line)", background: "var(--white)", color: "var(--terracotta-dark)", fontWeight: 600 }}
-            >
+            <button onClick={() => onRespond(false)} disabled={responding} style={{ flex: 1, fontSize: 13, padding: 10, borderRadius: 10, border: "1px solid var(--line)", background: "var(--white)", color: "var(--terracotta-dark)", fontWeight: 600 }}>
               ❌ Pas disponible
             </button>
           </div>
@@ -128,25 +88,12 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
 
         {isCourier && order.courierStatus === "available" && !order.deliveryProofUrl && (
           <>
-            {paymentBlocking ? (
-              <p style={{ marginTop: 12, fontSize: 12, color: "var(--terracotta-dark)", fontWeight: 600 }}>
-                ⏳ En attente du paiement en ligne du client avant de pouvoir valider la livraison.
-              </p>
-            ) : (
-              <>
-                <p style={{ marginTop: 12, fontSize: 11, color: "var(--ink-soft)" }}>
-                  Prends une photo montrant le colis remis {order.paymentMethod === "kkiapay" ? "et la preuve de paiement du client" : ""}.
-                </p>
-                <button
-                  className="btn-primary"
-                  onClick={onSubmitProof}
-                  disabled={uploadingProof}
-                  style={{ width: "100%", marginTop: 6, fontSize: 13, padding: 10 }}
-                >
-                  {uploadingProof ? "Envoi de la preuve..." : "🏁 Terminer la course"}
-                </button>
-              </>
-            )}
+            <p style={{ marginTop: 12, fontSize: 11, color: "var(--ink-soft)" }}>
+              Prends une photo montrant le colis remis au client.
+            </p>
+            <button className="btn-primary" onClick={onSubmitProof} disabled={uploadingProof} style={{ width: "100%", marginTop: 6, fontSize: 13, padding: 10 }}>
+              {uploadingProof ? "Envoi de la preuve..." : "🏁 Terminer la course"}
+            </button>
           </>
         )}
 
@@ -156,6 +103,11 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
               ✅ Preuve de livraison
             </div>
             <img src={order.deliveryProofUrl} alt="Preuve de livraison" style={{ width: "100%", display: "block" }} />
+            {order.paymentMethod === "kkiapay" && (
+              <div style={{ padding: "8px 10px", fontSize: 11, color: order.paymentStatus === "paid" ? "var(--green-dark)" : "var(--terracotta-dark)", fontWeight: 600 }}>
+                {order.paymentStatus === "paid" ? "✅ Client a payé en ligne" : "⏳ En attente du paiement du client"}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -165,16 +117,7 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
 
 function ImageBubble({ url, caption, isMine }) {
   return (
-    <div
-      style={{
-        alignSelf: isMine ? "flex-end" : "flex-start",
-        maxWidth: "75%",
-        borderRadius: 14,
-        overflow: "hidden",
-        border: "1px solid var(--line)",
-        background: "var(--white)",
-      }}
-    >
+    <div style={{ alignSelf: isMine ? "flex-end" : "flex-start", maxWidth: "75%", borderRadius: 14, overflow: "hidden", border: "1px solid var(--line)", background: "var(--white)" }}>
       <img src={url} alt={caption || "Image"} style={{ width: "100%", display: "block", maxHeight: 320, objectFit: "cover" }} />
       {caption && (
         <div style={{ padding: "8px 12px", fontSize: 12, color: isMine ? "var(--white)" : "var(--ink)", background: isMine ? "var(--ink)" : "var(--white)" }}>
@@ -245,10 +188,7 @@ export default function ConversationById() {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", UPLOAD_PRESET);
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-      method: "POST",
-      body: formData,
-    });
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: formData });
     const data = await res.json();
     return data.secure_url;
   };
@@ -318,18 +258,7 @@ export default function ConversationById() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100dvh", boxSizing: "border-box" }}>
       <Header hideSearchBar />
-      <main
-        className="container"
-        style={{
-          flex: 1,
-          minHeight: 0,
-          display: "flex",
-          flexDirection: "column",
-          paddingTop: 16,
-          paddingBottom: 12,
-          boxSizing: "border-box",
-        }}
-      >
+      <main className="container" style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", paddingTop: 16, paddingBottom: 12, boxSizing: "border-box" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexShrink: 0 }}>
           <a href={otherUserId ? `/profil/${otherUserId}` : "#"} style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {avatarUrl ? (
@@ -343,12 +272,8 @@ export default function ConversationById() {
           </a>
           {waBase && (
             <div style={{ display: "flex", gap: 8 }}>
-              <a href={waBase} target="_blank" rel="noreferrer" title="Appel audio via WhatsApp" style={{ fontSize: 18 }}>
-                📞
-              </a>
-              <a href={waBase} target="_blank" rel="noreferrer" title="Appel vidéo via WhatsApp" style={{ fontSize: 18 }}>
-                🎥
-              </a>
+              <a href={waBase} target="_blank" rel="noreferrer" title="Appel audio via WhatsApp" style={{ fontSize: 18 }}>📞</a>
+              <a href={waBase} target="_blank" rel="noreferrer" title="Appel vidéo via WhatsApp" style={{ fontSize: 18 }}>🎥</a>
             </div>
           )}
         </div>
@@ -377,27 +302,13 @@ export default function ConversationById() {
             }
 
             return (
-              <div
-                key={m._id}
-                style={{
-                  alignSelf: isMine ? "flex-end" : "flex-start",
-                  background: isMine ? "var(--ink)" : "var(--white)",
-                  color: isMine ? "var(--white)" : "var(--ink)",
-                  border: isMine ? "none" : "1px solid var(--line)",
-                  borderRadius: 14,
-                  padding: "8px 12px",
-                  maxWidth: "75%",
-                  fontSize: 13,
-                }}
-              >
+              <div key={m._id} style={{ alignSelf: isMine ? "flex-end" : "flex-start", background: isMine ? "var(--ink)" : "var(--white)", color: isMine ? "var(--white)" : "var(--ink)", border: isMine ? "none" : "1px solid var(--line)", borderRadius: 14, padding: "8px 12px", maxWidth: "75%", fontSize: 13 }}>
                 {m.text}
               </div>
             );
           })}
           {messages.length === 0 && (
-            <p style={{ fontSize: 13, color: "var(--ink-soft)", textAlign: "center", marginTop: 20 }}>
-              Aucun message pour l'instant.
-            </p>
+            <p style={{ fontSize: 13, color: "var(--ink-soft)", textAlign: "center", marginTop: 20 }}>Aucun message pour l'instant.</p>
           )}
           <div ref={bottomRef} />
         </div>
@@ -414,31 +325,12 @@ export default function ConversationById() {
         />
 
         <form onSubmit={handleSend} style={{ display: "flex", gap: 8, paddingTop: 8, borderTop: "1px solid var(--line)", alignItems: "center", flexShrink: 0 }}>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            onChange={handleImagePick}
-            style={{ display: "none" }}
-          />
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            aria-label="Envoyer une image"
-            style={{ fontSize: 20, padding: "6px 8px" }}
-          >
+          <input ref={fileRef} type="file" accept="image/*" onChange={handleImagePick} style={{ display: "none" }} />
+          <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Envoyer une image" style={{ fontSize: 20, padding: "6px 8px" }}>
             {uploading ? "..." : "📷"}
           </button>
-          <input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Écris un message..."
-            style={{ flex: 1, padding: 10, border: "1px solid var(--line)", borderRadius: 20, fontSize: 13, boxSizing: "border-box" }}
-          />
-          <button className="btn-primary" disabled={sending || !text.trim()} style={{ borderRadius: 20, padding: "10px 18px" }}>
-            Envoyer
-          </button>
+          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Écris un message..." style={{ flex: 1, padding: 10, border: "1px solid var(--line)", borderRadius: 20, fontSize: 13, boxSizing: "border-box" }} />
+          <button className="btn-primary" disabled={sending || !text.trim()} style={{ borderRadius: 20, padding: "10px 18px" }}>Envoyer</button>
         </form>
       </main>
     </div>

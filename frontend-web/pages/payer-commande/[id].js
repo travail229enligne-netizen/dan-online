@@ -96,24 +96,27 @@ export default function PayerCommande() {
     );
   }
 
+  if (!order.deliveryProofUrl) {
+    return (
+      <>
+        <Header hideSearchBar />
+        <main className="container" style={{ paddingTop: 40, textAlign: "center" }}>
+          <p style={{ color: "var(--ink-soft)" }}>Cette commande n'a pas encore été livrée. Tu pourras régler en ligne une fois la livraison confirmée.</p>
+        </main>
+      </>
+    );
+  }
+
   if (order.paymentStatus === "paid" || paid) {
     return (
       <>
         <Header hideSearchBar />
         <main className="container" style={{ paddingTop: 30, paddingBottom: 60, maxWidth: 420 }}>
-          <div
-            style={{
-              background: "var(--white)",
-              border: "2px solid var(--green-dark)",
-              borderRadius: "var(--radius-md)",
-              padding: 24,
-              textAlign: "center",
-            }}
-          >
+          <div style={{ background: "var(--white)", border: "2px solid var(--green-dark)", borderRadius: "var(--radius-md)", padding: 24, textAlign: "center" }}>
             <div style={{ fontSize: 48 }}>✅</div>
             <h1 style={{ fontSize: 20, marginTop: 10 }}>Paiement confirmé</h1>
             <p style={{ fontSize: 14, color: "var(--ink-soft)", marginTop: 8 }}>
-              Montre cet écran au livreur avant qu'il ne prenne la photo de livraison.
+              Merci ! Ta commande est maintenant réglée.
             </p>
             <div style={{ borderTop: "1px solid var(--line)", marginTop: 16, paddingTop: 16, textAlign: "left", fontSize: 13 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
@@ -142,19 +145,10 @@ export default function PayerCommande() {
       <main className="container" style={{ paddingTop: 30, paddingBottom: 60, maxWidth: 420 }}>
         <h1 style={{ fontSize: 20, marginBottom: 4 }}>Payer ta commande</h1>
         <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 20 }}>
-          Ton livreur est en route. Règle maintenant pour finaliser ta livraison.
+          Ta commande a été livrée. Règle maintenant pour la finaliser.
         </p>
 
-        <div
-          style={{
-            background: "var(--white)",
-            border: "1px solid var(--line)",
-            borderRadius: "var(--radius-md)",
-            padding: 18,
-            marginBottom: 20,
-            boxSizing: "border-box",
-          }}
-        >
+        <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 18, marginBottom: 20, boxSizing: "border-box" }}>
           {order.items.map((it, i) => (
             <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 6 }}>
               <span>{it.quantity}× {it.name}</span>

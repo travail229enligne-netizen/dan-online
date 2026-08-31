@@ -75,7 +75,6 @@ const createOrder = asyncHandler(async (req, res) => {
 
   const grandTotal = itemsTotal + deliveryFee;
 
-  // Le paiement en ligne se fait desormais au moment de la livraison, pas a la commande.
   const order = await Order.create({
     client: req.user._id,
     items: orderItems,
@@ -103,7 +102,7 @@ const createOrder = asyncHandler(async (req, res) => {
         "new_order",
         "Nouvelle commande à préparer",
         method === "kkiapay"
-          ? "Une nouvelle commande vient d'être passée. Le client paiera en ligne au moment de la livraison."
+          ? "Une nouvelle commande vient d'être passée. Le client réglera en ligne une fois la livraison effectuée."
           : "Une nouvelle commande vient d'être passée sur votre boutique. Le règlement se fera en espèces à la livraison.",
         "/marchand/commandes"
       );
@@ -115,7 +114,7 @@ const createOrder = asyncHandler(async (req, res) => {
     "order_status",
     "Merci pour votre commande",
     method === "kkiapay"
-      ? `Votre commande de ${grandTotal.toLocaleString("fr-FR")} FCFA a bien été enregistrée. Vous pourrez régler en ligne dès que le livreur sera en route.`
+      ? `Votre commande de ${grandTotal.toLocaleString("fr-FR")} FCFA a bien été enregistrée. Vous pourrez régler en ligne une fois la livraison effectuée.`
       : `Votre commande de ${grandTotal.toLocaleString("fr-FR")} FCFA a bien été enregistrée. Merci de prévoir le montant en espèces pour le livreur. Livraison estimée sous 48h.`,
     "/commandes"
   );
@@ -124,7 +123,7 @@ const createOrder = asyncHandler(async (req, res) => {
   if (client?.email) {
     const itemsHtml = orderItems.map((it) => `<li>${it.quantity} × ${it.name} — ${(it.price * it.quantity).toLocaleString("fr-FR")} FCFA</li>`).join("");
     const paymentLine = method === "kkiapay"
-      ? "Vous pourrez régler en ligne dès que le livreur sera en route avec votre commande."
+      ? "Vous pourrez régler en ligne une fois votre commande livrée."
       : `Merci de prévoir <strong>${grandTotal.toLocaleString("fr-FR")} FCFA</strong> en espèces pour le livreur.`;
 
     await sendEmail(
@@ -180,7 +179,7 @@ const getOrderById = asyncHandler(async (req, res) => {
 });
 
 // @route   PUT /api/orders/:id/pay
-// @access  Private (client, proprietaire de la commande) - paiement en ligne, une fois le livreur en route
+// @access  Private (client, proprietaire de la commande) - paiement en ligne, une fois la preuve de livraison recue
 const payOrder = asyncHandler(async (req, res) => {
   const { transactionId } = req.body;
   if (!transactionId) return res.status(400).json({ message: "Transaction de paiement manquante." });
@@ -196,6 +195,9 @@ const payOrder = asyncHandler(async (req, res) => {
   }
   if (order.paymentStatus === "paid") {
     return res.status(400).json({ message: "Cette commande est déjà payée." });
+  }
+  if (!order.deliveryProofUrl) {
+    return res.status(400).json({ message: "La preuve de livraison n'a pas encore été reçue." });
   }
 
   let payment;
@@ -253,9 +255,7 @@ const respondAsCourier = asyncHandler(async (req, res) => {
       order.client,
       "order_status",
       "Votre commande est en route",
-      order.paymentMethod === "kkiapay"
-        ? "Un livreur a été assigné à votre commande. Vous pouvez maintenant régler en ligne."
-        : "Un livreur a été assigné et votre commande est maintenant en cours de livraison.",
+      "Un livreur a été assigné et votre commande est maintenant en cours de livraison.",
       "/commandes"
     );
   }
@@ -278,10 +278,6 @@ const submitDeliveryProof = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Accès non autorisé." });
   }
 
-  if (order.paymentMethod === "kkiapay" && order.paymentStatus !== "paid") {
-    return res.status(400).json({ message: "Le client doit d'abord régler en ligne avant l'envoi de la preuve de livraison." });
-  }
-
   order.deliveryProofUrl = imageUrl;
   await order.save();
 
@@ -293,6 +289,16 @@ const submitDeliveryProof = asyncHandler(async (req, res) => {
       "Preuve de livraison reçue",
       "La preuve de livraison a été envoyée. Vous pouvez maintenant marquer la commande comme livrée.",
       "/marchand/commandes"
+    );
+  }
+
+  if (order.paymentMethod === "kkiapay") {
+    await notify(
+      order.client,
+      "order_status",
+      "Ta commande a été livrée",
+      "Tu peux maintenant régler ta commande en ligne.",
+      `/payer-commande/${order._id}`
     );
   }
 
