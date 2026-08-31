@@ -2,7 +2,13 @@ const mongoose = require("mongoose");
 
 const withdrawalSchema = new mongoose.Schema(
   {
-    shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", required: true },
+    type: {
+      type: String,
+      enum: ["shop", "courier", "admin"],
+      default: "shop",
+    },
+    shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", default: null },
+    courier: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
     amount: { type: Number, required: true, min: 0 },
     phone: { type: String, required: true }, // numero Mobile Money pour le versement
     status: {

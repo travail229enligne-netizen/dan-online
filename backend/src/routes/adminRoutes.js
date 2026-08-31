@@ -10,7 +10,12 @@ const {
   deleteShop,
   getDashboard,
 } = require("../controllers/adminController");
-const { getAllWithdrawals, processWithdrawal } = require("../controllers/walletController");
+const {
+  getAllWithdrawals,
+  processWithdrawal,
+  getAdminCommissionWallet,
+  withdrawAdminCommission,
+} = require("../controllers/walletController");
 const { protect } = require("../middleware/auth");
 const { authorize } = require("../middleware/roles");
 
@@ -26,6 +31,8 @@ router.put("/shops/:id/suspend", suspendShop);
 router.delete("/shops/:id", deleteShop);
 router.get("/withdrawals", getAllWithdrawals);
 router.put("/withdrawals/:id", processWithdrawal);
+router.get("/commission-wallet", getAdminCommissionWallet);
+router.post("/commission-wallet/withdraw", withdrawAdminCommission);
 
 router.put(
   "/shops/:id/professional",
@@ -37,8 +44,6 @@ router.put(
   })
 );
 
-// @route   PUT /api/admin/shops/:id/feature
-// @access  Private (admin) - met en avant une boutique pour N jours (0 = retirer)
 router.put(
   "/shops/:id/feature",
   asyncHandler(async (req, res) => {
@@ -50,8 +55,6 @@ router.put(
   })
 );
 
-// @route   PUT /api/admin/products/:id/feature
-// @access  Private (admin) - met en avant un produit pour N jours (0 = retirer)
 router.put(
   "/products/:id/feature",
   asyncHandler(async (req, res) => {

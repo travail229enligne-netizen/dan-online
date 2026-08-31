@@ -9,7 +9,6 @@ const getMyWallet = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associée." });
 
-  // Ventes livrees et payees (COD encaisse) = revenu acquis
   const deliveredOrders = await Order.find({ "items.shop": shop._id, status: "delivered" });
   let totalGagne = 0;
   deliveredOrders.forEach((order) => {
@@ -19,11 +18,9 @@ const getMyWallet = asyncHandler(async (req, res) => {
         totalGagne += it.price * it.quantity;
       });
   });
-  // On retire la part commission (approx via commissionAmount proportionnel a la commande globale)
   const totalCommissionSurLivrees = deliveredOrders.reduce((sum, o) => sum + o.commissionAmount, 0);
   const revenuNetAcquis = totalGagne - totalCommissionSurLivrees;
 
-  // Ventes en cours (confirmee/en livraison) = solde en attente
   const pendingOrders = await Order.find({
     "items.shop": shop._id,
     status: { $in: ["pending", "confirmed", "out_for_delivery"] },
@@ -37,13 +34,9 @@ const getMyWallet = asyncHandler(async (req, res) => {
       });
   });
 
-  const withdrawals = await Withdrawal.find({ shop: shop._id }).sort({ createdAt: -1 });
-  const totalRetire = withdrawals
-    .filter((w) => w.status === "paid")
-    .reduce((sum, w) => sum + w.amount, 0);
-  const totalEnCoursRetrait = withdrawals
-    .filter((w) => w.status === "pending")
-    .reduce((sum, w) => sum + w.amount, 0);
+  const withdrawals = await Withdrawal.find({ shop: shop._id, type: "shop" }).sort({ createdAt: -1 });
+  const totalRetire = withdrawals.filter((w) => w.status === "paid").reduce((sum, w) => sum + w.amount, 0);
+  const totalEnCoursRetrait = withdrawals.filter((w) => w.status === "pending").reduce((sum, w) => sum + w.amount, 0);
 
   const soldeDisponible = revenuNetAcquis - totalRetire - totalEnCoursRetrait;
 
@@ -62,22 +55,56 @@ const requestWithdrawal = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associée." });
 
-  if (!amount || amount <= 0) {
-    return res.status(400).json({ message: "Montant invalide." });
-  }
-  if (!phone) {
-    return res.status(400).json({ message: "Numéro Mobile Money requis." });
-  }
+  if (!amount || amount <= 0) return res.status(400).json({ message: "Montant invalide." });
+  if (!phone) return res.status(400).json({ message: "Numéro Mobile Money requis." });
 
-  const withdrawal = await Withdrawal.create({ shop: shop._id, amount, phone });
+  const withdrawal = await Withdrawal.create({ type: "shop", shop: shop._id, amount, phone });
+  res.status(201).json(withdrawal);
+});
+
+// @route   GET /api/wallet/courier/me
+// @access  Private (tout compte ayant deja livre au moins une commande) - solde et historique du livreur
+const getMyCourierWallet = asyncHandler(async (req, res) => {
+  const deliveredOrders = await Order.find({ assignedCourier: req.user._id, status: "delivered" });
+  const totalGagne = deliveredOrders.reduce((sum, o) => sum + (o.deliveryFee || 0), 0);
+
+  const pendingOrders = await Order.find({
+    assignedCourier: req.user._id,
+    status: { $in: ["confirmed", "out_for_delivery"] },
+  });
+  const totalEnAttente = pendingOrders.reduce((sum, o) => sum + (o.deliveryFee || 0), 0);
+
+  const withdrawals = await Withdrawal.find({ courier: req.user._id, type: "courier" }).sort({ createdAt: -1 });
+  const totalRetire = withdrawals.filter((w) => w.status === "paid").reduce((sum, w) => sum + w.amount, 0);
+  const totalEnCoursRetrait = withdrawals.filter((w) => w.status === "pending").reduce((sum, w) => sum + w.amount, 0);
+
+  const soldeDisponible = totalGagne - totalRetire - totalEnCoursRetrait;
+
+  res.json({
+    soldeDisponible: Math.max(0, soldeDisponible),
+    soldeEnAttente: totalEnAttente,
+    totalGagne,
+    withdrawals,
+  });
+});
+
+// @route   POST /api/wallet/courier/withdraw
+// @access  Private (livreur)
+const requestCourierWithdrawal = asyncHandler(async (req, res) => {
+  const { amount, phone } = req.body;
+  if (!amount || amount <= 0) return res.status(400).json({ message: "Montant invalide." });
+  if (!phone) return res.status(400).json({ message: "Numéro Mobile Money requis." });
+
+  const withdrawal = await Withdrawal.create({ type: "courier", courier: req.user._id, amount, phone });
   res.status(201).json(withdrawal);
 });
 
 // @route   GET /api/admin/withdrawals
-// @access  Private (admin) - liste des demandes de retrait en attente
+// @access  Private (admin) - liste des demandes de retrait en attente (marchands + livreurs)
 const getAllWithdrawals = asyncHandler(async (req, res) => {
-  const withdrawals = await Withdrawal.find({ status: "pending" })
+  const withdrawals = await Withdrawal.find({ status: "pending", type: { $ne: "admin" } })
     .populate({ path: "shop", select: "name owner", populate: { path: "owner", select: "name phone" } })
+    .populate("courier", "name phone")
     .sort({ createdAt: -1 });
   res.json(withdrawals);
 });
@@ -101,4 +128,46 @@ const processWithdrawal = asyncHandler(async (req, res) => {
   res.json(withdrawal);
 });
 
-module.exports = { getMyWallet, requestWithdrawal, getAllWithdrawals, processWithdrawal };
+// @route   GET /api/admin/commission-wallet
+// @access  Private (admin) - solde des commissions de la plateforme
+const getAdminCommissionWallet = asyncHandler(async (req, res) => {
+  const deliveredOrders = await Order.find({ status: "delivered" });
+  const totalCommission = deliveredOrders.reduce((sum, o) => sum + (o.commissionAmount || 0), 0);
+
+  const withdrawals = await Withdrawal.find({ type: "admin" }).sort({ createdAt: -1 });
+  const totalRetire = withdrawals.reduce((sum, w) => sum + w.amount, 0);
+
+  res.json({
+    soldeDisponible: Math.max(0, totalCommission - totalRetire),
+    totalCommission,
+    withdrawals,
+  });
+});
+
+// @route   POST /api/admin/commission-wallet/withdraw
+// @access  Private (admin) - retrait auto-valide (c'est son propre argent)
+const withdrawAdminCommission = asyncHandler(async (req, res) => {
+  const { amount, phone } = req.body;
+  if (!amount || amount <= 0) return res.status(400).json({ message: "Montant invalide." });
+  if (!phone) return res.status(400).json({ message: "Numéro Mobile Money requis." });
+
+  const withdrawal = await Withdrawal.create({
+    type: "admin",
+    amount,
+    phone,
+    status: "paid",
+    processedAt: new Date(),
+  });
+  res.status(201).json(withdrawal);
+});
+
+module.exports = {
+  getMyWallet,
+  requestWithdrawal,
+  getMyCourierWallet,
+  requestCourierWithdrawal,
+  getAllWithdrawals,
+  processWithdrawal,
+  getAdminCommissionWallet,
+  withdrawAdminCommission,
+};

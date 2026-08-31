@@ -10,6 +10,11 @@ export default function AdminDashboard() {
   const [allShops, setAllShops] = useState([]);
   const [categories, setCategories] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
+  const [commissionWallet, setCommissionWallet] = useState(undefined);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawPhone, setWithdrawPhone] = useState("");
+  const [withdrawError, setWithdrawError] = useState("");
+  const [withdrawSuccess, setWithdrawSuccess] = useState(false);
   const [busy, setBusy] = useState(null);
 
   const load = () => {
@@ -18,6 +23,7 @@ export default function AdminDashboard() {
     api.get("/admin/shops").then((r) => setAllShops(r.data)).catch(() => {});
     api.get("/categories").then((r) => setCategories(r.data)).catch(() => {});
     api.get("/admin/withdrawals").then((r) => setWithdrawals(r.data)).catch(() => {});
+    api.get("/admin/commission-wallet").then((r) => setCommissionWallet(r.data)).catch(() => setCommissionWallet(null));
   };
 
   useEffect(() => {
@@ -78,13 +84,36 @@ export default function AdminDashboard() {
   };
 
   const processWithdrawal = async (id, status) => {
-    if (status === "paid" && !window.confirm("Confirmer que le paiement Mobile Money a bien été envoyé au marchand ?")) return;
+    if (status === "paid" && !window.confirm("Confirmer que le paiement Mobile Money a bien été envoyé ?")) return;
     setBusy(id);
     try {
       await api.put(`/admin/withdrawals/${id}`, { status });
       load();
     } finally {
       setBusy(null);
+    }
+  };
+
+  const handleWithdrawCommission = async (e) => {
+    e.preventDefault();
+    setWithdrawError("");
+    setWithdrawSuccess(false);
+    const amt = Number(withdrawAmount);
+    if (!amt || amt <= 0) {
+      setWithdrawError("Montant invalide.");
+      return;
+    }
+    if (amt > commissionWallet.soldeDisponible) {
+      setWithdrawError("Montant supérieur au solde disponible.");
+      return;
+    }
+    try {
+      await api.post("/admin/commission-wallet/withdraw", { amount: amt, phone: withdrawPhone });
+      setWithdrawSuccess(true);
+      setWithdrawAmount("");
+      load();
+    } catch (err) {
+      setWithdrawError(err.response?.data?.message || "Erreur lors du retrait.");
     }
   };
 
@@ -117,15 +146,7 @@ export default function AdminDashboard() {
               { label: "Commandes", value: overview.totalOrders },
               { label: "Commission totale", value: `${overview.totalCommission.toLocaleString("fr-FR")} FCFA` },
             ].map((c) => (
-              <div
-                key={c.label}
-                style={{
-                  background: "var(--white)",
-                  border: "1px solid var(--line)",
-                  borderRadius: "var(--radius-md)",
-                  padding: 14,
-                }}
-              >
+              <div key={c.label} style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 14 }}>
                 <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>{c.label}</div>
                 <div style={{ fontSize: 17, fontWeight: 700, color: "var(--green-dark)", marginTop: 2 }}>{c.value}</div>
               </div>
@@ -133,41 +154,73 @@ export default function AdminDashboard() {
           </section>
         )}
 
-        <h2 style={{ fontSize: 16, marginBottom: 12 }}>Retraits à traiter ({withdrawals.length})</h2>
+        <h2 style={{ fontSize: 16, marginBottom: 12 }}>Mes commissions</h2>
+        {commissionWallet && (
+          <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 18, marginBottom: 32, boxSizing: "border-box" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>Disponible</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: "var(--green-dark)" }}>
+                  {commissionWallet.soldeDisponible.toLocaleString("fr-FR")} FCFA
+                </div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>Total historique</div>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>{commissionWallet.totalCommission.toLocaleString("fr-FR")} FCFA</div>
+              </div>
+            </div>
+
+            <form onSubmit={handleWithdrawCommission} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  type="number"
+                  placeholder="Montant"
+                  value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(e.target.value)}
+                  style={{ flex: 1, padding: 10, border: "1px solid var(--line)", borderRadius: 8, fontSize: 13, boxSizing: "border-box" }}
+                />
+                <input
+                  placeholder="Numéro Mobile Money"
+                  value={withdrawPhone}
+                  onChange={(e) => setWithdrawPhone(e.target.value)}
+                  style={{ flex: 1, padding: 10, border: "1px solid var(--line)", borderRadius: 8, fontSize: 13, boxSizing: "border-box" }}
+                />
+              </div>
+              {withdrawError && <p style={{ color: "var(--terracotta-dark)", fontSize: 12 }}>{withdrawError}</p>}
+              {withdrawSuccess && <p style={{ color: "var(--green-dark)", fontSize: 12 }}>Retrait enregistré !</p>}
+              <button className="btn-primary" type="submit" disabled={commissionWallet.soldeDisponible <= 0} style={{ fontSize: 13, padding: "10px 16px" }}>
+                Retirer mes commissions
+              </button>
+            </form>
+
+            {commissionWallet.withdrawals.length > 0 && (
+              <div style={{ marginTop: 16, borderTop: "1px solid var(--line)", paddingTop: 12 }}>
+                {commissionWallet.withdrawals.map((w) => (
+                  <div key={w._id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 6 }}>
+                    <span>{new Date(w.createdAt).toLocaleDateString("fr-FR")} — {w.phone}</span>
+                    <span style={{ fontWeight: 600 }}>{w.amount.toLocaleString("fr-FR")} FCFA</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <h2 style={{ fontSize: 16, marginBottom: 12 }}>Retraits à traiter — marchands & livreurs ({withdrawals.length})</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
           {withdrawals.map((w) => (
-            <div
-              key={w._id}
-              style={{
-                background: "var(--white)",
-                border: "1px solid var(--line)",
-                borderRadius: "var(--radius-md)",
-                padding: 14,
-              }}
-            >
+            <div key={w._id} style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 14 }}>
               <div style={{ fontWeight: 700, fontSize: 14 }}>{w.amount.toLocaleString("fr-FR")} FCFA</div>
               <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-                {w.shop?.name} - {w.shop?.owner?.name}
+                {w.type === "courier" ? `🛵 Livreur — ${w.courier?.name}` : `🏪 ${w.shop?.name} — ${w.shop?.owner?.name}`}
               </div>
               <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>Mobile Money : {w.phone}</div>
               <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <button
-                  className="btn-primary"
-                  style={{ fontSize: 12, padding: "8px 14px" }}
-                  disabled={busy === w._id}
-                  onClick={() => processWithdrawal(w._id, "paid")}
-                >
+                <button className="btn-primary" style={{ fontSize: 12, padding: "8px 14px" }} disabled={busy === w._id} onClick={() => processWithdrawal(w._id, "paid")}>
                   Marquer payé
                 </button>
                 <button
-                  style={{
-                    fontSize: 12,
-                    padding: "8px 14px",
-                    borderRadius: 10,
-                    border: "1px solid var(--line)",
-                    color: "var(--terracotta-dark)",
-                    fontWeight: 600,
-                  }}
+                  style={{ fontSize: 12, padding: "8px 14px", borderRadius: 10, border: "1px solid var(--line)", color: "var(--terracotta-dark)", fontWeight: 600 }}
                   disabled={busy === w._id}
                   onClick={() => processWithdrawal(w._id, "rejected")}
                 >
@@ -176,25 +229,13 @@ export default function AdminDashboard() {
               </div>
             </div>
           ))}
-          {withdrawals.length === 0 && (
-            <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucun retrait en attente.</p>
-          )}
+          {withdrawals.length === 0 && <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucun retrait en attente.</p>}
         </div>
 
         <h2 style={{ fontSize: 16, marginBottom: 12 }}>Commissions par catégorie</h2>
         <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", marginBottom: 32 }}>
           {categories.map((cat, i) => (
-            <div
-              key={cat._id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 10,
-                padding: 12,
-                borderTop: i > 0 ? "1px solid var(--line)" : "none",
-              }}
-            >
+            <div key={cat._id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: 12, borderTop: i > 0 ? "1px solid var(--line)" : "none" }}>
               <div style={{ fontSize: 13, fontWeight: 600 }}>{cat.name}</div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <input
@@ -209,9 +250,7 @@ export default function AdminDashboard() {
               </div>
             </div>
           ))}
-          {categories.length === 0 && (
-            <p style={{ padding: 12, fontSize: 13, color: "var(--ink-soft)" }}>Aucune catégorie.</p>
-          )}
+          {categories.length === 0 && <p style={{ padding: 12, fontSize: 13, color: "var(--ink-soft)" }}>Aucune catégorie.</p>}
         </div>
         <p style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: -20, marginBottom: 32 }}>
           Laisse vide pour utiliser le taux par défaut de la plateforme. La commission d'une boutique spécifique est toujours prioritaire.
@@ -220,41 +259,17 @@ export default function AdminDashboard() {
         <h2 style={{ fontSize: 16, marginBottom: 12 }}>Boutiques en attente de validation ({pendingShops.length})</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
           {pendingShops.map((shop) => (
-            <div
-              key={shop._id}
-              style={{
-                background: "var(--white)",
-                border: "1px solid var(--line)",
-                borderRadius: "var(--radius-md)",
-                padding: 14,
-              }}
-            >
+            <div key={shop._id} style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 14 }}>
               <div style={{ fontWeight: 700, fontSize: 14 }}>{shop.name}</div>
-              <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-                {shop.owner?.name} - {shop.owner?.phone}
-              </div>
-              <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-                {shop.location?.allee} {shop.location?.numero}
-              </div>
+              <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>{shop.owner?.name} - {shop.owner?.phone}</div>
+              <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>{shop.location?.allee} {shop.location?.numero}</div>
               <p style={{ fontSize: 13, marginTop: 6 }}>{shop.description}</p>
               <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <button
-                  className="btn-primary"
-                  style={{ fontSize: 12, padding: "8px 14px" }}
-                  disabled={busy === shop._id}
-                  onClick={() => validate(shop._id, true)}
-                >
+                <button className="btn-primary" style={{ fontSize: 12, padding: "8px 14px" }} disabled={busy === shop._id} onClick={() => validate(shop._id, true)}>
                   Valider
                 </button>
                 <button
-                  style={{
-                    fontSize: 12,
-                    padding: "8px 14px",
-                    borderRadius: 10,
-                    border: "1px solid var(--line)",
-                    color: "var(--terracotta-dark)",
-                    fontWeight: 600,
-                  }}
+                  style={{ fontSize: 12, padding: "8px 14px", borderRadius: 10, border: "1px solid var(--line)", color: "var(--terracotta-dark)", fontWeight: 600 }}
                   disabled={busy === shop._id}
                   onClick={() => validate(shop._id, false)}
                 >
@@ -263,9 +278,7 @@ export default function AdminDashboard() {
               </div>
             </div>
           ))}
-          {pendingShops.length === 0 && (
-            <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune boutique en attente.</p>
-          )}
+          {pendingShops.length === 0 && <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune boutique en attente.</p>}
         </div>
 
         <h2 style={{ fontSize: 16, marginBottom: 12 }}>Toutes les boutiques ({allShops.length})</h2>
@@ -273,21 +286,11 @@ export default function AdminDashboard() {
           {allShops.map((shop) => {
             const isFeatured = shop.featuredUntil && new Date(shop.featuredUntil) > new Date();
             return (
-              <div
-                key={shop._id}
-                style={{
-                  background: "var(--white)",
-                  border: "1px solid var(--line)",
-                  borderRadius: "var(--radius-md)",
-                  padding: 14,
-                }}
-              >
+              <div key={shop._id} style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 14 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: 14 }}>{shop.name}</div>
-                    <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-                      {shop.owner?.name} - statut : {shop.status}
-                    </div>
+                    <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>{shop.owner?.name} - statut : {shop.status}</div>
                     {isFeatured && (
                       <div style={{ fontSize: 11, color: "var(--green-dark)", fontWeight: 600, marginTop: 2 }}>
                         Sponsorisée jusqu'au {new Date(shop.featuredUntil).toLocaleDateString("fr-FR")}
@@ -295,15 +298,7 @@ export default function AdminDashboard() {
                     )}
                   </div>
                   <button
-                    style={{
-                      fontSize: 12,
-                      padding: "8px 14px",
-                      borderRadius: 10,
-                      border: "1px solid var(--line)",
-                      color: "var(--terracotta-dark)",
-                      fontWeight: 600,
-                      whiteSpace: "nowrap",
-                    }}
+                    style={{ fontSize: 12, padding: "8px 14px", borderRadius: 10, border: "1px solid var(--line)", color: "var(--terracotta-dark)", fontWeight: 600, whiteSpace: "nowrap" }}
                     disabled={busy === shop._id}
                     onClick={() => removeShop(shop._id, shop.name)}
                   >
@@ -312,23 +307,13 @@ export default function AdminDashboard() {
                 </div>
                 <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
                   <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
-                    <input
-                      type="checkbox"
-                      checked={!!shop.isProfessional}
-                      disabled={busy === shop._id}
-                      onChange={() => toggleProfessional(shop._id, shop.isProfessional)}
-                    />
+                    <input type="checkbox" checked={!!shop.isProfessional} disabled={busy === shop._id} onChange={() => toggleProfessional(shop._id, shop.isProfessional)} />
                     Boutique professionnelle
                   </label>
                   <button
                     onClick={() => featureShop(shop._id, isFeatured)}
                     disabled={busy === shop._id}
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: isFeatured ? "var(--terracotta-dark)" : "var(--ink)",
-                      textDecoration: "underline",
-                    }}
+                    style={{ fontSize: 12, fontWeight: 600, color: isFeatured ? "var(--terracotta-dark)" : "var(--ink)", textDecoration: "underline" }}
                   >
                     {isFeatured ? "Retirer la mise en avant" : "Mettre en avant"}
                   </button>
@@ -336,9 +321,7 @@ export default function AdminDashboard() {
               </div>
             );
           })}
-          {allShops.length === 0 && (
-            <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune boutique.</p>
-          )}
+          {allShops.length === 0 && <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune boutique.</p>}
         </div>
       </main>
     </>

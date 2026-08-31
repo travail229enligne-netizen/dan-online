@@ -319,6 +319,9 @@ export default function Header({ hideSearchBar = false }) {
                   <a href="/commandes" style={{ background: "var(--cream)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600 }}>
                     Mes commandes
                   </a>
+                  <a href="/livreur/portefeuille" style={{ background: "var(--cream)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600 }}>
+                    🛵 Portefeuille livreur
+                  </a>
                   {user.role === "marchand" && (
                     <a href="/marchand/dashboard" style={{ background: "var(--cream)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600 }}>
                       Tableau de bord marchand
