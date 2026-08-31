@@ -282,7 +282,7 @@ export default function ConversationById() {
 
         <div style={{ flex: "1 1 0%", minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", display: "flex", flexDirection: "column", gap: 10, paddingBottom: 10 }}>
           {messages.map((m) => {
-            const isMine = m.senderRole === user.role;
+            const isMine = m.sender === user._id || m.sender?._id === user._id;
 
             if (m.kind === "order_summary" && m.order) {
               const order = orderCache[m.order._id] || m.order;
