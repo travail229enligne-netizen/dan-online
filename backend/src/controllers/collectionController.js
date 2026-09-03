@@ -9,6 +9,31 @@ const getShopCollections = asyncHandler(async (req, res) => {
   res.json(collections);
 });
 
+// @route   GET /api/collections/search?q=...
+// @access  Public - recherche de collections par nom, sur des boutiques actives
+const searchCollections = asyncHandler(async (req, res) => {
+  const { q } = req.query;
+  if (!q || !q.trim()) return res.json([]);
+
+  const activeShops = await Shop.find({ status: "active" }).select("_id name slug logoUrl");
+  const activeShopIds = activeShops.map((s) => s._id);
+  const shopMap = Object.fromEntries(activeShops.map((s) => [s._id.toString(), s]));
+
+  const collections = await Collection.find({
+    name: { $regex: q.trim(), $options: "i" },
+    shop: { $in: activeShopIds },
+  }).limit(10);
+
+  const results = collections.map((c) => ({
+    _id: c._id,
+    name: c.name,
+    productCount: c.products.length,
+    shop: shopMap[c.shop.toString()],
+  }));
+
+  res.json(results);
+});
+
 // @route   GET /api/collections/mine
 // @access  Private (marchand) - ses propres collections
 const getMyCollections = asyncHandler(async (req, res) => {
@@ -59,4 +84,11 @@ const deleteCollection = asyncHandler(async (req, res) => {
   res.json({ message: "Collection supprimée." });
 });
 
-module.exports = { getShopCollections, getMyCollections, createCollection, updateCollection, deleteCollection };
+module.exports = {
+  getShopCollections,
+  searchCollections,
+  getMyCollections,
+  createCollection,
+  updateCollection,
+  deleteCollection,
+};

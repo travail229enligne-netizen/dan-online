@@ -13,6 +13,8 @@ export default function Recherche() {
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState([]);
   const [shops, setShops] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [collections, setCollections] = useState([]);
   const [searched, setSearched] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -41,12 +43,22 @@ export default function Recherche() {
     shopParams.set("search", q);
     if (city.trim()) shopParams.set("city", city.trim());
 
-    const [prodRes, shopRes] = await Promise.all([
+    const collectionParams = new URLSearchParams();
+    collectionParams.set("q", q);
+
+    const [prodRes, shopRes, catRes, colRes] = await Promise.all([
       api.get(`/products?${params.toString()}`),
       api.get(`/shops?${shopParams.toString()}`),
+      api.get("/categories"),
+      api.get(`/collections/search?${collectionParams.toString()}`),
     ]);
+
     setProducts(prodRes.data.products);
     setShops(shopRes.data);
+    setCollections(colRes.data);
+
+    const qLower = q.trim().toLowerCase();
+    setCategories(catRes.data.filter((c) => c.name.toLowerCase().includes(qLower)));
   };
 
   useEffect(() => {
@@ -67,17 +79,18 @@ export default function Recherche() {
   };
 
   const activeFilterCount = [minPrice, maxPrice, wholesale, location, city].filter(Boolean).length;
+  const totalResults = products.length + shops.length + categories.length + collections.length;
 
   return (
     <>
-      <Header hideSearchBar />
+      <Header />
       <main className="container" style={{ paddingTop: 20, paddingBottom: 60, boxSizing: "border-box" }}>
         <form onSubmit={handleSubmit} style={{ marginBottom: 12 }}>
           <input
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher un produit, une boutique..."
+            placeholder="Rechercher un produit, une boutique, une catégorie..."
             style={{
               width: "100%",
               padding: 12,
@@ -184,8 +197,37 @@ export default function Recherche() {
 
         {!searched && (
           <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>
-            Tape un mot-clé pour rechercher parmi les produits et boutiques d'EasyShop.
+            Tape un mot-clé pour rechercher parmi les produits, boutiques, catégories et collections d'EasyShop.
           </p>
+        )}
+
+        {searched && totalResults === 0 && (
+          <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>Aucun résultat pour "{query}".</p>
+        )}
+
+        {searched && categories.length > 0 && (
+          <section style={{ marginBottom: 28 }}>
+            <h2 style={{ fontSize: 16, marginBottom: 10 }}>Catégories ({categories.length})</h2>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {categories.map((cat) => (
+                <a
+                  key={cat._id}
+                  href={`/categorie/${cat.slug}`}
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    padding: "8px 16px",
+                    borderRadius: 20,
+                    border: "1px solid var(--line)",
+                    background: "var(--white)",
+                    color: "var(--ink)",
+                  }}
+                >
+                  {cat.icon ? `${cat.icon} ` : ""}{cat.name}
+                </a>
+              ))}
+            </div>
+          </section>
         )}
 
         {searched && shops.length > 0 && (
@@ -206,11 +248,50 @@ export default function Recherche() {
                     padding: 12,
                   }}
                 >
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--ink)" }} />
+                  {shop.logoUrl ? (
+                    <img src={shop.logoUrl} alt={shop.name} style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover" }} />
+                  ) : (
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--ink)" }} />
+                  )}
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 14 }}>{shop.name}</div>
                     <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
                       {shop.city} {shop.location?.allee} {shop.location?.numero}
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {searched && collections.length > 0 && (
+          <section style={{ marginBottom: 28 }}>
+            <h2 style={{ fontSize: 16, marginBottom: 10 }}>Collections ({collections.length})</h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {collections.map((col) => (
+                <a
+                  key={col._id}
+                  href={`/boutique/${col.shop?.slug}`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    background: "var(--white)",
+                    border: "1px solid var(--line)",
+                    borderRadius: "var(--radius-md)",
+                    padding: 12,
+                  }}
+                >
+                  {col.shop?.logoUrl ? (
+                    <img src={col.shop.logoUrl} alt={col.shop.name} style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover" }} />
+                  ) : (
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--ink)" }} />
+                  )}
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>🗂️ {col.name}</div>
+                    <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+                      {col.shop?.name} — {col.productCount} produit{col.productCount > 1 ? "s" : ""}
                     </div>
                   </div>
                 </a>
@@ -224,10 +305,8 @@ export default function Recherche() {
             <h2 style={{ fontSize: 16, marginBottom: 10 }}>
               Produits {products.length > 0 && `(${products.length})`}
             </h2>
-            {products.length === 0 && shops.length === 0 ? (
-              <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>
-                Aucun résultat pour "{query}".
-              </p>
+            {products.length === 0 ? (
+              <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>Aucun produit pour "{query}".</p>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14 }}>
                 {products.map((p) => (
