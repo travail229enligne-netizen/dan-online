@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
 import Script from "next/script";
 import Header from "../../components/Header";
@@ -14,11 +14,27 @@ export default function PayerCommande() {
   const [error, setError] = useState("");
   const [paying, setPaying] = useState(false);
   const [paid, setPaid] = useState(false);
+  const autoOpenedRef = useRef(false);
 
   useEffect(() => {
     if (!id) return;
     api.get(`/orders/${id}`).then((r) => setOrder(r.data)).catch(() => setOrder(null));
   }, [id]);
+
+  const handlePay = () => {
+    setError("");
+    if (!widgetReady || typeof window.openKkiapayWidget !== "function") {
+      setError("Le module de paiement n'est pas encore chargé, réessaie dans un instant.");
+      return;
+    }
+    window.openKkiapayWidget({
+      amount: order.grandTotal,
+      key: process.env.NEXT_PUBLIC_KKIAPAY_PUBLIC_KEY,
+      sandbox: true,
+      phone: order.deliveryPhone,
+      data: JSON.stringify({ userId: user?._id, orderId: order._id }),
+    });
+  };
 
   useEffect(() => {
     if (!widgetReady || typeof window.addKkiapayListener !== "function") return;
@@ -54,25 +70,17 @@ export default function PayerCommande() {
     };
   }, [widgetReady, id]);
 
+  useEffect(() => {
+    if (!widgetReady || !order || autoOpenedRef.current) return;
+    if (!order.deliveryProofUrl || order.paymentStatus === "paid") return;
+    autoOpenedRef.current = true;
+    handlePay();
+  }, [widgetReady, order]);
+
   if (!loading && !user) {
     if (typeof window !== "undefined") router.push(`/connexion?next=/payer-commande/${id}`);
     return null;
   }
-
-  const handlePay = () => {
-    setError("");
-    if (!widgetReady || typeof window.openKkiapayWidget !== "function") {
-      setError("Le module de paiement n'est pas encore chargé, réessaie dans un instant.");
-      return;
-    }
-    window.openKkiapayWidget({
-      amount: order.grandTotal,
-      key: process.env.NEXT_PUBLIC_KKIAPAY_PUBLIC_KEY,
-      sandbox: true,
-      phone: order.deliveryPhone,
-      data: JSON.stringify({ userId: user?._id, orderId: order._id }),
-    });
-  };
 
   if (order === undefined) {
     return (
@@ -115,9 +123,7 @@ export default function PayerCommande() {
           <div style={{ background: "var(--white)", border: "2px solid var(--green-dark)", borderRadius: "var(--radius-md)", padding: 24, textAlign: "center" }}>
             <div style={{ fontSize: 48 }}>✅</div>
             <h1 style={{ fontSize: 20, marginTop: 10 }}>Paiement confirmé</h1>
-            <p style={{ fontSize: 14, color: "var(--ink-soft)", marginTop: 8 }}>
-              Merci ! Ta commande est maintenant réglée.
-            </p>
+            <p style={{ fontSize: 14, color: "var(--ink-soft)", marginTop: 8 }}>Merci ! Ta commande est maintenant réglée.</p>
             <div style={{ borderTop: "1px solid var(--line)", marginTop: 16, paddingTop: 16, textAlign: "left", fontSize: 13 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                 <span>Commande</span>
@@ -145,7 +151,7 @@ export default function PayerCommande() {
       <main className="container" style={{ paddingTop: 30, paddingBottom: 60, maxWidth: 420 }}>
         <h1 style={{ fontSize: 20, marginBottom: 4 }}>Payer ta commande</h1>
         <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 20 }}>
-          Ta commande a été livrée. Règle maintenant pour la finaliser.
+          Ta commande a été livrée. Le paiement s'ouvre automatiquement.
         </p>
 
         <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 18, marginBottom: 20, boxSizing: "border-box" }}>

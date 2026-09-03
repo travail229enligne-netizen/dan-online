@@ -151,6 +151,19 @@ const getMyOrders = asyncHandler(async (req, res) => {
   res.json(orders);
 });
 
+// @route   GET /api/orders/pending-payment
+// @access  Private (client) - detecte s'il existe une commande en attente de paiement en ligne
+const getPendingPaymentOrder = asyncHandler(async (req, res) => {
+  const order = await Order.findOne({
+    client: req.user._id,
+    paymentMethod: "kkiapay",
+    paymentStatus: { $ne: "paid" },
+    deliveryProofUrl: { $ne: "" },
+  }).sort({ createdAt: -1 });
+
+  res.json({ orderId: order ? order._id : null });
+});
+
 const getShopOrders = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associée." });
@@ -178,8 +191,6 @@ const getOrderById = asyncHandler(async (req, res) => {
   res.json(order);
 });
 
-// @route   PUT /api/orders/:id/pay
-// @access  Private (client, proprietaire de la commande) - paiement en ligne, une fois la preuve de livraison recue
 const payOrder = asyncHandler(async (req, res) => {
   const { transactionId } = req.body;
   if (!transactionId) return res.status(400).json({ message: "Transaction de paiement manquante." });
@@ -263,8 +274,6 @@ const respondAsCourier = asyncHandler(async (req, res) => {
   res.json(order);
 });
 
-// @route   PUT /api/orders/:id/delivery-proof
-// @access  Private (livreur assigne ou client)
 const submitDeliveryProof = asyncHandler(async (req, res) => {
   const { imageUrl } = req.body;
   if (!imageUrl) return res.status(400).json({ message: "Image requise." });
@@ -338,6 +347,7 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
 module.exports = {
   createOrder,
   getMyOrders,
+  getPendingPaymentOrder,
   getShopOrders,
   getOrderById,
   payOrder,
