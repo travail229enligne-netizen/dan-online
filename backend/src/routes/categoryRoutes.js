@@ -1,6 +1,7 @@
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 const Category = require("../models/Category");
+const Product = require("../models/Product");
 const { protect } = require("../middleware/auth");
 const { authorize } = require("../middleware/roles");
 
@@ -24,8 +25,6 @@ router.post(
   })
 );
 
-// @route   PUT /api/categories/:id/commission
-// @access  Private (admin) - regle le taux de commission specifique a une categorie
 router.put(
   "/:id/commission",
   protect,
@@ -42,8 +41,6 @@ router.put(
   })
 );
 
-// @route   GET /api/categories/seed-extra?key=SEED_KEY
-// @access  Protege par cle - ajoute les nouvelles categories marketplace (upsert, ne touche pas les existantes)
 router.get(
   "/seed-extra",
   asyncHandler(async (req, res) => {
@@ -76,6 +73,40 @@ router.get(
     }
 
     res.json({ message: "Catégories ajoutées avec succès.", categories: results });
+  })
+);
+
+// @route   GET /api/categories/merge-mode-vetements?key=SEED_KEY
+// @access  Protege par cle - fusionne Chaussures dans Mode, renomme Mode en "Mode & Vetements"
+// A visiter UNE SEULE FOIS depuis un navigateur.
+router.get(
+  "/merge-mode-vetements",
+  asyncHandler(async (req, res) => {
+    if (req.query.key !== process.env.SEED_KEY) {
+      return res.status(403).json({ message: "Clé invalide." });
+    }
+
+    const mode = await Category.findOne({ slug: "mode" });
+    const chaussures = await Category.findOne({ slug: "chaussures" });
+
+    if (!mode) {
+      return res.status(404).json({ message: "Catégorie 'Mode' introuvable." });
+    }
+
+    mode.name = "Mode & Vêtements";
+    mode.slug = "mode-vetements";
+    await mode.save();
+
+    let movedCount = 0;
+    if (chaussures) {
+      const result = await Product.updateMany({ category: chaussures._id }, { category: mode._id });
+      movedCount = result.modifiedCount || 0;
+      await chaussures.deleteOne();
+    }
+
+    res.json({
+      message: `Fusion terminée. Catégorie renommée en "${mode.name}". ${movedCount} produit(s) déplacé(s) depuis Chaussures.`,
+    });
   })
 );
 

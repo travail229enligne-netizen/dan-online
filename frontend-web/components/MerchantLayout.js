@@ -18,13 +18,13 @@ const navItems = [
 
 export default function MerchantLayout({ children, title }) {
   const [open, setOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [unreadOrders, setUnreadOrders] = useState(0);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || user.role !== "marchand") return;
     const load = () => {
       api
         .get("/notifications")
@@ -38,6 +38,30 @@ export default function MerchantLayout({ children, title }) {
     const interval = setInterval(load, 15000);
     return () => clearInterval(interval);
   }, [user]);
+
+  if (loading) return null;
+
+  if (!user) {
+    if (typeof window !== "undefined") router.push("/connexion");
+    return null;
+  }
+
+  if (user.role !== "marchand") {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--cream)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 24, textAlign: "center", maxWidth: 340 }}>
+          <div style={{ fontSize: 36, marginBottom: 10 }}>🔒</div>
+          <h1 style={{ fontSize: 17, marginBottom: 8 }}>Espace réservé aux marchands</h1>
+          <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 16 }}>
+            Cette section n'est pas accessible avec ton type de compte actuel.
+          </p>
+          <a href="/" className="btn-primary" style={{ display: "inline-block" }}>
+            Retour à l'accueil
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--cream)" }}>

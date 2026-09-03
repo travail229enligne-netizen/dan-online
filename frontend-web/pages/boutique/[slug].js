@@ -19,13 +19,6 @@ function shade(hex, percent) {
   }
 }
 
-function whatsappLink(phone, shopName) {
-  if (!phone) return null;
-  const digits = phone.replace(/[^0-9]/g, "");
-  const message = encodeURIComponent(`Bonjour, je vous contacte depuis EasyShop au sujet de votre boutique ${shopName}.`);
-  return `https://wa.me/${digits}?text=${message}`;
-}
-
 const sortOptions = [
   { value: "recent", label: "Plus récents" },
   { value: "price_asc", label: "Prix croissant" },
@@ -132,7 +125,9 @@ export default function BoutiquePublique() {
   const theme = shop.themeColor || "#111111";
   const themeDark = shade(theme, -30);
   const location = [shop.city, shop.location?.allee, shop.location?.numero].filter(Boolean).join(", ");
-  const waLink = whatsappLink(shop.owner?.phone, shop.name);
+  const isCertified = shop.isVerified || shop.isProfessional;
+  const certifiedLabel = shop.isProfessional ? "Boutique professionnelle certifiée" : "Boutique vérifiée";
+  const callHref = shop.owner?.phone ? `tel:${shop.owner.phone}` : null;
 
   const pageTitle = `${shop.name}${shop.city ? ` à ${shop.city}` : ""} | EasyShop`;
   const pageDescription = shop.description
@@ -164,6 +159,26 @@ export default function BoutiquePublique() {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <h1 style={{ color: "var(--white)", fontSize: 20 }}>{shop.name}</h1>
+              {isCertified && (
+                <span
+                  title={certifiedLabel}
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: "50%",
+                    background: shop.isProfessional ? "#e8a93b" : "var(--white)",
+                    color: shop.isProfessional ? "var(--white)" : theme,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 12,
+                    fontWeight: 900,
+                    flexShrink: 0,
+                  }}
+                >
+                  ✓
+                </span>
+              )}
               <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", display: "inline-block" }} />
             </div>
             <div style={{ display: "flex", gap: 8 }}>
@@ -185,11 +200,9 @@ export default function BoutiquePublique() {
                   {following ? "Suivi ✓" : "Suivre"}
                 </button>
               )}
-              {waLink && (
+              {callHref && (
                 <a
-                  href={waLink}
-                  target="_blank"
-                  rel="noreferrer"
+                  href={callHref}
                   style={{
                     background: "rgba(255,255,255,0.18)",
                     color: "var(--white)",
@@ -201,7 +214,7 @@ export default function BoutiquePublique() {
                     whiteSpace: "nowrap",
                   }}
                 >
-                  Contacter
+                  📞 Contacter
                 </a>
               )}
             </div>
@@ -225,38 +238,8 @@ export default function BoutiquePublique() {
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-            {shop.isProfessional && (
-              <span
-                style={{
-                  background: "rgba(255,255,255,0.25)",
-                  color: "var(--white)",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  padding: "5px 12px",
-                  borderRadius: 20,
-                  border: "1px solid rgba(255,255,255,0.5)",
-                }}
-              >
-                Boutique professionnelle
-              </span>
-            )}
-            {shop.isVerified && (
-              <span
-                style={{
-                  background: "rgba(255,255,255,0.18)",
-                  color: "var(--white)",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  padding: "5px 12px",
-                  borderRadius: 20,
-                  border: "1px solid rgba(255,255,255,0.35)",
-                }}
-              >
-                Boutique vérifiée
-              </span>
-            )}
-            {location && (
+          {location && (
+            <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
               <span
                 style={{
                   background: "rgba(255,255,255,0.18)",
@@ -270,23 +253,8 @@ export default function BoutiquePublique() {
               >
                 {location}
               </span>
-            )}
-            {shop.category?.name && (
-              <span
-                style={{
-                  background: "rgba(255,255,255,0.18)",
-                  color: "var(--white)",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  padding: "5px 12px",
-                  borderRadius: 20,
-                  border: "1px solid rgba(255,255,255,0.35)",
-                }}
-              >
-                {shop.category.name}
-              </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 

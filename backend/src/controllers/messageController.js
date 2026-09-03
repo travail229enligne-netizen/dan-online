@@ -33,11 +33,11 @@ const startConversation = asyncHandler(async (req, res) => {
 });
 
 // @route   POST /api/messages/start-courier
-// @access  Private (marchand) - demarre/recupere une conversation avec un livreur et lui assigne une commande
-// body: { courierId, orderId }
+// @access  Private (marchand) - demarre/recupere une conversation avec un livreur
+// body: { courierId, orderId? } - orderId est optionnel: s'il est fourni, assigne la commande et envoie le bilan
 const startCourierConversation = asyncHandler(async (req, res) => {
   const { courierId, orderId } = req.body;
-  if (!courierId || !orderId) return res.status(400).json({ message: "Livreur et commande requis." });
+  if (!courierId) return res.status(400).json({ message: "Livreur requis." });
 
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
@@ -47,36 +47,38 @@ const startCourierConversation = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Ce livreur n'est pas dans ta liste. Ajoute-le d'abord." });
   }
 
-  const order = await Order.findById(orderId);
-  if (!order) return res.status(404).json({ message: "Commande introuvable." });
-
   let conversation = await Conversation.findOne({ type: "shop_courier", shop: shop._id, courier: courierId });
   if (!conversation) {
-    conversation = await Conversation.create({ type: "shop_courier", shop: shop._id, courier: courierId, order: orderId });
-  } else {
-    conversation.order = orderId;
-    await conversation.save();
+    conversation = await Conversation.create({ type: "shop_courier", shop: shop._id, courier: courierId, order: orderId || null });
   }
 
-  order.assignedCourier = courierId;
-  order.courierStatus = "pending";
-  await order.save();
+  if (orderId) {
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ message: "Commande introuvable." });
 
-  const message = await Message.create({
-    conversation: conversation._id,
-    sender: req.user._id,
-    senderRole: "marchand",
-    kind: "order_summary",
-    order: order._id,
-    text: "",
-  });
+    conversation.order = orderId;
+    await conversation.save();
 
-  conversation.lastMessage = "📦 Nouvelle commande à livrer";
-  conversation.lastMessageAt = new Date();
-  conversation.unreadForClient += 1; // reutilise ce compteur pour le livreur
-  await conversation.save();
+    order.assignedCourier = courierId;
+    order.courierStatus = "pending";
+    await order.save();
 
-  await notify(courierId, "message", "Nouvelle commande à livrer", "Une boutique t'a envoyé une commande à livrer.", `/messages/c/${conversation._id}`);
+    const message = await Message.create({
+      conversation: conversation._id,
+      sender: req.user._id,
+      senderRole: "marchand",
+      kind: "order_summary",
+      order: order._id,
+      text: "",
+    });
+
+    conversation.lastMessage = "📦 Nouvelle commande à livrer";
+    conversation.lastMessageAt = new Date();
+    conversation.unreadForClient += 1;
+    await conversation.save();
+
+    await notify(courierId, "message", "Nouvelle commande à livrer", "Une boutique t'a envoyé une commande à livrer.", `/messages/c/${conversation._id}`);
+  }
 
   res.json(conversation);
 });
