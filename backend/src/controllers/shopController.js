@@ -156,8 +156,6 @@ const getMyShopStats = asyncHandler(async (req, res) => {
   });
 });
 
-// @route   GET /api/shops/me/chart
-// @access  Private (marchand) - evolution 30 jours + top produits + repartition statuts
 const getMyShopChart = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
@@ -168,7 +166,6 @@ const getMyShopChart = asyncHandler(async (req, res) => {
 
   const allOrders = await Order.find({ "items.shop": shop._id });
 
-  // Evolution journaliere (30 jours), hors commandes annulees
   const days = [];
   for (let i = 0; i < 30; i++) {
     const d = new Date(since);
@@ -193,13 +190,11 @@ const getMyShopChart = asyncHandler(async (req, res) => {
       dayMap[key].ventes += lineTotal;
     });
 
-  // Repartition par statut (toutes periodes confondues)
   const statusCounts = { pending: 0, confirmed: 0, out_for_delivery: 0, delivered: 0, cancelled: 0 };
   allOrders.forEach((o) => {
     if (statusCounts[o.status] !== undefined) statusCounts[o.status] += 1;
   });
 
-  // Top 5 produits les plus vendus (par quantite, commandes non annulees)
   const productSales = {};
   allOrders
     .filter((o) => o.status !== "cancelled")
@@ -222,6 +217,51 @@ const getMyShopChart = asyncHandler(async (req, res) => {
     statusCounts,
     topProducts,
   });
+});
+
+const getMyCouriers = asyncHandler(async (req, res) => {
+  const shop = await Shop.findOne({ owner: req.user._id });
+  if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
+  res.json(shop.couriers);
+});
+
+const addCourier = asyncHandler(async (req, res) => {
+  const { phone, name } = req.body;
+  if (!phone || !phone.trim()) {
+    return res.status(400).json({ message: "Numero de telephone requis." });
+  }
+
+  const shop = await Shop.findOne({ owner: req.user._id });
+  if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
+
+  const courierUser = await User.findOne({ phone: phone.trim() });
+  if (!courierUser) {
+    return res.status(404).json({ message: "Aucun compte EasyShop n'est associe a ce numero. Le livreur doit d'abord creer un compte." });
+  }
+
+  const alreadyAdded = shop.couriers.some((c) => c.user.toString() === courierUser._id.toString());
+  if (alreadyAdded) {
+    return res.status(400).json({ message: "Ce livreur est deja dans ta liste." });
+  }
+
+  shop.couriers.push({
+    user: courierUser._id,
+    name: name && name.trim() ? name.trim() : courierUser.name,
+    phone: phone.trim(),
+  });
+  await shop.save();
+
+  res.status(201).json(shop.couriers);
+});
+
+const removeCourier = asyncHandler(async (req, res) => {
+  const shop = await Shop.findOne({ owner: req.user._id });
+  if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
+
+  shop.couriers = shop.couriers.filter((c) => c.user.toString() !== req.params.userId);
+  await shop.save();
+
+  res.json(shop.couriers);
 });
 
 module.exports = {
