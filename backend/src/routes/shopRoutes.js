@@ -9,6 +9,7 @@ const {
   closeMyShop,
   reopenMyShop,
   getMyShopStats,
+  getMyShopChart,
   getMyCouriers,
   addCourier,
   removeCourier,
@@ -21,6 +22,7 @@ const router = express.Router();
 router.get("/", getShops);
 router.get("/me", protect, authorize("marchand"), getMyShop);
 router.get("/me/stats", protect, authorize("marchand"), getMyShopStats);
+router.get("/me/chart", protect, authorize("marchand"), getMyShopChart);
 router.put("/me/close", protect, authorize("marchand"), closeMyShop);
 router.put("/me/reopen", protect, authorize("marchand"), reopenMyShop);
 router.get("/me/couriers", protect, authorize("marchand"), getMyCouriers);

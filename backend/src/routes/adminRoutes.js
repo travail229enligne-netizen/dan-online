@@ -9,6 +9,7 @@ const {
   suspendShop,
   deleteShop,
   getDashboard,
+  getDashboardChart,
 } = require("../controllers/adminController");
 const {
   getAllWithdrawals,
@@ -24,6 +25,7 @@ const router = express.Router();
 router.use(protect, authorize("admin"));
 
 router.get("/dashboard", getDashboard);
+router.get("/dashboard-chart", getDashboardChart);
 router.get("/shops", getAllShops);
 router.get("/shops/pending", getPendingShops);
 router.put("/shops/:id/validate", validateShop);

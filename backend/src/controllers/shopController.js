@@ -1,6 +1,8 @@
 const asyncHandler = require("express-async-handler");
 const Shop = require("../models/Shop");
 const User = require("../models/User");
+const Order = require("../models/Order");
+const Product = require("../models/Product");
 
 function sanitizeZones(zones) {
   if (!Array.isArray(zones)) return [];
@@ -9,8 +11,6 @@ function sanitizeZones(zones) {
     .map((z) => ({ city: z.city.trim(), price: Number(z.price) }));
 }
 
-// @route   GET /api/shops
-// @access  Public - liste des boutiques partenaires verifiees
 const getShops = asyncHandler(async (req, res) => {
   const filter = { status: "active" };
   if (req.query.category) filter.category = req.query.category;
@@ -24,31 +24,23 @@ const getShops = asyncHandler(async (req, res) => {
   res.json(shops);
 });
 
-// @route   GET /api/shops/me
-// @access  Private (marchand) - recupere sa propre boutique (ou null)
 const getMyShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id }).populate("category", "name icon");
   res.json(shop || null);
 });
 
-// @route   GET /api/shops/by-id/:id
-// @access  Public - utilise notamment pour calculer les frais de livraison au checkout
 const getShopById = asyncHandler(async (req, res) => {
   const shop = await Shop.findById(req.params.id).select("name slug deliveryZones businessType");
   if (!shop) return res.status(404).json({ message: "Boutique introuvable." });
   res.json(shop);
 });
 
-// @route   GET /api/shops/:slug
-// @access  Public
 const getShopBySlug = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ slug: req.params.slug }).populate("category", "name icon").populate("owner", "phone");
   if (!shop) return res.status(404).json({ message: "Boutique introuvable." });
   res.json(shop);
 });
 
-// @route   POST /api/shops
-// @access  Private (marchand) - cree sa boutique / demande d'emplacement virtuel
 const createShop = asyncHandler(async (req, res) => {
   if (req.user.shop) {
     return res.status(400).json({ message: "Vous possedez deja une boutique." });
@@ -83,8 +75,6 @@ const createShop = asyncHandler(async (req, res) => {
   res.status(201).json(shop);
 });
 
-// @route   PUT /api/shops/me
-// @access  Private (marchand) - met a jour sa propre boutique
 const updateMyShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
@@ -112,8 +102,6 @@ const updateMyShop = asyncHandler(async (req, res) => {
   res.json(shop);
 });
 
-// @route   PUT /api/shops/me/close
-// @access  Private (marchand)
 const closeMyShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
@@ -126,8 +114,6 @@ const closeMyShop = asyncHandler(async (req, res) => {
   res.json(shop);
 });
 
-// @route   PUT /api/shops/me/reopen
-// @access  Private (marchand)
 const reopenMyShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
@@ -140,10 +126,7 @@ const reopenMyShop = asyncHandler(async (req, res) => {
   res.json(shop);
 });
 
-// @route   GET /api/shops/me/stats
-// @access  Private (marchand)
 const getMyShopStats = asyncHandler(async (req, res) => {
-  const Order = require("../models/Order");
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
 
@@ -173,55 +156,72 @@ const getMyShopStats = asyncHandler(async (req, res) => {
   });
 });
 
-// @route   GET /api/shops/me/couriers
-// @access  Private (marchand)
-const getMyCouriers = asyncHandler(async (req, res) => {
-  const shop = await Shop.findOne({ owner: req.user._id });
-  if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
-  res.json(shop.couriers);
-});
-
-// @route   POST /api/shops/me/couriers
-// @access  Private (marchand)
-const addCourier = asyncHandler(async (req, res) => {
-  const { phone, name } = req.body;
-  if (!phone || !phone.trim()) {
-    return res.status(400).json({ message: "Numero de telephone requis." });
-  }
-
+// @route   GET /api/shops/me/chart
+// @access  Private (marchand) - evolution 30 jours + top produits + repartition statuts
+const getMyShopChart = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
 
-  const courierUser = await User.findOne({ phone: phone.trim() });
-  if (!courierUser) {
-    return res.status(404).json({ message: "Aucun compte EasyShop n'est associe a ce numero. Le livreur doit d'abord creer un compte." });
-  }
+  const since = new Date();
+  since.setDate(since.getDate() - 29);
+  since.setHours(0, 0, 0, 0);
 
-  const alreadyAdded = shop.couriers.some((c) => c.user.toString() === courierUser._id.toString());
-  if (alreadyAdded) {
-    return res.status(400).json({ message: "Ce livreur est deja dans ta liste." });
-  }
+  const allOrders = await Order.find({ "items.shop": shop._id });
 
-  shop.couriers.push({
-    user: courierUser._id,
-    name: name && name.trim() ? name.trim() : courierUser.name,
-    phone: phone.trim(),
+  // Evolution journaliere (30 jours), hors commandes annulees
+  const days = [];
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(since);
+    d.setDate(d.getDate() + i);
+    const key = d.toISOString().slice(0, 10);
+    days.push({ date: key, label: d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }), commandes: 0, ventes: 0 });
+  }
+  const dayMap = Object.fromEntries(days.map((d) => [d.date, d]));
+
+  allOrders
+    .filter((o) => o.status !== "cancelled" && o.createdAt >= since)
+    .forEach((order) => {
+      const key = order.createdAt.toISOString().slice(0, 10);
+      if (!dayMap[key]) return;
+      let lineTotal = 0;
+      order.items
+        .filter((it) => it.shop.toString() === shop._id.toString())
+        .forEach((it) => {
+          lineTotal += it.price * it.quantity;
+        });
+      dayMap[key].commandes += 1;
+      dayMap[key].ventes += lineTotal;
+    });
+
+  // Repartition par statut (toutes periodes confondues)
+  const statusCounts = { pending: 0, confirmed: 0, out_for_delivery: 0, delivered: 0, cancelled: 0 };
+  allOrders.forEach((o) => {
+    if (statusCounts[o.status] !== undefined) statusCounts[o.status] += 1;
   });
-  await shop.save();
 
-  res.status(201).json(shop.couriers);
-});
+  // Top 5 produits les plus vendus (par quantite, commandes non annulees)
+  const productSales = {};
+  allOrders
+    .filter((o) => o.status !== "cancelled")
+    .forEach((order) => {
+      order.items
+        .filter((it) => it.shop.toString() === shop._id.toString())
+        .forEach((it) => {
+          const key = it.product.toString();
+          if (!productSales[key]) productSales[key] = { name: it.name, quantite: 0, ventes: 0 };
+          productSales[key].quantite += it.quantity;
+          productSales[key].ventes += it.price * it.quantity;
+        });
+    });
+  const topProducts = Object.values(productSales)
+    .sort((a, b) => b.quantite - a.quantite)
+    .slice(0, 5);
 
-// @route   DELETE /api/shops/me/couriers/:userId
-// @access  Private (marchand)
-const removeCourier = asyncHandler(async (req, res) => {
-  const shop = await Shop.findOne({ owner: req.user._id });
-  if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
-
-  shop.couriers = shop.couriers.filter((c) => c.user.toString() !== req.params.userId);
-  await shop.save();
-
-  res.json(shop.couriers);
+  res.json({
+    evolution: days,
+    statusCounts,
+    topProducts,
+  });
 });
 
 module.exports = {
@@ -234,7 +234,5 @@ module.exports = {
   closeMyShop,
   reopenMyShop,
   getMyShopStats,
-  getMyCouriers,
-  addCourier,
-  removeCourier,
+  getMyShopChart,
 };

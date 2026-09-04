@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import Header from "../../components/Header";
 import { useAuth } from "../../lib/auth";
 import api from "../../lib/api";
@@ -6,6 +7,7 @@ import api from "../../lib/api";
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
   const [overview, setOverview] = useState(null);
+  const [chartData, setChartData] = useState(null);
   const [pendingShops, setPendingShops] = useState([]);
   const [allShops, setAllShops] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -19,6 +21,7 @@ export default function AdminDashboard() {
 
   const load = () => {
     api.get("/admin/dashboard").then((r) => setOverview(r.data)).catch(() => {});
+    api.get("/admin/dashboard-chart").then((r) => setChartData(r.data)).catch(() => {});
     api.get("/admin/shops/pending").then((r) => setPendingShops(r.data)).catch(() => {});
     api.get("/admin/shops").then((r) => setAllShops(r.data)).catch(() => {});
     api.get("/categories").then((r) => setCategories(r.data)).catch(() => {});
@@ -153,6 +156,25 @@ export default function AdminDashboard() {
             ))}
           </section>
         )}
+
+        <h2 style={{ fontSize: 16, marginBottom: 12 }}>Évolution — 30 derniers jours</h2>
+        <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 16, marginBottom: 32, boxSizing: "border-box" }}>
+          {chartData ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                <XAxis dataKey="label" tick={{ fontSize: 10 }} interval={4} />
+                <YAxis yAxisId="left" tick={{ fontSize: 10 }} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} />
+                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                <Line yAxisId="left" type="monotone" dataKey="commandes" name="Commandes" stroke="#16543a" strokeWidth={2} dot={false} />
+                <Line yAxisId="right" type="monotone" dataKey="commission" name="Commission (FCFA)" stroke="#c1592b" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Chargement du graphique...</p>
+          )}
+        </div>
 
         <h2 style={{ fontSize: 16, marginBottom: 12 }}>Mes commissions</h2>
         {commissionWallet && (

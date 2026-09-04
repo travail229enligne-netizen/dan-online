@@ -5,22 +5,16 @@ const Order = require("../models/Order");
 const Product = require("../models/Product");
 const { notify } = require("../utils/notify");
 
-// @route   GET /api/admin/shops/pending
-// @access  Private (admin) - boutiques en attente de validation
 const getPendingShops = asyncHandler(async (req, res) => {
   const shops = await Shop.find({ status: "pending" }).populate("owner", "name email phone");
   res.json(shops);
 });
 
-// @route   GET /api/admin/shops
-// @access  Private (admin) - liste de toutes les boutiques, tous statuts
 const getAllShops = asyncHandler(async (req, res) => {
   const shops = await Shop.find().populate("owner", "name email phone").sort({ createdAt: -1 });
   res.json(shops);
 });
 
-// @route   PUT /api/admin/shops/:id/validate
-// @access  Private (admin) - valide un emplacement virtuel (boutique)
 const validateShop = asyncHandler(async (req, res) => {
   const { approve, commissionRate, rentAmount } = req.body;
   const shop = await Shop.findById(req.params.id);
@@ -46,16 +40,12 @@ const validateShop = asyncHandler(async (req, res) => {
   res.json(shop);
 });
 
-// @route   PUT /api/admin/shops/:id/suspend
-// @access  Private (admin)
 const suspendShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findByIdAndUpdate(req.params.id, { status: "suspended" }, { new: true });
   if (!shop) return res.status(404).json({ message: "Boutique introuvable." });
   res.json(shop);
 });
 
-// @route   DELETE /api/admin/shops/:id
-// @access  Private (admin) - supprime definitivement une boutique (donnees test ou non-conformite)
 const deleteShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findById(req.params.id);
   if (!shop) return res.status(404).json({ message: "Boutique introuvable." });
@@ -67,8 +57,6 @@ const deleteShop = asyncHandler(async (req, res) => {
   res.json({ message: "Boutique supprimee avec succes." });
 });
 
-// @route   GET /api/admin/dashboard
-// @access  Private (admin) - vue d'ensemble de la plateforme
 const getDashboard = asyncHandler(async (req, res) => {
   const [totalMarchands, totalClients, activeShops, pendingShops, totalOrders] = await Promise.all([
     User.countDocuments({ role: "marchand" }),
@@ -93,4 +81,36 @@ const getDashboard = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { getPendingShops, getAllShops, validateShop, suspendShop, deleteShop, getDashboard };
+// @route   GET /api/admin/dashboard-chart
+// @access  Private (admin) - evolution commandes + revenu sur 30 jours
+const getDashboardChart = asyncHandler(async (req, res) => {
+  const since = new Date();
+  since.setDate(since.getDate() - 29);
+  since.setHours(0, 0, 0, 0);
+
+  const orders = await Order.find({
+    createdAt: { $gte: since },
+    status: { $ne: "cancelled" },
+  }).select("createdAt grandTotal commissionAmount");
+
+  const days = [];
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(since);
+    d.setDate(d.getDate() + i);
+    const key = d.toISOString().slice(0, 10);
+    days.push({ date: key, label: d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }), commandes: 0, commission: 0 });
+  }
+  const dayMap = Object.fromEntries(days.map((d) => [d.date, d]));
+
+  orders.forEach((o) => {
+    const key = o.createdAt.toISOString().slice(0, 10);
+    if (dayMap[key]) {
+      dayMap[key].commandes += 1;
+      dayMap[key].commission += o.commissionAmount || 0;
+    }
+  });
+
+  res.json(days);
+});
+
+module.exports = { getPendingShops, getAllShops, validateShop, suspendShop, deleteShop, getDashboard, getDashboardChart };
