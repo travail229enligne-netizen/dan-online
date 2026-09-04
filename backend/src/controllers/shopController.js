@@ -235,4 +235,7 @@ module.exports = {
   reopenMyShop,
   getMyShopStats,
   getMyShopChart,
+  getMyCouriers,
+  addCourier,
+  removeCourier,
 };
