@@ -19,6 +19,7 @@ const messageRoutes = require("./routes/messageRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const followRoutes = require("./routes/followRoutes");
 const seedRoute = require("./routes/seedRoute");
+const featureRoutes = require("./routes/featureRoutes");
 
 connectDB();
 
@@ -53,6 +54,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/follows", followRoutes);
 app.use("/api/seed", seedRoute);
+app.use("/api/feature", featureRoutes);
 
 // 404
 app.use((req, res) => {
