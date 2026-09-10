@@ -130,7 +130,7 @@ const getMyShopStats = asyncHandler(async (req, res) => {
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
 
-  const orders = await Order.find({ "items.shop": shop._id, status: { $ne: "cancelled" } });
+  const orders = await Order.find({ "items.shop": shop._id, status: "delivered" });
 
   let totalVentes = 0;
   let totalCommission = 0;
