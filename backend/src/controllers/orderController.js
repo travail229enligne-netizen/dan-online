@@ -227,6 +227,7 @@ const payOrder = asyncHandler(async (req, res) => {
 
   order.paymentStatus = "paid";
   order.paidAt = new Date();
+  order.status = "delivered";
   order.kkiapayTransactionId = transactionId;
   await order.save();
 
@@ -328,6 +329,7 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   if (status === "delivered" && order.paymentMethod === "cod" && order.paymentStatus !== "paid") {
     order.paymentStatus = "paid";
     order.paidAt = new Date();
+  order.status = "delivered";
   }
   await order.save();
 
