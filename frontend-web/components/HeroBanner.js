@@ -69,38 +69,29 @@ export default function HeroBanner({ title, subtitle, ctaLabel = "Commander main
       }}
     >
       {currentImage && (
-        <>
-          <div
-            key={currentImage._id + "-bg"}
-            onClick={() => goToBusinessType(currentImage.businessType)}
-            style={{
-              position: "absolute",
-              inset: 0,
-              backgroundImage: `url(${currentImage.imageUrl})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              filter: "blur(18px) brightness(0.55)",
-              transform: "scale(1.15)",
-              cursor: "pointer",
-            }}
-          />
-          <img
-            key={currentImage._id}
-            src={currentImage.imageUrl}
-            alt={currentImage.businessType}
-            onClick={() => goToBusinessType(currentImage.businessType)}
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-              objectPosition: "center",
-              animation: "heroFade 0.5s ease",
-              cursor: "pointer",
-            }}
-          />
-        </>
+        <img
+          key={currentImage._id}
+          src={currentImage.imageUrl}
+          alt={currentImage.businessType}
+          onClick={() => goToBusinessType(currentImage.businessType)}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "center",
+            animation: "heroFade 0.5s ease",
+            cursor: "pointer",
+          }}
+        />
+      )}
+
+      {currentImage && (
+        <div
+          onClick={() => goToBusinessType(currentImage.businessType)}
+          style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.25)", cursor: "pointer" }}
+        />
       )}
 
       <div
