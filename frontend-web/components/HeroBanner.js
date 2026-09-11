@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../lib/api";
 
 const orderedTypes = ["boutique", "restaurant", "supermarche", "grossiste", "artisan"];
+const HERO_HEIGHT = 300;
 
 export default function HeroBanner({ title, subtitle, ctaLabel = "Commander maintenant", onCtaClick }) {
   const [images, setImages] = useState([]);
@@ -52,13 +53,14 @@ export default function HeroBanner({ title, subtitle, ctaLabel = "Commander main
     <div
       style={{
         position: "relative",
+        height: HERO_HEIGHT,
         background: currentImage
-          ? `linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.55)), url(${currentImage.imageUrl})`
+          ? `linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.6)), url(${currentImage.imageUrl})`
           : "linear-gradient(135deg, var(--green-deep), var(--green-dark))",
         backgroundSize: "cover",
         backgroundPosition: "center",
         borderRadius: "var(--radius-lg)",
-        padding: "32px 24px",
+        padding: "24px 20px",
         color: "var(--white)",
         marginTop: 16,
         textAlign: "center",
@@ -66,7 +68,6 @@ export default function HeroBanner({ title, subtitle, ctaLabel = "Commander main
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        minHeight: 260,
         boxSizing: "border-box",
         transition: "background 0.6s ease",
         overflow: "hidden",
@@ -77,7 +78,7 @@ export default function HeroBanner({ title, subtitle, ctaLabel = "Commander main
           key="intro"
           style={{
             fontFamily: "var(--font-display)",
-            fontSize: 22,
+            fontSize: 20,
             lineHeight: 1.35,
             maxWidth: 460,
             margin: 0,
@@ -97,7 +98,7 @@ export default function HeroBanner({ title, subtitle, ctaLabel = "Commander main
             fontWeight: 700,
             textTransform: "uppercase",
             letterSpacing: "0.08em",
-            background: "rgba(0,0,0,0.35)",
+            background: "rgba(0,0,0,0.4)",
             padding: "8px 16px",
             borderRadius: 999,
             animation: "heroFade 0.5s ease",
@@ -108,12 +109,21 @@ export default function HeroBanner({ title, subtitle, ctaLabel = "Commander main
       )}
 
       {(phase === "final" || images.length === 0) && (
-        <div key="final" style={{ animation: "heroFade 0.8s ease" }}>
-          <h2 style={{ fontFamily: "var(--font-display)", color: "var(--white)", fontSize: 26, lineHeight: 1.25, marginBottom: 12, maxWidth: 480 }}>
+        <div
+          key="final"
+          style={{
+            animation: "heroFade 0.8s ease",
+            maxHeight: "100%",
+            overflowY: "auto",
+            width: "100%",
+            padding: "0 4px",
+          }}
+        >
+          <h2 style={{ fontFamily: "var(--font-display)", color: "var(--white)", fontSize: 21, lineHeight: 1.25, marginBottom: 10, maxWidth: 480, marginLeft: "auto", marginRight: "auto" }}>
             {title}
           </h2>
           {subtitle && (
-            <p style={{ margin: "0 0 18px", color: "#EDE7DA", maxWidth: 480, lineHeight: 1.5 }}>
+            <p style={{ margin: "0 0 14px", fontSize: 13, color: "#EDE7DA", maxWidth: 480, lineHeight: 1.45, marginLeft: "auto", marginRight: "auto" }}>
               {subtitle}
             </p>
           )}
