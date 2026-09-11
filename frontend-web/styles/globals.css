@@ -1,17 +1,17 @@
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap");
 
 :root {
-  /* Palette EasyShop */
-  --green-deep: #0f3d2e;
+  /* Palette EasyShop — Sombre & Or */
+  --green-deep: #0d0d0d;
   --green-dark: #16543a;
   --gold: #e8a93b;
-  --terracotta: #c1592b;
-  --terracotta-dark: #9c4620;
-  --cream: #faf6f0;
-  --ink: #1c1c1c;
-  --ink-soft: #6b6b6b;
-  --line: #e8e0d4;
-  --white: #ffffff;
+  --terracotta: #e8a93b;
+  --terracotta-dark: #c8901f;
+  --cream: #0d0d0d;
+  --ink: #f2efe9;
+  --ink-soft: #a8a29e;
+  --line: #2a2a2a;
+  --white: #171717;
 
   --font-display: "Space Grotesk", -apple-system, sans-serif;
   --font-body: "Inter", -apple-system, sans-serif;
@@ -55,7 +55,7 @@ button {
 
 .btn-primary {
   background: var(--terracotta);
-  color: var(--white);
+  color: #111111;
   font-weight: 600;
   padding: 12px 20px;
   border-radius: 14px;
