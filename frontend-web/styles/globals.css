@@ -1,17 +1,18 @@
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap");
 
 :root {
-  /* Palette EasyShop — Sombre & Or */
-  --green-deep: #0d0d0d;
-  --green-dark: #16543a;
-  --gold: #e8a93b;
-  --terracotta: #e8a93b;
-  --terracotta-dark: #c8901f;
-  --cream: #0d0d0d;
-  --ink: #f2efe9;
-  --ink-soft: #a8a29e;
-  --line: #2a2a2a;
-  --white: #171717;
+  /* Palette EasyShop — Beige, Gris, Noir */
+  --cream: #efe9dc;        /* fond de page : beige doux */
+  --white: #ffffff;        /* fond des cartes/sections : blanc */
+  --ink: #201d1a;          /* texte principal : noir chaud */
+  --ink-soft: #6f6a5f;     /* texte secondaire : gris beige */
+  --line: #ddd4c2;         /* bordures : beige-gris clair */
+
+  --terracotta: #2b2b2b;       /* accent principal (boutons) : gris anthracite */
+  --terracotta-dark: #000000;  /* accent principal survol : noir */
+  --gold: #8a8272;             /* accent secondaire discret : gris-beige moyen */
+  --green-dark: #4a4a45;       /* état positif/succès : gris foncé */
+  --green-deep: #201d1a;       /* réservé, non utilisé activement */
 
   --font-display: "Space Grotesk", -apple-system, sans-serif;
   --font-body: "Inter", -apple-system, sans-serif;
@@ -55,7 +56,7 @@ button {
 
 .btn-primary {
   background: var(--terracotta);
-  color: #111111;
+  color: var(--white);
   font-weight: 600;
   padding: 12px 20px;
   border-radius: 14px;
