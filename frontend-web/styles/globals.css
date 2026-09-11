@@ -1,18 +1,18 @@
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap");
 
 :root {
-  /* Palette EasyShop — Beige, Gris, Noir */
+  /* Palette EasyShop — Beige, Blanc, Noir */
   --cream: #efe9dc;        /* fond de page : beige doux */
   --white: #ffffff;        /* fond des cartes/sections : blanc */
-  --ink: #201d1a;          /* texte principal : noir chaud */
-  --ink-soft: #6f6a5f;     /* texte secondaire : gris beige */
+  --ink: #171512;          /* texte principal : noir profond */
+  --ink-soft: #6f6a5f;     /* texte secondaire : gris beige, pour la lisibilité */
   --line: #ddd4c2;         /* bordures : beige-gris clair */
 
-  --terracotta: #2b2b2b;       /* accent principal (boutons) : gris anthracite */
-  --terracotta-dark: #000000;  /* accent principal survol : noir */
-  --gold: #8a8272;             /* accent secondaire discret : gris-beige moyen */
-  --green-dark: #4a4a45;       /* état positif/succès : gris foncé */
-  --green-deep: #201d1a;       /* réservé, non utilisé activement */
+  --terracotta: #171512;       /* accent principal (boutons) : noir profond */
+  --terracotta-dark: #000000;  /* accent principal survol : noir pur */
+  --gold: #4a4438;             /* accent secondaire discret : brun-noir */
+  --green-dark: #171512;       /* état positif/succès : noir profond */
+  --green-deep: #171512;       /* réservé, non utilisé activement */
 
   --font-display: "Space Grotesk", -apple-system, sans-serif;
   --font-body: "Inter", -apple-system, sans-serif;
