@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import Header from "../components/Header";
 import api from "../lib/api";
 
@@ -10,7 +11,17 @@ const businessIcons = {
   boutique: "🏪",
 };
 
+const businessLabels = {
+  restaurant: "Restaurants",
+  supermarche: "Supermarchés",
+  grossiste: "Grossistes",
+  artisan: "Artisans",
+  boutique: "Boutiques",
+};
+
 export default function Boutiques() {
+  const router = useRouter();
+  const { businessType } = router.query;
   const [shops, setShops] = useState([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -19,6 +30,7 @@ export default function Boutiques() {
     setLoading(true);
     const params = new URLSearchParams();
     if (q && q.trim()) params.set("search", q.trim());
+    if (businessType) params.set("businessType", businessType);
     api
       .get(`/shops?${params.toString()}`)
       .then((r) => setShops(r.data))
@@ -26,8 +38,9 @@ export default function Boutiques() {
   };
 
   useEffect(() => {
+    if (!router.isReady) return;
     load("");
-  }, []);
+  }, [router.isReady, businessType]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -38,10 +51,21 @@ export default function Boutiques() {
     <>
       <Header hideSearchBar />
       <main className="container" style={{ paddingTop: 20, paddingBottom: 60 }}>
-        <h1 style={{ fontSize: 20, marginBottom: 4 }}>Toutes les boutiques</h1>
+        <h1 style={{ fontSize: 20, marginBottom: 4 }}>
+          {businessType ? businessLabels[businessType] || "Toutes les boutiques" : "Toutes les boutiques"}
+        </h1>
         <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 18 }}>
           Boutiques, restaurants, supermarchés, grossistes et artisans partenaires d'EasyShop.
         </p>
+
+        {businessType && (
+          <a
+            href="/boutiques"
+            style={{ display: "inline-block", marginBottom: 16, fontSize: 13, color: "var(--terracotta-dark)", fontWeight: 600 }}
+          >
+            ← Voir toutes les catégories
+          </a>
+        )}
 
         <form onSubmit={handleSubmit} style={{ position: "relative", marginBottom: 22 }}>
           <input

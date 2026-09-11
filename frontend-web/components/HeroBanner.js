@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import api from "../lib/api";
 
 const orderedTypes = ["boutique", "restaurant", "supermarche", "grossiste", "artisan"];
 const HERO_HEIGHT = 300;
 
 export default function HeroBanner({ title, subtitle, ctaLabel = "Commander maintenant", onCtaClick }) {
+  const router = useRouter();
   const [images, setImages] = useState([]);
   const [phase, setPhase] = useState("intro"); // intro | carousel | final
   const [imageIndex, setImageIndex] = useState(0);
@@ -49,6 +51,10 @@ export default function HeroBanner({ title, subtitle, ctaLabel = "Commander main
 
   const currentImage = phase === "carousel" ? images[imageIndex] : null;
 
+  const goToBusinessType = (type) => {
+    router.push(`/boutiques?businessType=${type}`);
+  };
+
   return (
     <div
       style={{
@@ -66,7 +72,8 @@ export default function HeroBanner({ title, subtitle, ctaLabel = "Commander main
         <img
           key={currentImage._id}
           src={currentImage.imageUrl}
-          alt=""
+          alt={currentImage.businessType}
+          onClick={() => goToBusinessType(currentImage.businessType)}
           style={{
             position: "absolute",
             inset: 0,
@@ -75,12 +82,16 @@ export default function HeroBanner({ title, subtitle, ctaLabel = "Commander main
             objectFit: "contain",
             objectPosition: "center",
             animation: "heroFade 0.5s ease",
+            cursor: "pointer",
           }}
         />
       )}
 
       {currentImage && (
-        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.25)" }} />
+        <div
+          onClick={() => goToBusinessType(currentImage.businessType)}
+          style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.25)", cursor: "pointer" }}
+        />
       )}
 
       <div
@@ -94,6 +105,7 @@ export default function HeroBanner({ title, subtitle, ctaLabel = "Commander main
           justifyContent: "center",
           textAlign: "center",
           boxSizing: "border-box",
+          pointerEvents: phase === "carousel" ? "none" : "auto",
         }}
       >
         {phase === "intro" && (
@@ -116,6 +128,7 @@ export default function HeroBanner({ title, subtitle, ctaLabel = "Commander main
         {phase === "carousel" && currentImage && (
           <div
             key={currentImage._id + "-label"}
+            onClick={() => goToBusinessType(currentImage.businessType)}
             style={{
               fontSize: 13,
               fontWeight: 700,
@@ -126,9 +139,11 @@ export default function HeroBanner({ title, subtitle, ctaLabel = "Commander main
               borderRadius: 999,
               marginTop: "auto",
               animation: "heroFade 0.5s ease",
+              cursor: "pointer",
+              pointerEvents: "auto",
             }}
           >
-            {currentImage.businessType}
+            {currentImage.businessType} — voir tout →
           </div>
         )}
 
