@@ -55,6 +55,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/follows", followRoutes);
 app.use("/api/seed", seedRoute);
 app.use("/api/feature", featureRoutes);
+app.use("/api/hero-images", require("./routes/heroImageRoutes"));
 
 // 404
 app.use((req, res) => {

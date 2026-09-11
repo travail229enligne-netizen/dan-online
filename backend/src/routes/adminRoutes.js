@@ -19,6 +19,7 @@ const {
 } = require("../controllers/walletController");
 const { protect } = require("../middleware/auth");
 const { authorize } = require("../middleware/roles");
+const { addHeroImage, deleteHeroImage } = require("../controllers/heroImageController");
 
 const router = express.Router();
 
@@ -35,6 +36,8 @@ router.get("/withdrawals", getAllWithdrawals);
 router.put("/withdrawals/:id", processWithdrawal);
 router.get("/commission-wallet", getAdminCommissionWallet);
 router.post("/commission-wallet/withdraw", withdrawAdminCommission);
+router.post("/hero-images", addHeroImage);
+router.delete("/hero-images/:id", deleteHeroImage);
 
 router.put(
   "/shops/:id/professional",
