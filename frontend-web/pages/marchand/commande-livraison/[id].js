@@ -7,7 +7,9 @@ export default function CommandeLivraison() {
   const router = useRouter();
   const { id } = router.query;
   const [order, setOrder] = useState(undefined);
-  const [couriers, setCouriers] = useState([]);
+  const [myCouriers, setMyCouriers] = useState([]);
+  const [platformCouriers, setPlatformCouriers] = useState([]);
+  const [useEasyShop, setUseEasyShop] = useState(false);
   const [selectedCourier, setSelectedCourier] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -16,8 +18,11 @@ export default function CommandeLivraison() {
   useEffect(() => {
     if (!id) return;
     api.get(`/orders/${id}`).then((r) => setOrder(r.data)).catch(() => setOrder(null));
-    api.get("/shops/me/couriers").then((r) => setCouriers(r.data)).catch(() => setCouriers([]));
+    api.get("/shops/me/couriers").then((r) => setMyCouriers(r.data)).catch(() => setMyCouriers([]));
+    api.get("/platform-couriers").then((r) => setPlatformCouriers(r.data)).catch(() => setPlatformCouriers([]));
   }, [id]);
+
+  const couriers = useEasyShop ? platformCouriers : myCouriers;
 
   const handleSend = async () => {
     if (!selectedCourier) {
@@ -40,7 +45,7 @@ export default function CommandeLivraison() {
     }
   };
 
-  if (order === undefined || couriers === undefined) {
+  if (order === undefined || myCouriers === undefined) {
     return (
       <MerchantLayout title="Bilan de la commande">
         <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Chargement...</p>
@@ -109,6 +114,32 @@ export default function CommandeLivraison() {
         </div>
       </div>
 
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          background: "var(--white)",
+          border: "1px solid var(--line)",
+          borderRadius: "var(--radius-md)",
+          padding: 16,
+          marginBottom: 20,
+          fontSize: 14,
+          fontWeight: 600,
+          boxSizing: "border-box",
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={useEasyShop}
+          onChange={(e) => {
+            setUseEasyShop(e.target.checked);
+            setSelectedCourier("");
+          }}
+        />
+        Confier la livraison à EasyShop
+      </label>
+
       {couriers.length === 0 ? (
         <div
           style={{
@@ -120,12 +151,20 @@ export default function CommandeLivraison() {
             boxSizing: "border-box",
           }}
         >
-          <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 14 }}>
-            Tu n'as pas encore de livreur enregistré.
-          </p>
-          <a href="/marchand/livreurs" className="btn-primary" style={{ display: "inline-block" }}>
-            Ajouter un livreur
-          </a>
+          {useEasyShop ? (
+            <p style={{ fontSize: 14, color: "var(--ink-soft)", margin: 0 }}>
+              Aucun livreur EasyShop n'est disponible pour le moment.
+            </p>
+          ) : (
+            <>
+              <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 14 }}>
+                Tu n'as pas encore de livreur enregistré.
+              </p>
+              <a href="/marchand/livreurs" className="btn-primary" style={{ display: "inline-block" }}>
+                Ajouter un livreur
+              </a>
+            </>
+          )}
         </div>
       ) : (
         <div
@@ -141,11 +180,11 @@ export default function CommandeLivraison() {
           }}
         >
           <label style={{ fontSize: 13, fontWeight: 600 }}>
-            Choisir un livreur
+            Choisir un livreur {useEasyShop ? "EasyShop" : ""}
             <select
               value={selectedCourier}
               onChange={(e) => setSelectedCourier(e.target.value)}
-              style={{ width: "100%", padding: 12, marginTop: 6, border: "1px solid var(--line)", borderRadius: 10, fontSize: 15, boxSizing: "border-box" }}
+              style={{ width: "100%", padding: 12, marginTop: 6, border: "1px solid var(--line)", borderRadius: 14, fontSize: 15, boxSizing: "border-box" }}
             >
               <option value="">Choisir...</option>
               {couriers.map((c) => (
@@ -156,8 +195,8 @@ export default function CommandeLivraison() {
             </select>
           </label>
 
-          {error && <p style={{ color: "var(--terracotta-dark)", fontSize: 14 }}>{error}</p>}
-          {sent && <p style={{ color: "var(--green-dark)", fontSize: 14 }}>Livreur contacté ! Redirection...</p>}
+          {error && <p style={{ color: "var(--terracotta-dark)", fontSize: 14, margin: 0 }}>{error}</p>}
+          {sent && <p style={{ color: "var(--green-dark)", fontSize: 14, margin: 0 }}>Livreur contacté ! Redirection...</p>}
 
           <button
             className="btn-primary"
