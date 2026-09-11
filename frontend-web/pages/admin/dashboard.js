@@ -1,8 +1,28 @@
 import { useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import Header from "../../components/Header";
+import ImageUpload from "../../components/ImageUpload";
 import { useAuth } from "../../lib/auth";
 import api from "../../lib/api";
+
+const businessTypeLabels = {
+  boutique: "🏪 Boutique",
+  restaurant: "🍽️ Restaurant",
+  supermarche: "🛒 Supermarché",
+  grossiste: "📦 Grossiste",
+  artisan: "🛠️ Artisan",
+};
+
+const card = {
+  background: "var(--white)",
+  border: "1px solid var(--line)",
+  borderRadius: "var(--radius-md)",
+  padding: 16,
+  boxSizing: "border-box",
+};
+
+const sectionTitle = { fontSize: 16, fontWeight: 700, marginBottom: 14 };
+const sectionBlock = { marginBottom: 36 };
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
@@ -19,6 +39,11 @@ export default function AdminDashboard() {
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
   const [busy, setBusy] = useState(null);
 
+  const [heroImages, setHeroImages] = useState([]);
+  const [newHeroType, setNewHeroType] = useState("boutique");
+  const [newHeroUrl, setNewHeroUrl] = useState("");
+  const [heroBusy, setHeroBusy] = useState(false);
+
   const load = () => {
     api.get("/admin/dashboard").then((r) => setOverview(r.data)).catch(() => {});
     api.get("/admin/dashboard-chart").then((r) => setChartData(r.data)).catch(() => {});
@@ -27,6 +52,7 @@ export default function AdminDashboard() {
     api.get("/categories").then((r) => setCategories(r.data)).catch(() => {});
     api.get("/admin/withdrawals").then((r) => setWithdrawals(r.data)).catch(() => {});
     api.get("/admin/commission-wallet").then((r) => setCommissionWallet(r.data)).catch(() => setCommissionWallet(null));
+    api.get("/hero-images").then((r) => setHeroImages(r.data)).catch(() => {});
   };
 
   useEffect(() => {
@@ -120,6 +146,28 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleHeroUpload = async (url) => {
+    setHeroBusy(true);
+    try {
+      await api.post("/admin/hero-images", { imageUrl: url, businessType: newHeroType });
+      setNewHeroUrl("");
+      load();
+    } finally {
+      setHeroBusy(false);
+    }
+  };
+
+  const removeHeroImage = async (id) => {
+    if (!window.confirm("Supprimer cette image ?")) return;
+    setHeroBusy(true);
+    try {
+      await api.delete(`/admin/hero-images/${id}`);
+      load();
+    } finally {
+      setHeroBusy(false);
+    }
+  };
+
   if (loading) return null;
 
   if (!user || user.role !== "admin") {
@@ -137,214 +185,306 @@ export default function AdminDashboard() {
     <>
       <Header hideSearchBar />
       <main className="container" style={{ paddingTop: 24, paddingBottom: 60 }}>
-        <h1 style={{ fontSize: 22, marginBottom: 20 }}>Espace administrateur</h1>
+        <h1 style={{ fontSize: 22, marginBottom: 24 }}>Espace administrateur</h1>
 
         {overview && (
-          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 28 }}>
-            {[
-              { label: "Marchands", value: overview.totalMarchands },
-              { label: "Clients", value: overview.totalClients },
-              { label: "Boutiques actives", value: overview.activeShops },
-              { label: "En attente", value: overview.pendingShops },
-              { label: "Commandes", value: overview.totalOrders },
-              { label: "Commission totale", value: `${overview.totalCommission.toLocaleString("fr-FR")} FCFA` },
-            ].map((c) => (
-              <div key={c.label} style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 14 }}>
-                <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>{c.label}</div>
-                <div style={{ fontSize: 17, fontWeight: 700, color: "var(--green-dark)", marginTop: 2 }}>{c.value}</div>
-              </div>
-            ))}
+          <section style={sectionBlock}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
+              {[
+                { label: "Marchands", value: overview.totalMarchands },
+                { label: "Clients", value: overview.totalClients },
+                { label: "Boutiques actives", value: overview.activeShops },
+                { label: "En attente", value: overview.pendingShops },
+                { label: "Commandes", value: overview.totalOrders },
+                { label: "Commission totale", value: `${overview.totalCommission.toLocaleString("fr-FR")} FCFA` },
+              ].map((c) => (
+                <div key={c.label} style={card}>
+                  <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>{c.label}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", marginTop: 4 }}>{c.value}</div>
+                </div>
+              ))}
+            </div>
           </section>
         )}
 
-        <h2 style={{ fontSize: 16, marginBottom: 12 }}>Évolution — 30 derniers jours</h2>
-        <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 16, marginBottom: 32, boxSizing: "border-box" }}>
-          {chartData ? (
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                <XAxis dataKey="label" tick={{ fontSize: 10 }} interval={4} />
-                <YAxis yAxisId="left" tick={{ fontSize: 10 }} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} />
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Line yAxisId="left" type="monotone" dataKey="commandes" name="Commandes" stroke="#16543a" strokeWidth={2} dot={false} />
-                <Line yAxisId="right" type="monotone" dataKey="commission" name="Commission (FCFA)" stroke="#c1592b" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Chargement du graphique...</p>
-          )}
-        </div>
-
-        <h2 style={{ fontSize: 16, marginBottom: 12 }}>Mes commissions</h2>
-        {commissionWallet && (
-          <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 18, marginBottom: 32, boxSizing: "border-box" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-              <div>
-                <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>Disponible</div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: "var(--green-dark)" }}>
-                  {commissionWallet.soldeDisponible.toLocaleString("fr-FR")} FCFA
-                </div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>Total historique</div>
-                <div style={{ fontSize: 14, fontWeight: 600 }}>{commissionWallet.totalCommission.toLocaleString("fr-FR")} FCFA</div>
-              </div>
-            </div>
-
-            <form onSubmit={handleWithdrawCommission} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input
-                  type="number"
-                  placeholder="Montant"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                  style={{ flex: 1, padding: 10, border: "1px solid var(--line)", borderRadius: 8, fontSize: 13, boxSizing: "border-box" }}
-                />
-                <input
-                  placeholder="Numéro Mobile Money"
-                  value={withdrawPhone}
-                  onChange={(e) => setWithdrawPhone(e.target.value)}
-                  style={{ flex: 1, padding: 10, border: "1px solid var(--line)", borderRadius: 8, fontSize: 13, boxSizing: "border-box" }}
-                />
-              </div>
-              {withdrawError && <p style={{ color: "var(--terracotta-dark)", fontSize: 12 }}>{withdrawError}</p>}
-              {withdrawSuccess && <p style={{ color: "var(--green-dark)", fontSize: 12 }}>Retrait enregistré !</p>}
-              <button className="btn-primary" type="submit" disabled={commissionWallet.soldeDisponible <= 0} style={{ fontSize: 13, padding: "10px 16px" }}>
-                Retirer mes commissions
-              </button>
-            </form>
-
-            {commissionWallet.withdrawals.length > 0 && (
-              <div style={{ marginTop: 16, borderTop: "1px solid var(--line)", paddingTop: 12 }}>
-                {commissionWallet.withdrawals.map((w) => (
-                  <div key={w._id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 6 }}>
-                    <span>{new Date(w.createdAt).toLocaleDateString("fr-FR")} — {w.phone}</span>
-                    <span style={{ fontWeight: 600 }}>{w.amount.toLocaleString("fr-FR")} FCFA</span>
-                  </div>
-                ))}
-              </div>
+        <section style={sectionBlock}>
+          <h2 style={sectionTitle}>Évolution — 30 derniers jours</h2>
+          <div style={card}>
+            {chartData ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} interval={4} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 10 }} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} />
+                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                  <Line yAxisId="left" type="monotone" dataKey="commandes" name="Commandes" stroke="var(--green-dark)" strokeWidth={2} dot={false} />
+                  <Line yAxisId="right" type="monotone" dataKey="commission" name="Commission (FCFA)" stroke="var(--terracotta)" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Chargement du graphique...</p>
             )}
           </div>
-        )}
+        </section>
 
-        <h2 style={{ fontSize: 16, marginBottom: 12 }}>Retraits à traiter — marchands & livreurs ({withdrawals.length})</h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
-          {withdrawals.map((w) => (
-            <div key={w._id} style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 14 }}>
-              <div style={{ fontWeight: 700, fontSize: 14 }}>{w.amount.toLocaleString("fr-FR")} FCFA</div>
-              <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-                {w.type === "courier" ? `🛵 Livreur — ${w.courier?.name}` : `🏪 ${w.shop?.name} — ${w.shop?.owner?.name}`}
-              </div>
-              <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>Mobile Money : {w.phone}</div>
-              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <button className="btn-primary" style={{ fontSize: 12, padding: "8px 14px" }} disabled={busy === w._id} onClick={() => processWithdrawal(w._id, "paid")}>
-                  Marquer payé
-                </button>
-                <button
-                  style={{ fontSize: 12, padding: "8px 14px", borderRadius: 10, border: "1px solid var(--line)", color: "var(--terracotta-dark)", fontWeight: 600 }}
-                  disabled={busy === w._id}
-                  onClick={() => processWithdrawal(w._id, "rejected")}
-                >
-                  Refuser
-                </button>
-              </div>
-            </div>
-          ))}
-          {withdrawals.length === 0 && <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucun retrait en attente.</p>}
-        </div>
+        <section style={sectionBlock}>
+          <h2 style={sectionTitle}>Images du hero — accueil</h2>
+          <div style={card}>
+            <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 0, marginBottom: 14 }}>
+              Ajoute des images pour chaque type de commerce. Elles s'affichent dans le carrousel d'accueil, dans l'ordre : boutique, restaurant, supermarché, grossiste, artisan.
+            </p>
 
-        <h2 style={{ fontSize: 16, marginBottom: 12 }}>Commissions par catégorie</h2>
-        <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", marginBottom: 32 }}>
-          {categories.map((cat, i) => (
-            <div key={cat._id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: 12, borderTop: i > 0 ? "1px solid var(--line)" : "none" }}>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>{cat.name}</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <input
-                  type="number"
-                  defaultValue={cat.commissionRate ?? ""}
-                  placeholder="Défaut"
-                  disabled={busy === cat._id}
-                  onBlur={(e) => updateCategoryCommission(cat._id, e.target.value)}
-                  style={{ width: 64, padding: 6, border: "1px solid var(--line)", borderRadius: 6, fontSize: 12, textAlign: "center" }}
-                />
-                <span style={{ fontSize: 12, color: "var(--ink-soft)" }}>%</span>
-              </div>
-            </div>
-          ))}
-          {categories.length === 0 && <p style={{ padding: 12, fontSize: 13, color: "var(--ink-soft)" }}>Aucune catégorie.</p>}
-        </div>
-        <p style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: -20, marginBottom: 32 }}>
-          Laisse vide pour utiliser le taux par défaut de la plateforme. La commission d'une boutique spécifique est toujours prioritaire.
-        </p>
+            <label style={{ fontSize: 13, fontWeight: 600, display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
+              Type de commerce pour la prochaine image
+              <select
+                value={newHeroType}
+                onChange={(e) => setNewHeroType(e.target.value)}
+                style={{ padding: 10, border: "1px solid var(--line)", borderRadius: 10, fontSize: 14 }}
+              >
+                {Object.entries(businessTypeLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-        <h2 style={{ fontSize: 16, marginBottom: 12 }}>Boutiques en attente de validation ({pendingShops.length})</h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
-          {pendingShops.map((shop) => (
-            <div key={shop._id} style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 14 }}>
-              <div style={{ fontWeight: 700, fontSize: 14 }}>{shop.name}</div>
-              <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>{shop.owner?.name} - {shop.owner?.phone}</div>
-              <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>{shop.location?.allee} {shop.location?.numero}</div>
-              <p style={{ fontSize: 13, marginTop: 6 }}>{shop.description}</p>
-              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <button className="btn-primary" style={{ fontSize: 12, padding: "8px 14px" }} disabled={busy === shop._id} onClick={() => validate(shop._id, true)}>
-                  Valider
-                </button>
-                <button
-                  style={{ fontSize: 12, padding: "8px 14px", borderRadius: 10, border: "1px solid var(--line)", color: "var(--terracotta-dark)", fontWeight: 600 }}
-                  disabled={busy === shop._id}
-                  onClick={() => validate(shop._id, false)}
-                >
-                  Refuser
-                </button>
-              </div>
-            </div>
-          ))}
-          {pendingShops.length === 0 && <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune boutique en attente.</p>}
-        </div>
+            <ImageUpload label="Ajouter une image" value={newHeroUrl} onChange={handleHeroUpload} />
 
-        <h2 style={{ fontSize: 16, marginBottom: 12 }}>Toutes les boutiques ({allShops.length})</h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {allShops.map((shop) => {
-            const isFeatured = shop.featuredUntil && new Date(shop.featuredUntil) > new Date();
-            return (
-              <div key={shop._id} style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 14 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{shop.name}</div>
-                    <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>{shop.owner?.name} - statut : {shop.status}</div>
-                    {isFeatured && (
-                      <div style={{ fontSize: 11, color: "var(--green-dark)", fontWeight: 600, marginTop: 2 }}>
-                        Sponsorisée jusqu'au {new Date(shop.featuredUntil).toLocaleDateString("fr-FR")}
+            {Object.keys(businessTypeLabels).map((type) => {
+              const images = heroImages.filter((img) => img.businessType === type);
+              if (images.length === 0) return null;
+              return (
+                <div key={type} style={{ marginTop: 18 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>{businessTypeLabels[type]}</div>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    {images.map((img) => (
+                      <div key={img._id} style={{ position: "relative", width: 90, flexShrink: 0 }}>
+                        <img
+                          src={img.imageUrl}
+                          alt=""
+                          style={{ width: 90, height: 90, objectFit: "cover", borderRadius: 10, border: "1px solid var(--line)" }}
+                        />
+                        <button
+                          type="button"
+                          disabled={heroBusy}
+                          onClick={() => removeHeroImage(img._id)}
+                          style={{
+                            position: "absolute",
+                            top: -6,
+                            right: -6,
+                            width: 22,
+                            height: 22,
+                            borderRadius: "50%",
+                            background: "var(--terracotta-dark)",
+                            color: "var(--white)",
+                            fontSize: 13,
+                            fontWeight: 700,
+                            lineHeight: "22px",
+                            textAlign: "center",
+                          }}
+                        >
+                          ×
+                        </button>
                       </div>
-                    )}
+                    ))}
                   </div>
-                  <button
-                    style={{ fontSize: 12, padding: "8px 14px", borderRadius: 10, border: "1px solid var(--line)", color: "var(--terracotta-dark)", fontWeight: 600, whiteSpace: "nowrap" }}
-                    disabled={busy === shop._id}
-                    onClick={() => removeShop(shop._id, shop.name)}
-                  >
-                    Supprimer
-                  </button>
                 </div>
-                <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
-                    <input type="checkbox" checked={!!shop.isProfessional} disabled={busy === shop._id} onChange={() => toggleProfessional(shop._id, shop.isProfessional)} />
-                    Boutique professionnelle
-                  </label>
+              );
+            })}
+          </div>
+        </section>
+
+        <section style={sectionBlock}>
+          <h2 style={sectionTitle}>Mes commissions</h2>
+          {commissionWallet && (
+            <div style={card}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+                <div>
+                  <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>Disponible</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)" }}>
+                    {commissionWallet.soldeDisponible.toLocaleString("fr-FR")} FCFA
+                  </div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>Total historique</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{commissionWallet.totalCommission.toLocaleString("fr-FR")} FCFA</div>
+                </div>
+              </div>
+
+              <form onSubmit={handleWithdrawCommission} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <input
+                    type="number"
+                    placeholder="Montant"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    style={{ flex: "1 1 140px", padding: 10, border: "1px solid var(--line)", borderRadius: 10, fontSize: 13, boxSizing: "border-box" }}
+                  />
+                  <input
+                    placeholder="Numéro Mobile Money"
+                    value={withdrawPhone}
+                    onChange={(e) => setWithdrawPhone(e.target.value)}
+                    style={{ flex: "1 1 140px", padding: 10, border: "1px solid var(--line)", borderRadius: 10, fontSize: 13, boxSizing: "border-box" }}
+                  />
+                </div>
+                {withdrawError && <p style={{ color: "var(--terracotta-dark)", fontSize: 12, margin: 0 }}>{withdrawError}</p>}
+                {withdrawSuccess && <p style={{ color: "var(--green-dark)", fontSize: 12, margin: 0 }}>Retrait enregistré !</p>}
+                <button className="btn-primary" type="submit" disabled={commissionWallet.soldeDisponible <= 0} style={{ fontSize: 13, padding: "10px 16px" }}>
+                  Retirer mes commissions
+                </button>
+              </form>
+
+              {commissionWallet.withdrawals.length > 0 && (
+                <div style={{ marginTop: 16, borderTop: "1px solid var(--line)", paddingTop: 12 }}>
+                  {commissionWallet.withdrawals.map((w) => (
+                    <div key={w._id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 6 }}>
+                      <span>{new Date(w.createdAt).toLocaleDateString("fr-FR")} — {w.phone}</span>
+                      <span style={{ fontWeight: 600 }}>{w.amount.toLocaleString("fr-FR")} FCFA</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        <section style={sectionBlock}>
+          <h2 style={sectionTitle}>Retraits à traiter — marchands & livreurs ({withdrawals.length})</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {withdrawals.map((w) => (
+              <div key={w._id} style={card}>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>{w.amount.toLocaleString("fr-FR")} FCFA</div>
+                <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+                  {w.type === "courier" ? `🛵 Livreur — ${w.courier?.name}` : `🏪 ${w.shop?.name} — ${w.shop?.owner?.name}`}
+                </div>
+                <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>Mobile Money : {w.phone}</div>
+                <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                  <button className="btn-primary" style={{ fontSize: 12, padding: "8px 14px" }} disabled={busy === w._id} onClick={() => processWithdrawal(w._id, "paid")}>
+                    Marquer payé
+                  </button>
                   <button
-                    onClick={() => featureShop(shop._id, isFeatured)}
-                    disabled={busy === shop._id}
-                    style={{ fontSize: 12, fontWeight: 600, color: isFeatured ? "var(--terracotta-dark)" : "var(--ink)", textDecoration: "underline" }}
+                    style={{ fontSize: 12, padding: "8px 14px", borderRadius: 10, border: "1px solid var(--line)", color: "var(--terracotta-dark)", fontWeight: 600 }}
+                    disabled={busy === w._id}
+                    onClick={() => processWithdrawal(w._id, "rejected")}
                   >
-                    {isFeatured ? "Retirer la mise en avant" : "Mettre en avant"}
+                    Refuser
                   </button>
                 </div>
               </div>
-            );
-          })}
-          {allShops.length === 0 && <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune boutique.</p>}
-        </div>
+            ))}
+            {withdrawals.length === 0 && <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucun retrait en attente.</p>}
+          </div>
+        </section>
+
+        <section style={sectionBlock}>
+          <h2 style={sectionTitle}>Commissions par catégorie</h2>
+          <div style={{ ...card, padding: 0 }}>
+            {categories.map((cat, i) => (
+              <div
+                key={cat._id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 10,
+                  padding: 14,
+                  borderTop: i > 0 ? "1px solid var(--line)" : "none",
+                }}
+              >
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{cat.name}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <input
+                    type="number"
+                    defaultValue={cat.commissionRate ?? ""}
+                    placeholder="Défaut"
+                    disabled={busy === cat._id}
+                    onBlur={(e) => updateCategoryCommission(cat._id, e.target.value)}
+                    style={{ width: 64, padding: 6, border: "1px solid var(--line)", borderRadius: 8, fontSize: 12, textAlign: "center" }}
+                  />
+                  <span style={{ fontSize: 12, color: "var(--ink-soft)" }}>%</span>
+                </div>
+              </div>
+            ))}
+            {categories.length === 0 && <p style={{ padding: 14, fontSize: 13, color: "var(--ink-soft)" }}>Aucune catégorie.</p>}
+          </div>
+          <p style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 10 }}>
+            Laisse vide pour utiliser le taux par défaut de la plateforme. La commission d'une boutique spécifique est toujours prioritaire.
+          </p>
+        </section>
+
+        <section style={sectionBlock}>
+          <h2 style={sectionTitle}>Boutiques en attente de validation ({pendingShops.length})</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {pendingShops.map((shop) => (
+              <div key={shop._id} style={card}>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>{shop.name}</div>
+                <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>{shop.owner?.name} - {shop.owner?.phone}</div>
+                <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>{shop.location?.allee} {shop.location?.numero}</div>
+                <p style={{ fontSize: 13, marginTop: 6, marginBottom: 0 }}>{shop.description}</p>
+                <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                  <button className="btn-primary" style={{ fontSize: 12, padding: "8px 14px" }} disabled={busy === shop._id} onClick={() => validate(shop._id, true)}>
+                    Valider
+                  </button>
+                  <button
+                    style={{ fontSize: 12, padding: "8px 14px", borderRadius: 10, border: "1px solid var(--line)", color: "var(--terracotta-dark)", fontWeight: 600 }}
+                    disabled={busy === shop._id}
+                    onClick={() => validate(shop._id, false)}
+                  >
+                    Refuser
+                  </button>
+                </div>
+              </div>
+            ))}
+            {pendingShops.length === 0 && <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune boutique en attente.</p>}
+          </div>
+        </section>
+
+        <section>
+          <h2 style={sectionTitle}>Toutes les boutiques ({allShops.length})</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {allShops.map((shop) => {
+              const isFeatured = shop.featuredUntil && new Date(shop.featuredUntil) > new Date();
+              return (
+                <div key={shop._id} style={card}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{shop.name}</div>
+                      <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>{shop.owner?.name} - statut : {shop.status}</div>
+                      {isFeatured && (
+                        <div style={{ fontSize: 11, color: "var(--green-dark)", fontWeight: 600, marginTop: 2 }}>
+                          Sponsorisée jusqu'au {new Date(shop.featuredUntil).toLocaleDateString("fr-FR")}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      style={{ fontSize: 12, padding: "8px 14px", borderRadius: 10, border: "1px solid var(--line)", color: "var(--terracotta-dark)", fontWeight: 600, whiteSpace: "nowrap" }}
+                      disabled={busy === shop._id}
+                      onClick={() => removeShop(shop._id, shop.name)}
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                  <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                      <input type="checkbox" checked={!!shop.isProfessional} disabled={busy === shop._id} onChange={() => toggleProfessional(shop._id, shop.isProfessional)} />
+                      Boutique professionnelle
+                    </label>
+                    <button
+                      onClick={() => featureShop(shop._id, isFeatured)}
+                      disabled={busy === shop._id}
+                      style={{ fontSize: 12, fontWeight: 600, color: isFeatured ? "var(--terracotta-dark)" : "var(--ink)", textDecoration: "underline" }}
+                    >
+                      {isFeatured ? "Retirer la mise en avant" : "Mettre en avant"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+            {allShops.length === 0 && <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune boutique.</p>}
+          </div>
+        </section>
       </main>
     </>
   );
