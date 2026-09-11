@@ -315,6 +315,52 @@ const submitDeliveryProof = asyncHandler(async (req, res) => {
   res.json(order);
 });
 
+const submitPaymentProof = asyncHandler(async (req, res) => {
+  const { imageUrl } = req.body;
+  if (!imageUrl) return res.status(400).json({ message: "Image requise." });
+
+  const order = await Order.findById(req.params.id).populate("items.shop");
+  if (!order) return res.status(404).json({ message: "Commande introuvable." });
+
+  const isCourier = order.assignedCourier && order.assignedCourier.toString() === req.user._id.toString();
+  if (!isCourier) {
+    return res.status(403).json({ message: "Accès non autorisé." });
+  }
+  if (order.paymentMethod !== "cod") {
+    return res.status(400).json({ message: "Cette commande n'utilise pas le paiement en espèces." });
+  }
+  if (!order.deliveryProofUrl) {
+    return res.status(400).json({ message: "La preuve de livraison doit être envoyée en premier." });
+  }
+
+  order.paymentProofUrl = imageUrl;
+  order.paymentStatus = "paid";
+  order.paidAt = new Date();
+  order.status = "delivered";
+  await order.save();
+
+  const shopOwners = [...new Set(order.items.map((it) => it.shop.owner.toString()))];
+  for (const ownerId of shopOwners) {
+    await notify(
+      ownerId,
+      "order_status",
+      "Commande livrée et payée",
+      "La preuve de paiement en espèces a été reçue. La commande est marquée comme livrée.",
+      "/marchand/commandes"
+    );
+  }
+
+  await notify(
+    order.client,
+    "order_status",
+    "Votre commande a été livrée",
+    "Votre commande a bien été livrée et réglée en espèces.",
+    "/commandes"
+  );
+
+  res.json(order);
+});
+
 const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
   const validStatuses = ["pending", "confirmed", "out_for_delivery", "delivered", "cancelled"];
@@ -355,5 +401,6 @@ module.exports = {
   payOrder,
   respondAsCourier,
   submitDeliveryProof,
+  submitPaymentProof,
   updateOrderStatus,
 };

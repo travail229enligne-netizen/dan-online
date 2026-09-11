@@ -35,6 +35,7 @@ const orderSchema = new mongoose.Schema(
       default: "none",
     },
     deliveryProofUrl: { type: String, default: "" },
+    paymentProofUrl: { type: String, default: "" },
     paymentMethod: {
       type: String,
       enum: ["kkiapay", "cod"],
