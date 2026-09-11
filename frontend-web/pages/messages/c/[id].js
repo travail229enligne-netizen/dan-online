@@ -12,7 +12,7 @@ function whatsappBase(phone) {
   return `https://wa.me/${phone.replace(/[^0-9]/g, "")}`;
 }
 
-function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, responding, uploadingProof }) {
+function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, responding, uploadingProof, onSubmitPaymentProof, uploadingPaymentProof }) {
   if (!order) {
     return (
       <div style={{ flexShrink: 0, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", maxWidth: "90%", alignSelf: "flex-start" }}>
@@ -110,6 +110,21 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
             )}
           </div>
         )}
+
+        {isCourier && order.deliveryProofUrl && order.paymentMethod === "cod" && order.paymentStatus !== "paid" && (
+          <button className="btn-primary" onClick={onSubmitPaymentProof} disabled={uploadingPaymentProof} style={{ width: "100%", marginTop: 10, fontSize: 13, padding: 10 }}>
+            {uploadingPaymentProof ? "Envoi de la preuve..." : "📸 Preuve du paiement"}
+          </button>
+        )}
+
+        {order.paymentProofUrl && (
+          <div style={{ marginTop: 12, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }}>
+            <div style={{ padding: "6px 10px", background: "#e8f5ee", fontSize: 11, fontWeight: 700, color: "var(--green-dark)" }}>
+              ✅ Preuve de paiement en espèces
+            </div>
+            <img src={order.paymentProofUrl} alt="Preuve de paiement" style={{ width: "100%", display: "block" }} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -143,6 +158,8 @@ export default function ConversationById() {
   const bottomRef = useRef(null);
   const fileRef = useRef(null);
   const proofFileRef = useRef(null);
+  const paymentProofFileRef = useRef(null);
+  const [uploadingPaymentProof, setUploadingPaymentProof] = useState(false);
 
   const load = () => {
     if (!id) return;
@@ -230,13 +247,34 @@ export default function ConversationById() {
     try {
       const url = await uploadToCloudinary(file);
       await api.put(`/orders/${orderId}/delivery-proof`, { imageUrl: url });
-      await api.post(`/messages/${id}`, { text: "📸 Preuve de livraison envoyée.", imageUrl: url });
+      await api.post(`/messages/${id}`, { text: "📸 Preuve de livraison envoyée." });
       load();
     } catch (err) {
       alert(err.response?.data?.message || "Impossible d'envoyer la preuve.");
     } finally {
       setUploadingProof(false);
       if (proofFileRef.current) proofFileRef.current.value = "";
+    }
+  };
+
+  const handleSubmitPaymentProofClick = () => {
+    paymentProofFileRef.current?.click();
+  };
+
+  const handlePaymentProofPick = async (e, orderId) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingPaymentProof(true);
+    try {
+      const url = await uploadToCloudinary(file);
+      await api.put(`/orders/${orderId}/payment-proof`, { imageUrl: url });
+      await api.post(`/messages/${id}`, { text: "📸 Preuve de paiement envoyée." });
+      load();
+    } catch (err) {
+      alert(err.response?.data?.message || "Impossible d'envoyer la preuve de paiement.");
+    } finally {
+      setUploadingPaymentProof(false);
+      if (paymentProofFileRef.current) paymentProofFileRef.current.value = "";
     }
   };
 
@@ -295,6 +333,8 @@ export default function ConversationById() {
                   uploadingProof={uploadingProof}
                   onRespond={(available) => handleRespond(order._id, available)}
                   onSubmitProof={handleSubmitProofClick}
+                  onSubmitPaymentProof={handleSubmitPaymentProofClick}
+                  uploadingPaymentProof={uploadingPaymentProof}
                 />
               );
             }
@@ -319,10 +359,25 @@ export default function ConversationById() {
           ref={proofFileRef}
           type="file"
           accept="image/*"
+          capture="environment"
           style={{ display: "none" }}
           onChange={(e) => {
             const orderId = Object.keys(orderCache).find((oid) => orderCache[oid].courierStatus === "available" && !orderCache[oid].deliveryProofUrl);
             if (orderId) handleProofPick(e, orderId);
+          }}
+        />
+
+        <input
+          ref={paymentProofFileRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          style={{ display: "none" }}
+          onChange={(e) => {
+            const orderId = Object.keys(orderCache).find(
+              (oid) => orderCache[oid].deliveryProofUrl && orderCache[oid].paymentMethod === "cod" && orderCache[oid].paymentStatus !== "paid"
+            );
+            if (orderId) handlePaymentProofPick(e, orderId);
           }}
         />
 
