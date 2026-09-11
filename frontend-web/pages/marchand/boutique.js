@@ -28,9 +28,17 @@ const inputStyle = {
   padding: 12,
   marginTop: 6,
   border: "1px solid var(--line)",
-  borderRadius: 10,
+  borderRadius: 14,
   fontSize: 15,
   boxSizing: "border-box",
+};
+
+const labelStyle = {
+  fontSize: 13,
+  fontWeight: 600,
+  display: "flex",
+  flexDirection: "column",
+  gap: 2,
 };
 
 function Eyebrow({ children }) {
@@ -56,7 +64,7 @@ function Section({ children }) {
       style={{
         background: "var(--white)",
         border: "1px solid var(--line)",
-        borderRadius: "var(--radius-md)",
+        borderRadius: 20,
         padding: 18,
         display: "flex",
         flexDirection: "column",
@@ -214,7 +222,7 @@ export default function Boutique() {
               marginBottom: 20,
               fontSize: 14,
               padding: "12px 18px",
-              borderRadius: 10,
+              borderRadius: 14,
               border: "1px solid var(--line)",
               background: "var(--white)",
               color: existingShop.status === "active" ? "var(--terracotta-dark)" : "var(--green-dark)",
@@ -237,26 +245,20 @@ export default function Boutique() {
         >
           <Section>
             <Eyebrow>Type de commerce</Eyebrow>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {businessTypes.map((bt) => (
-                <button
-                  type="button"
-                  key={bt.value}
-                  onClick={() => setForm({ ...form, businessType: bt.value })}
-                  style={{
-                    padding: "10px 14px",
-                    borderRadius: 10,
-                    border: `2px solid ${form.businessType === bt.value ? "var(--terracotta)" : "var(--line)"}`,
-                    background: form.businessType === bt.value ? "var(--terracotta)" : "var(--white)",
-                    color: form.businessType === bt.value ? "var(--white)" : "var(--ink)",
-                    fontWeight: 600,
-                    fontSize: 13,
-                  }}
-                >
-                  {bt.icon} {bt.label}
-                </button>
-              ))}
-            </div>
+            <label style={labelStyle}>
+              Choisir le type
+              <select
+                value={form.businessType}
+                onChange={(e) => setForm({ ...form, businessType: e.target.value })}
+                style={inputStyle}
+              >
+                {businessTypes.map((bt) => (
+                  <option key={bt.value} value={bt.value}>
+                    {bt.icon} {bt.label}
+                  </option>
+                ))}
+              </select>
+            </label>
           </Section>
 
           <Section>
@@ -268,7 +270,7 @@ export default function Boutique() {
               onChange={(url) => setForm({ ...form, logoUrl: url })}
             />
 
-            <label style={{ fontSize: 13, fontWeight: 600 }}>
+            <label style={labelStyle}>
               Nom de la boutique
               <input
                 required
@@ -278,7 +280,7 @@ export default function Boutique() {
               />
             </label>
 
-            <label style={{ fontSize: 13, fontWeight: 600 }}>
+            <label style={labelStyle}>
               Description
               <textarea
                 rows={3}
@@ -288,7 +290,7 @@ export default function Boutique() {
               />
             </label>
 
-            <label style={{ fontSize: 13, fontWeight: 600 }}>
+            <label style={labelStyle}>
               Catégorie principale
               <select
                 value={form.category}
@@ -308,7 +310,7 @@ export default function Boutique() {
           <Section>
             <Eyebrow>Localisation</Eyebrow>
 
-            <label style={{ fontSize: 13, fontWeight: 600 }}>
+            <label style={labelStyle}>
               Ville
               <input
                 required
@@ -326,7 +328,7 @@ export default function Boutique() {
             </label>
 
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <label style={{ fontSize: 13, fontWeight: 600, flex: "1 1 120px", minWidth: 0 }}>
+              <label style={{ ...labelStyle, flex: "1 1 120px", minWidth: 0 }}>
                 Allée
                 <input
                   placeholder="Allée 3"
@@ -335,7 +337,7 @@ export default function Boutique() {
                   style={inputStyle}
                 />
               </label>
-              <label style={{ fontSize: 13, fontWeight: 600, flex: "1 1 120px", minWidth: 0 }}>
+              <label style={{ ...labelStyle, flex: "1 1 120px", minWidth: 0 }}>
                 Numéro
                 <input
                   placeholder="N°45"
@@ -371,7 +373,7 @@ export default function Boutique() {
                   gap: 8,
                   alignItems: "center",
                   background: "var(--cream)",
-                  borderRadius: 10,
+                  borderRadius: 14,
                   padding: 10,
                   boxSizing: "border-box",
                   width: "100%",
@@ -387,7 +389,7 @@ export default function Boutique() {
                     minWidth: 0,
                     padding: 10,
                     border: "1px solid var(--line)",
-                    borderRadius: 8,
+                    borderRadius: 12,
                     fontSize: 14,
                     boxSizing: "border-box",
                     background: "var(--white)",
@@ -403,7 +405,7 @@ export default function Boutique() {
                     minWidth: 0,
                     padding: 10,
                     border: "1px solid var(--line)",
-                    borderRadius: 8,
+                    borderRadius: 12,
                     fontSize: 14,
                     boxSizing: "border-box",
                     background: "var(--white)",
@@ -446,7 +448,7 @@ export default function Boutique() {
           {error && <p style={{ color: "var(--terracotta-dark)", fontSize: 14 }}>{error}</p>}
           {saved && <p style={{ color: "var(--green-dark)", fontSize: 14 }}>Boutique enregistrée !</p>}
 
-          <button className="btn-primary" type="submit" disabled={saving} style={{ fontSize: 15, padding: 14 }}>
+          <button className="btn-primary" type="submit" disabled={saving} style={{ fontSize: 15, padding: 14, borderRadius: 14 }}>
             {saving ? "Enregistrement..." : existingShop ? "Enregistrer les modifications" : "Créer ma boutique"}
           </button>
         </form>
