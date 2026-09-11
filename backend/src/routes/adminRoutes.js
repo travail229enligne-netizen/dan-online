@@ -20,6 +20,7 @@ const {
 const { protect } = require("../middleware/auth");
 const { authorize } = require("../middleware/roles");
 const { addHeroImage, deleteHeroImage } = require("../controllers/heroImageController");
+const { addPlatformCourier, removePlatformCourier } = require("../controllers/platformCourierController");
 
 const router = express.Router();
 
@@ -38,6 +39,8 @@ router.get("/commission-wallet", getAdminCommissionWallet);
 router.post("/commission-wallet/withdraw", withdrawAdminCommission);
 router.post("/hero-images", addHeroImage);
 router.delete("/hero-images/:id", deleteHeroImage);
+router.post("/platform-couriers", addPlatformCourier);
+router.delete("/platform-couriers/:userId", removePlatformCourier);
 
 router.put(
   "/shops/:id/professional",
