@@ -44,6 +44,12 @@ export default function AdminDashboard() {
   const [newHeroUrl, setNewHeroUrl] = useState("");
   const [heroBusy, setHeroBusy] = useState(false);
 
+  const [platformCouriers, setPlatformCouriers] = useState([]);
+  const [courierForm, setCourierForm] = useState({ phone: "", name: "" });
+  const [courierError, setCourierError] = useState("");
+  const [addingCourier, setAddingCourier] = useState(false);
+  const [courierBusy, setCourierBusy] = useState(null);
+
   const load = () => {
     api.get("/admin/dashboard").then((r) => setOverview(r.data)).catch(() => {});
     api.get("/admin/dashboard-chart").then((r) => setChartData(r.data)).catch(() => {});
@@ -53,6 +59,7 @@ export default function AdminDashboard() {
     api.get("/admin/withdrawals").then((r) => setWithdrawals(r.data)).catch(() => {});
     api.get("/admin/commission-wallet").then((r) => setCommissionWallet(r.data)).catch(() => setCommissionWallet(null));
     api.get("/hero-images").then((r) => setHeroImages(r.data)).catch(() => {});
+    api.get("/platform-couriers").then((r) => setPlatformCouriers(r.data)).catch(() => {});
   };
 
   useEffect(() => {
@@ -165,6 +172,32 @@ export default function AdminDashboard() {
       load();
     } finally {
       setHeroBusy(false);
+    }
+  };
+
+  const handleAddCourier = async (e) => {
+    e.preventDefault();
+    setCourierError("");
+    setAddingCourier(true);
+    try {
+      await api.post("/admin/platform-couriers", courierForm);
+      setCourierForm({ phone: "", name: "" });
+      load();
+    } catch (err) {
+      setCourierError(err.response?.data?.message || "Impossible d'ajouter ce livreur.");
+    } finally {
+      setAddingCourier(false);
+    }
+  };
+
+  const removePlatformCourier = async (userId) => {
+    if (!window.confirm("Retirer ce livreur de la liste EasyShop ?")) return;
+    setCourierBusy(userId);
+    try {
+      await api.delete(`/admin/platform-couriers/${userId}`);
+      load();
+    } finally {
+      setCourierBusy(null);
     }
   };
 
@@ -293,6 +326,60 @@ export default function AdminDashboard() {
                 </div>
               );
             })}
+          </div>
+        </section>
+
+        <section style={sectionBlock}>
+          <h2 style={sectionTitle}>Livreurs EasyShop</h2>
+          <div style={card}>
+            <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 0, marginBottom: 14 }}>
+              Ajoute les livreurs disponibles pour tous les marchands, à partir de leur numéro de téléphone.
+              Ils doivent déjà avoir un compte EasyShop.
+            </p>
+
+            <form onSubmit={handleAddCourier} style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <input
+                  required
+                  placeholder="Téléphone du livreur"
+                  value={courierForm.phone}
+                  onChange={(e) => setCourierForm({ ...courierForm, phone: e.target.value })}
+                  style={{ flex: "1 1 140px", padding: 10, border: "1px solid var(--line)", borderRadius: 10, fontSize: 13, boxSizing: "border-box" }}
+                />
+                <input
+                  placeholder="Nom à afficher (optionnel)"
+                  value={courierForm.name}
+                  onChange={(e) => setCourierForm({ ...courierForm, name: e.target.value })}
+                  style={{ flex: "1 1 140px", padding: 10, border: "1px solid var(--line)", borderRadius: 10, fontSize: 13, boxSizing: "border-box" }}
+                />
+              </div>
+              {courierError && <p style={{ color: "var(--terracotta-dark)", fontSize: 12, margin: 0 }}>{courierError}</p>}
+              <button className="btn-primary" type="submit" disabled={addingCourier} style={{ fontSize: 13, padding: "10px 16px" }}>
+                {addingCourier ? "Ajout..." : "Ajouter ce livreur"}
+              </button>
+            </form>
+
+            {platformCouriers.length === 0 ? (
+              <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: 0 }}>Aucun livreur EasyShop ajouté pour l'instant.</p>
+            ) : (
+              <div style={{ borderTop: "1px solid var(--line)" }}>
+                {platformCouriers.map((c) => (
+                  <div key={c.user} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--line)", gap: 10, flexWrap: "wrap" }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{c.name}</div>
+                      <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>{c.phone}</div>
+                    </div>
+                    <button
+                      onClick={() => removePlatformCourier(c.user)}
+                      disabled={courierBusy === c.user}
+                      style={{ fontSize: 12, padding: "8px 14px", borderRadius: 10, border: "1px solid var(--line)", color: "var(--terracotta-dark)", fontWeight: 600 }}
+                    >
+                      Retirer
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 

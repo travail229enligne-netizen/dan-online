@@ -114,71 +114,34 @@ export default function CommandeLivraison() {
         </div>
       </div>
 
-      <label
+      <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
           background: "var(--white)",
           border: "1px solid var(--line)",
           borderRadius: "var(--radius-md)",
-          padding: 16,
-          marginBottom: 20,
-          fontSize: 14,
-          fontWeight: 600,
+          padding: 18,
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
           boxSizing: "border-box",
         }}
       >
-        <input
-          type="checkbox"
-          checked={useEasyShop}
-          onChange={(e) => {
-            setUseEasyShop(e.target.checked);
-            setSelectedCourier("");
-          }}
-        />
-        Confier la livraison à EasyShop
-      </label>
-
-      {couriers.length === 0 ? (
-        <div
-          style={{
-            background: "var(--white)",
-            border: "1px solid var(--line)",
-            borderRadius: "var(--radius-md)",
-            padding: 18,
-            textAlign: "center",
-            boxSizing: "border-box",
-          }}
-        >
-          {useEasyShop ? (
+        {couriers.length === 0 ? (
+          useEasyShop ? (
             <p style={{ fontSize: 14, color: "var(--ink-soft)", margin: 0 }}>
               Aucun livreur EasyShop n'est disponible pour le moment.
             </p>
           ) : (
-            <>
+            <div style={{ textAlign: "center" }}>
               <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 14 }}>
                 Tu n'as pas encore de livreur enregistré.
               </p>
               <a href="/marchand/livreurs" className="btn-primary" style={{ display: "inline-block" }}>
                 Ajouter un livreur
               </a>
-            </>
-          )}
-        </div>
-      ) : (
-        <div
-          style={{
-            background: "var(--white)",
-            border: "1px solid var(--line)",
-            borderRadius: "var(--radius-md)",
-            padding: 18,
-            display: "flex",
-            flexDirection: "column",
-            gap: 14,
-            boxSizing: "border-box",
-          }}
-        >
+            </div>
+          )
+        ) : (
           <label style={{ fontSize: 13, fontWeight: 600 }}>
             Choisir un livreur {useEasyShop ? "EasyShop" : ""}
             <select
@@ -194,20 +157,37 @@ export default function CommandeLivraison() {
               ))}
             </select>
           </label>
+        )}
 
-          {error && <p style={{ color: "var(--terracotta-dark)", fontSize: 14, margin: 0 }}>{error}</p>}
-          {sent && <p style={{ color: "var(--green-dark)", fontSize: 14, margin: 0 }}>Livreur contacté ! Redirection...</p>}
-
-          <button
-            className="btn-primary"
-            onClick={handleSend}
-            disabled={sending || sent}
-            style={{ fontSize: 15, padding: 14 }}
-          >
-            {sending ? "Envoi..." : "Contacter le livreur"}
-          </button>
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: 14 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
+            Vous n'avez pas de livreurs disponibles ?
+          </p>
+          <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, fontWeight: 600 }}>
+            <input
+              type="checkbox"
+              checked={useEasyShop}
+              onChange={(e) => {
+                setUseEasyShop(e.target.checked);
+                setSelectedCourier("");
+              }}
+            />
+            Confier la livraison à EasyShop
+          </label>
         </div>
-      )}
+
+        {error && <p style={{ color: "var(--terracotta-dark)", fontSize: 14, margin: 0 }}>{error}</p>}
+        {sent && <p style={{ color: "var(--green-dark)", fontSize: 14, margin: 0 }}>Livreur contacté ! Redirection...</p>}
+
+        <button
+          className="btn-primary"
+          onClick={handleSend}
+          disabled={sending || sent || couriers.length === 0}
+          style={{ fontSize: 15, padding: 14 }}
+        >
+          {sending ? "Envoi..." : "Contacter le livreur"}
+        </button>
+      </div>
     </MerchantLayout>
   );
 }
