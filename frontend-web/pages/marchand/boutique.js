@@ -11,6 +11,12 @@ const themeOptions = [
   { name: "Bordeaux", value: "#8b2e3c" },
   { name: "Bleu indigo", value: "#2c4a7a" },
   { name: "Violet", value: "#6b3fa0" },
+  { name: "Rose corail", value: "#e0637a" },
+  { name: "Turquoise", value: "#2b8a8a" },
+  { name: "Marron chocolat", value: "#5a3a29" },
+  { name: "Gris ardoise", value: "#4a5560" },
+  { name: "Rouge cerise", value: "#a3283f" },
+  { name: "Kaki olive", value: "#6b6b2e" },
 ];
 
 const cities = ["Cotonou", "Porto-Novo", "Abomey-Calavi", "Parakou", "Bohicon"];
@@ -98,6 +104,7 @@ export default function Boutique() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [copiedShopLink, setCopiedShopLink] = useState(false);
 
   useEffect(() => {
     api.get("/categories").then((r) => setCategories(r.data)).catch(() => {});
@@ -180,6 +187,21 @@ export default function Boutique() {
     }
   };
 
+  const getShopUrl = () =>
+    existingShop && typeof window !== "undefined"
+      ? `${window.location.origin}/boutique/${existingShop.slug}`
+      : "";
+
+  const handleCopyShopLink = async () => {
+    try {
+      await navigator.clipboard.writeText(getShopUrl());
+      setCopiedShopLink(true);
+      setTimeout(() => setCopiedShopLink(false), 2000);
+    } catch (err) {
+      alert("Impossible de copier le lien.");
+    }
+  };
+
   return (
     <MerchantLayout title="Ma boutique">
       <div style={{ width: "100%", maxWidth: "100%", overflowX: "hidden", boxSizing: "border-box" }}>
@@ -213,6 +235,57 @@ export default function Boutique() {
               : "Boutique active sur le marché."
             : "Renseigne les informations de ton emplacement virtuel."}
         </p>
+
+        {existingShop && (
+          <div
+            style={{
+              background: "var(--white)",
+              border: "1px solid var(--line)",
+              borderRadius: 20,
+              padding: 18,
+              marginBottom: 20,
+              boxSizing: "border-box",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            <Eyebrow>Partager ma boutique</Eyebrow>
+            <div style={{ display: "flex", gap: 6 }}>
+              <input
+                readOnly
+                value={getShopUrl()}
+                onFocus={(e) => e.target.select()}
+                style={{ flex: 1, minWidth: 0, padding: 10, fontSize: 12, border: "1px solid var(--line)", borderRadius: 10, background: "var(--cream)" }}
+              />
+              <button
+                type="button"
+                onClick={handleCopyShopLink}
+                style={{ fontSize: 12, padding: "10px 14px", borderRadius: 10, border: "1px solid var(--line)", background: "var(--white)", fontWeight: 600, whiteSpace: "nowrap" }}
+              >
+                {copiedShopLink ? "Copié !" : "Copier"}
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`Découvre ma boutique ${form.name} sur EasyShop :\n${getShopUrl()}`)}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{ flex: 1, textAlign: "center", fontSize: 13, padding: "10px 12px", borderRadius: 10, background: "var(--ink)", color: "var(--white)", fontWeight: 600 }}
+              >
+                💬 WhatsApp
+              </a>
+              <a
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getShopUrl())}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{ flex: 1, textAlign: "center", fontSize: 13, padding: "10px 12px", borderRadius: 10, background: "var(--ink)", color: "var(--white)", fontWeight: 600 }}
+              >
+                📘 Facebook
+              </a>
+            </div>
+          </div>
+        )}
 
         {existingShop && existingShop.status !== "pending" && (
           <button
@@ -425,7 +498,7 @@ export default function Boutique() {
 
           <Section>
             <Eyebrow>Apparence de la vitrine</Eyebrow>
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10, justifyItems: "center" }}>
               {themeOptions.map((t) => (
                 <button
                   type="button"
@@ -433,8 +506,8 @@ export default function Boutique() {
                   onClick={() => setForm({ ...form, themeColor: t.value })}
                   title={t.name}
                   style={{
-                    width: 42,
-                    height: 42,
+                    width: 38,
+                    height: 38,
                     borderRadius: "50%",
                     background: t.value,
                     border: form.themeColor === t.value ? "3px solid var(--ink)" : "3px solid transparent",
