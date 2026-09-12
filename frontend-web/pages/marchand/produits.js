@@ -59,6 +59,21 @@ export default function MerchantProduits() {
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(null);
+  const [shareOpen, setShareOpen] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
+
+  const getProductUrl = (id) =>
+    typeof window !== "undefined" ? `${window.location.origin}/produit/${id}` : "";
+
+  const handleCopyLink = async (id) => {
+    try {
+      await navigator.clipboard.writeText(getProductUrl(id));
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      alert("Impossible de copier le lien.");
+    }
+  };
 
   const isRestaurant = shop?.businessType === "restaurant";
   const itemLabel = isRestaurant ? "plat" : "produit";
@@ -562,35 +577,100 @@ export default function MerchantProduits() {
                       </div>
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      onClick={() => startEdit(p)}
-                      style={{
-                        fontSize: 12,
-                        padding: "8px 14px",
-                        borderRadius: 8,
-                        border: "1px solid var(--line)",
-                        background: "var(--white)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Modifier
-                    </button>
-                    <button
-                      onClick={() => handleDelete(p._id, p.name)}
-                      disabled={busy === p._id}
-                      style={{
-                        fontSize: 12,
-                        padding: "8px 14px",
-                        borderRadius: 8,
-                        border: "1px solid var(--line)",
-                        color: "var(--terracotta-dark)",
-                        background: "var(--white)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Supprimer
-                    </button>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        onClick={() => setShareOpen(shareOpen === p._id ? null : p._id)}
+                        style={{
+                          fontSize: 12,
+                          padding: "8px 14px",
+                          borderRadius: 8,
+                          border: "1px solid var(--line)",
+                          background: shareOpen === p._id ? "var(--ink)" : "var(--white)",
+                          color: shareOpen === p._id ? "var(--white)" : "var(--ink)",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Partager
+                      </button>
+                      <button
+                        onClick={() => startEdit(p)}
+                        style={{
+                          fontSize: 12,
+                          padding: "8px 14px",
+                          borderRadius: 8,
+                          border: "1px solid var(--line)",
+                          background: "var(--white)",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        onClick={() => handleDelete(p._id, p.name)}
+                        disabled={busy === p._id}
+                        style={{
+                          fontSize: 12,
+                          padding: "8px 14px",
+                          borderRadius: 8,
+                          border: "1px solid var(--line)",
+                          color: "var(--terracotta-dark)",
+                          background: "var(--white)",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+
+                    {shareOpen === p._id && (
+                      <div
+                        style={{
+                          width: "100%",
+                          minWidth: 260,
+                          background: "var(--cream)",
+                          borderRadius: 10,
+                          padding: 12,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 8,
+                          boxSizing: "border-box",
+                        }}
+                      >
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <input
+                            readOnly
+                            value={getProductUrl(p._id)}
+                            onFocus={(e) => e.target.select()}
+                            style={{ flex: 1, minWidth: 0, padding: 8, fontSize: 11, border: "1px solid var(--line)", borderRadius: 8, background: "var(--white)" }}
+                          />
+                          <button
+                            onClick={() => handleCopyLink(p._id)}
+                            style={{ fontSize: 11, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--white)", fontWeight: 600, whiteSpace: "nowrap" }}
+                          >
+                            {copiedId === p._id ? "Copié !" : "Copier"}
+                          </button>
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <a
+                            href={`https://wa.me/?text=${encodeURIComponent(`${p.name} — ${p.price.toLocaleString("fr-FR")} FCFA\n${getProductUrl(p._id)}`)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ flex: 1, textAlign: "center", fontSize: 12, padding: "8px 10px", borderRadius: 8, background: "var(--ink)", color: "var(--white)", fontWeight: 600 }}
+                          >
+                            💬 WhatsApp
+                          </a>
+                          <a
+                            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getProductUrl(p._id))}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ flex: 1, textAlign: "center", fontSize: 12, padding: "8px 10px", borderRadius: 8, background: "var(--ink)", color: "var(--white)", fontWeight: 600 }}
+                          >
+                            📘 Facebook
+                          </a>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
