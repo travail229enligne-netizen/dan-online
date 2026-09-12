@@ -9,8 +9,8 @@ export default function Header({ hideSearchBar = false }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [catOpen, setCatOpen] = useState(false);
-  const [infoOpen, setInfoOpen] = useState(false);
+  const [catOpen, setCatOpen] = useState(true);
+  const [infoOpen, setInfoOpen] = useState(true);
   const [categories, setCategories] = useState([]);
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [unreadOrders, setUnreadOrders] = useState(0);
@@ -228,6 +228,28 @@ export default function Header({ hideSearchBar = false }) {
                 </div>
               )}
 
+              {navLink("/panier", "Panier")}
+              {navLink("/commandes", "Commandes", unreadOrders > 0)}
+              {navLink("/favoris", "Favoris")}
+              {navLink("/favoris-boutiques", "Boutiques suivies")}
+              {navLink("/messages", "Messages")}
+
+              <a
+                href={user ? "/compte" : "/connexion"}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "12px 14px",
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: "var(--ink)",
+                  marginBottom: 4,
+                }}
+              >
+                {user ? "Mon compte" : "Connexion"}
+              </a>
+
               <button
                 onClick={() => setInfoOpen(!infoOpen)}
                 style={{
@@ -274,27 +296,6 @@ export default function Header({ hideSearchBar = false }) {
                 </div>
               )}
 
-              {navLink("/panier", "Panier")}
-              {navLink("/commandes", "Commandes", unreadOrders > 0)}
-              {navLink("/favoris", "Favoris")}
-              {navLink("/favoris-boutiques", "Boutiques suivies")}
-              {navLink("/messages", "Messages")}
-
-              <a
-                href={user ? "/compte" : "/connexion"}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "12px 14px",
-                  borderRadius: 10,
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: "var(--ink)",
-                  marginBottom: 4,
-                }}
-              >
-                {user ? "Mon compte" : "Connexion"}
-              </a>
             </div>
 
             {user && (
