@@ -71,7 +71,8 @@ export default function Header({ hideSearchBar = false }) {
     <>
       <header
         style={{
-          background: "linear-gradient(180deg, var(--green-deep), var(--green-dark))",
+          background: "var(--white)",
+          borderBottom: "1px solid var(--line)",
           padding: "16px 0",
         }}
       >
@@ -80,17 +81,17 @@ export default function Header({ hideSearchBar = false }) {
             <button
               onClick={() => setOpen(true)}
               aria-label="Ouvrir le menu"
-              style={{ background: "transparent", color: "var(--white)", fontSize: 22, lineHeight: 1 }}
+              style={{ background: "transparent", color: "var(--ink)", fontSize: 22, lineHeight: 1 }}
             >
               ☰
             </button>
             <a href="/" style={{ display: "flex", alignItems: "center" }}>
-              <h1 style={{ color: "var(--white)", fontSize: 22 }}>EasyShop</h1>
+              <h1 style={{ color: "var(--ink)", fontSize: 22 }}>EasyShop</h1>
             </a>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {user && (
-              <a href="/notifications" aria-label="Notifications" style={{ color: "var(--white)", position: "relative" }}>
+              <a href="/notifications" aria-label="Notifications" style={{ color: "var(--ink)", position: "relative" }}>
                 <span style={{ fontSize: 20 }}>🔔</span>
                 {unreadNotif > 0 && (
                   <span
@@ -117,7 +118,7 @@ export default function Header({ hideSearchBar = false }) {
             <button
               onClick={() => setProfileOpen(true)}
               aria-label="Mon profil"
-              style={{ background: "transparent", color: "var(--white)" }}
+              style={{ background: "transparent", color: "var(--ink)" }}
             >
               {user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.name} style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover" }} />
