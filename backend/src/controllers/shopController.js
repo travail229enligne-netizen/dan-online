@@ -16,6 +16,7 @@ const getShops = asyncHandler(async (req, res) => {
   if (req.query.category) filter.category = req.query.category;
   if (req.query.city) filter.city = req.query.city;
   if (req.query.search && req.query.search.trim()) filter.name = { $regex: req.query.search.trim(), $options: "i" };
+  if (req.query.businessType) filter.businessType = req.query.businessType;
 
   const shops = await Shop.find(filter)
     .populate("category", "name icon")
