@@ -186,6 +186,12 @@ export default function Header({ hideSearchBar = false }) {
                 Boutiques
               </a>
 
+              {navLink("/panier", "Panier")}
+              {navLink("/commandes", "Commandes", unreadOrders > 0)}
+              {navLink("/favoris", "Favoris")}
+              {navLink("/favoris-boutiques", "Boutiques suivies")}
+              {navLink("/messages", "Messages")}
+
               <button
                 onClick={() => setCatOpen(!catOpen)}
                 style={{
@@ -227,28 +233,6 @@ export default function Header({ hideSearchBar = false }) {
                   )}
                 </div>
               )}
-
-              {navLink("/panier", "Panier")}
-              {navLink("/commandes", "Commandes", unreadOrders > 0)}
-              {navLink("/favoris", "Favoris")}
-              {navLink("/favoris-boutiques", "Boutiques suivies")}
-              {navLink("/messages", "Messages")}
-
-              <a
-                href={user ? "/compte" : "/connexion"}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "12px 14px",
-                  borderRadius: 10,
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: "var(--ink)",
-                  marginBottom: 4,
-                }}
-              >
-                {user ? "Mon compte" : "Connexion"}
-              </a>
 
               <button
                 onClick={() => setInfoOpen(!infoOpen)}
@@ -296,6 +280,21 @@ export default function Header({ hideSearchBar = false }) {
                 </div>
               )}
 
+              <a
+                href={user ? "/compte" : "/connexion"}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "12px 14px",
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: "var(--ink)",
+                  marginBottom: 4,
+                }}
+              >
+                {user ? "Mon compte" : "Connexion"}
+              </a>
             </div>
 
             {user && (
