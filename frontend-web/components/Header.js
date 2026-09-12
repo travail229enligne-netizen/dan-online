@@ -10,6 +10,7 @@ export default function Header({ hideSearchBar = false }) {
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [unreadOrders, setUnreadOrders] = useState(0);
@@ -224,6 +225,52 @@ export default function Header({ hideSearchBar = false }) {
                   {categories.length === 0 && (
                     <p style={{ fontSize: 12, color: "var(--ink-soft)", padding: "6px 14px" }}>Chargement...</p>
                   )}
+                </div>
+              )}
+
+              <button
+                onClick={() => setInfoOpen(!infoOpen)}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "12px 14px",
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: "var(--ink)",
+                  marginBottom: 4,
+                }}
+              >
+                <span>Informations</span>
+                <span style={{ fontSize: 11 }}>{infoOpen ? "▲" : "▼"}</span>
+              </button>
+
+              {infoOpen && (
+                <div style={{ paddingLeft: 12, marginBottom: 4 }}>
+                  {[
+                    { href: "/a-propos", label: "À propos" },
+                    { href: "/faq", label: "FAQ" },
+                    { href: "/contact", label: "Nous contacter" },
+                    { href: "/mentions-legales", label: "Mentions légales" },
+                    { href: "/confidentialite", label: "Politique de confidentialité" },
+                    { href: "/cgu", label: "Conditions générales d'utilisation" },
+                  ].map((link) => (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      style={{
+                        display: "block",
+                        padding: "9px 14px",
+                        borderRadius: 8,
+                        fontSize: 13,
+                        color: "var(--ink-soft)",
+                      }}
+                    >
+                      {link.label}
+                    </a>
+                  ))}
                 </div>
               )}
 
