@@ -208,6 +208,22 @@ export default function Header({ hideSearchBar = false }) {
                 Promotions
               </a>
 
+              <a
+                href="/foires"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "12px 14px",
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: "var(--ink)",
+                  marginBottom: 4,
+                }}
+              >
+                Foires
+              </a>
+
               <button
                 onClick={() => setCatOpen(!catOpen)}
                 style={{
