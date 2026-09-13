@@ -152,7 +152,35 @@ const updateMyEntries = asyncHandler(async (req, res) => {
   res.json(fair);
 });
 
+// @route   PUT /api/fairs/:id
+// @access  Private (marchand organisateur)
+const updateFair = asyncHandler(async (req, res) => {
+  const shop = await Shop.findOne({ owner: req.user._id });
+  if (!shop) return res.status(404).json({ message: "Aucune boutique associée." });
+
+  const fair = await Fair.findById(req.params.id);
+  if (!fair) return res.status(404).json({ message: "Foire introuvable." });
+  if (fair.organizerShop.toString() !== shop._id.toString()) {
+    return res.status(403).json({ message: "Seul l'organisateur peut modifier cette Foire." });
+  }
+
+  const { title, description, bannerImage, startDate, endDate } = req.body;
+  if (title !== undefined) fair.title = title;
+  if (description !== undefined) fair.description = description;
+  if (bannerImage !== undefined) fair.bannerImage = bannerImage;
+  if (startDate !== undefined) fair.startDate = startDate;
+  if (endDate !== undefined) fair.endDate = endDate;
+
+  if (new Date(fair.endDate) < new Date(fair.startDate)) {
+    return res.status(400).json({ message: "La date de fin doit être après la date de début." });
+  }
+
+  await fair.save();
+  res.json(fair);
+});
+
 module.exports = {
+
   getActiveFairs,
   getFairById,
   getMyFairs,
@@ -160,4 +188,5 @@ module.exports = {
   inviteShop,
   respondInvite,
   updateMyEntries,
+  updateFair,
 };

@@ -7,6 +7,7 @@ const {
   inviteShop,
   respondInvite,
   updateMyEntries,
+  updateFair,
 } = require("../controllers/fairController");
 const { protect } = require("../middleware/auth");
 const { authorize } = require("../middleware/roles");
@@ -17,6 +18,7 @@ router.get("/", getActiveFairs);
 router.get("/me", protect, authorize("marchand"), getMyFairs);
 router.get("/:id", getFairById);
 router.post("/", protect, authorize("marchand"), createFair);
+router.put("/:id", protect, authorize("marchand"), updateFair);
 router.post("/:id/invite", protect, authorize("marchand"), inviteShop);
 router.put("/:id/respond", protect, authorize("marchand"), respondInvite);
 router.put("/:id/products", protect, authorize("marchand"), updateMyEntries);
