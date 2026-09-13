@@ -48,7 +48,7 @@ export default function FoireDetail() {
       <Header hideSearchBar />
       <main className="container" style={{ paddingBottom: 60 }}>
         {fair.bannerImage ? (
-          <div style={{ width: "100%", aspectRatio: "16 / 7", overflow: "hidden", borderRadius: "var(--radius-lg)", marginTop: 16, background: "var(--ink)" }}>
+          <div style={{ width: "100%", aspectRatio: "1 / 1", overflow: "hidden", borderRadius: "var(--radius-lg)", marginTop: 16, background: "var(--ink)" }}>
             <img
               src={fair.bannerImage}
               alt={fair.title}
@@ -59,7 +59,7 @@ export default function FoireDetail() {
           <div
             style={{
               width: "100%",
-              aspectRatio: "16 / 7",
+              aspectRatio: "1 / 1",
               borderRadius: "var(--radius-lg)",
               marginTop: 16,
               background: "linear-gradient(135deg, var(--green-deep), var(--green-dark))",

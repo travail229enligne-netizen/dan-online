@@ -39,7 +39,7 @@ export default function Foires() {
                 }}
               >
                 {fair.bannerImage ? (
-                  <div style={{ width: "100%", aspectRatio: "16 / 7", overflow: "hidden", background: "var(--ink)" }}>
+                  <div style={{ width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "var(--ink)" }}>
                     <img
                       src={fair.bannerImage}
                       alt={fair.title}
@@ -50,7 +50,7 @@ export default function Foires() {
                   <div
                     style={{
                       width: "100%",
-                      aspectRatio: "16 / 7",
+                      aspectRatio: "1 / 1",
                       background: "linear-gradient(135deg, var(--green-deep), var(--green-dark))",
                       display: "flex",
                       alignItems: "center",
