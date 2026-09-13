@@ -47,14 +47,42 @@ export default function FoireDetail() {
     <>
       <Header hideSearchBar />
       <main className="container" style={{ paddingBottom: 60 }}>
-        {fair.bannerImage && (
-          <img src={fair.bannerImage} alt={fair.title} style={{ width: "100%", height: 200, objectFit: "cover", borderRadius: "var(--radius-lg)", marginTop: 16 }} />
+        {fair.bannerImage ? (
+          <div style={{ width: "100%", aspectRatio: "16 / 7", overflow: "hidden", borderRadius: "var(--radius-lg)", marginTop: 16, background: "var(--ink)" }}>
+            <img
+              src={fair.bannerImage}
+              alt={fair.title}
+              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }}
+            />
+          </div>
+        ) : (
+          <div
+            style={{
+              width: "100%",
+              aspectRatio: "16 / 7",
+              borderRadius: "var(--radius-lg)",
+              marginTop: 16,
+              background: "linear-gradient(135deg, var(--green-deep), var(--green-dark))",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "var(--white)",
+              fontFamily: "var(--font-display)",
+              fontSize: 24,
+              textAlign: "center",
+              padding: 20,
+              boxSizing: "border-box",
+            }}
+          >
+            {fair.title}
+          </div>
         )}
-        <h1 style={{ fontSize: 22, marginTop: 16, marginBottom: 4 }}>{fair.title}</h1>
-        <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 6 }}>
-          {new Date(fair.startDate).toLocaleDateString("fr-FR")} → {new Date(fair.endDate).toLocaleDateString("fr-FR")}
-        </p>
-        {fair.description && <p style={{ fontSize: 14, marginBottom: 16 }}>{fair.description}</p>}
+        <h1 style={{ fontSize: 22, marginTop: 18, marginBottom: 6 }}>{fair.title}</h1>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--ink-soft)", marginBottom: 12 }}>
+          <span>📅</span>
+          <span>{new Date(fair.startDate).toLocaleDateString("fr-FR")} → {new Date(fair.endDate).toLocaleDateString("fr-FR")}</span>
+        </div>
+        {fair.description && <p style={{ fontSize: 14, marginBottom: 16, lineHeight: 1.6 }}>{fair.description}</p>}
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
           {[...acceptedShopIds].map((shopId) => {
