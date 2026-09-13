@@ -192,6 +192,22 @@ export default function Header({ hideSearchBar = false }) {
               {navLink("/favoris-boutiques", "Boutiques suivies")}
               {navLink("/messages", "Messages")}
 
+              <a
+                href="/promotions"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "12px 14px",
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: "var(--ink)",
+                  marginBottom: 4,
+                }}
+              >
+                Promotions
+              </a>
+
               <button
                 onClick={() => setCatOpen(!catOpen)}
                 style={{
