@@ -5,12 +5,14 @@ const {
   togglePromotion,
   deletePromotion,
   validateCode,
+  getActivePromotions,
 } = require("../controllers/promotionController");
 const { protect } = require("../middleware/auth");
 const { authorize } = require("../middleware/roles");
 
 const router = express.Router();
 
+router.get("/", getActivePromotions);
 router.get("/me", protect, authorize("marchand"), getMyPromotions);
 router.post("/", protect, authorize("marchand"), createPromotion);
 router.put("/:id/toggle", protect, authorize("marchand"), togglePromotion);

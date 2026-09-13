@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const Promotion = require("../models/Promotion");
 const Shop = require("../models/Shop");
+const mongoose = require("mongoose");
 
 // @route   GET /api/promotions/me
 // @access  Private (marchand)
@@ -114,10 +115,31 @@ const validateCode = asyncHandler(async (req, res) => {
   });
 });
 
+// @route   GET /api/promotions
+// @access  Public - liste des codes actifs et valides actuellement, toutes boutiques confondues
+const getActivePromotions = asyncHandler(async (req, res) => {
+  const now = new Date();
+  const promotions = await Promotion.find({
+    active: true,
+    $and: [
+      { $or: [{ startDate: null }, { startDate: { $lte: now } }] },
+      { $or: [{ endDate: null }, { endDate: { $gte: now } }] },
+    ],
+  })
+    .populate("shop", "name slug logoUrl")
+    .populate("products", "name")
+    .sort({ createdAt: -1 });
+
+  const filtered = promotions.filter((p) => !p.usageLimit || p.timesUsed < p.usageLimit);
+  res.json(filtered);
+});
+
 module.exports = {
+
   getMyPromotions,
   createPromotion,
   togglePromotion,
   deletePromotion,
   validateCode,
+  getActivePromotions,
 };
