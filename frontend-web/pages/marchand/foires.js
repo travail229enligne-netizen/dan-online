@@ -29,15 +29,29 @@ const statusLabels = {
   declined: { text: "Refusé", color: "var(--terracotta-dark)" },
 };
 
-function FairCard({ fair, myShopId, myProducts, onRespond, onUpdateEntries, onInvite, busy }) {
+function FairCard({ fair, myShopId, myProducts, onRespond, onUpdateEntries, onInvite, onEdit, busy }) {
   const [inviteQuery, setInviteQuery] = useState("");
   const [inviteResults, setInviteResults] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState(
     fair.entries.filter((e) => e.shop?._id === myShopId).map((e) => e.product?._id)
   );
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: fair.title,
+    description: fair.description || "",
+    bannerImage: fair.bannerImage || "",
+    startDate: fair.startDate.slice(0, 10),
+    endDate: fair.endDate.slice(0, 10),
+  });
 
   const isOrganizer = fair.organizerShop?._id === myShopId;
   const myParticipation = fair.participants.find((p) => p.shop?._id === myShopId);
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    await onEdit(fair._id, editForm);
+    setEditing(false);
+  };
 
   const searchShops = async (q) => {
     setInviteQuery(q);
@@ -66,6 +80,56 @@ function FairCard({ fair, myShopId, myProducts, onRespond, onUpdateEntries, onIn
           </span>
         )}
       </div>
+
+      {isOrganizer && !editing && (
+        <button
+          onClick={() => setEditing(true)}
+          style={{ fontSize: 12, padding: "6px 12px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--white)", fontWeight: 600, marginBottom: 10 }}
+        >
+          Modifier la Foire
+        </button>
+      )}
+
+      {editing && (
+        <form onSubmit={handleEditSubmit} style={{ display: "flex", flexDirection: "column", gap: 10, background: "var(--cream)", borderRadius: 12, padding: 12, marginBottom: 12 }}>
+          <ImageUpload label="Bannière" value={editForm.bannerImage} onChange={(url) => setEditForm({ ...editForm, bannerImage: url })} />
+          <label style={labelStyle}>
+            Titre
+            <input required value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} style={inputStyle} />
+          </label>
+          <label style={labelStyle}>
+            Description
+            <textarea
+              rows={2}
+              value={editForm.description}
+              onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+              style={{ ...inputStyle, fontFamily: "inherit", resize: "vertical" }}
+            />
+          </label>
+          <div style={{ display: "flex", gap: 10 }}>
+            <label style={{ ...labelStyle, flex: 1 }}>
+              Début
+              <input required type="date" value={editForm.startDate} onChange={(e) => setEditForm({ ...editForm, startDate: e.target.value })} style={inputStyle} />
+            </label>
+            <label style={{ ...labelStyle, flex: 1 }}>
+              Fin
+              <input required type="date" value={editForm.endDate} onChange={(e) => setEditForm({ ...editForm, endDate: e.target.value })} style={inputStyle} />
+            </label>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="btn-primary" type="submit" style={{ flex: 1, fontSize: 13, padding: 10 }}>
+              Enregistrer
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              style={{ flex: 1, fontSize: 13, padding: 10, borderRadius: 10, border: "1px solid var(--line)", background: "var(--white)", fontWeight: 600 }}
+            >
+              Annuler
+            </button>
+          </div>
+        </form>
+      )}
 
       {myParticipation?.status === "pending" && !isOrganizer && (
         <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
@@ -219,6 +283,18 @@ export default function Foires() {
     }
   };
 
+  const handleEdit = async (fairId, data) => {
+    setBusy(true);
+    try {
+      await api.put(`/fairs/${fairId}`, data);
+      load();
+    } catch (err) {
+      alert(err.response?.data?.message || "Impossible de modifier la Foire.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <MerchantLayout title="Foires">
       <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, marginBottom: 4 }}>Foires</h1>
@@ -281,6 +357,7 @@ export default function Foires() {
             onRespond={handleRespond}
             onUpdateEntries={handleUpdateEntries}
             onInvite={handleInvite}
+            onEdit={handleEdit}
             busy={busy}
           />
         ))}
