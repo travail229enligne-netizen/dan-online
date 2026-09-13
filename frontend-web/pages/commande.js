@@ -23,7 +23,17 @@ export default function Commande() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(null);
 
+  const [hasPromoCode, setHasPromoCode] = useState(false);
+  const [promoInputs, setPromoInputs] = useState({});
+  const [promoResults, setPromoResults] = useState({});
+  const [promoChecking, setPromoChecking] = useState({});
+
   const shopIds = [...new Set(items.map((it) => it.shopId).filter(Boolean))];
+
+  const shopGroups = shopIds.map((id) => ({
+    shopId: id,
+    shopName: items.find((it) => it.shopId === id)?.shopName || "cette boutique",
+  }));
 
   useEffect(() => {
     if (selfDelivery || !form.deliveryCity.trim() || shopIds.length === 0) {
@@ -52,8 +62,29 @@ export default function Commande() {
     return zone ? zone.price : 0;
   };
 
+  const handleVerifyPromo = async (shopId) => {
+    const code = (promoInputs[shopId] || "").trim();
+    if (!code) return;
+    setPromoChecking((p) => ({ ...p, [shopId]: true }));
+    try {
+      const shopItemsIds = items.filter((it) => it.shopId === shopId).map((it) => it.productId);
+      const { data } = await api.post("/promotions/validate", { shopId, code, productIds: shopItemsIds });
+
+      const eligibleItems = items.filter((it) => shopId === it.shopId && data.eligibleProductIds.includes(it.productId));
+      const eligibleSubtotal = eligibleItems.reduce((sum, it) => sum + it.price * it.quantity, 0);
+      const discount = data.type === "percent" ? (eligibleSubtotal * data.value) / 100 : Math.min(data.value, eligibleSubtotal);
+
+      setPromoResults((p) => ({ ...p, [shopId]: { valid: true, discount, message: `Code appliqué : -${discount.toLocaleString("fr-FR")} FCFA` } }));
+    } catch (err) {
+      setPromoResults((p) => ({ ...p, [shopId]: { valid: false, discount: 0, message: err.response?.data?.message || "Code invalide." } }));
+    } finally {
+      setPromoChecking((p) => ({ ...p, [shopId]: false }));
+    }
+  };
+
   const totalDeliveryFee = selfDelivery ? 0 : shopFees.reduce((sum, s) => sum + s.fee, 0);
-  const grandTotal = total + totalDeliveryFee;
+  const totalDiscount = Object.values(promoResults).reduce((sum, r) => sum + (r.valid ? r.discount : 0), 0);
+  const grandTotal = Math.max(0, total - totalDiscount) + totalDeliveryFee;
 
   if (!loading && !user) {
     if (typeof window !== "undefined") router.push("/connexion?next=/commande");
@@ -72,6 +103,14 @@ export default function Commande() {
       return;
     }
 
+    const promoCodes = {};
+    if (hasPromoCode) {
+      for (const shopId of Object.keys(promoInputs)) {
+        const code = (promoInputs[shopId] || "").trim();
+        if (code) promoCodes[shopId] = code;
+      }
+    }
+
     setSubmitting(true);
     try {
       const { data } = await api.post("/orders", {
@@ -81,6 +120,7 @@ export default function Commande() {
         deliveryCity: form.deliveryCity,
         selfDelivery,
         paymentMethod,
+        promoCodes,
       });
       setSuccess(data);
       clearCart();
@@ -147,6 +187,13 @@ export default function Commande() {
             <span>Sous-total produits</span>
             <span>{total.toLocaleString("fr-FR")} FCFA</span>
           </div>
+
+          {totalDiscount > 0 && (
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--green-dark)", marginTop: 4 }}>
+              <span>Réduction</span>
+              <span>-{totalDiscount.toLocaleString("fr-FR")} FCFA</span>
+            </div>
+          )}
 
           {!selfDelivery && shopFees.length > 0 && (
             <div style={{ marginTop: 6 }}>
@@ -270,6 +317,49 @@ export default function Commande() {
           ) : (
             <div style={{ fontSize: 12, background: "var(--cream)", padding: 10, borderRadius: 8 }}>
               💳 Tu pourras régler en ligne dès que ton livreur sera en route avec ta commande.
+            </div>
+          )}
+
+          <label style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
+            <input
+              type="checkbox"
+              checked={hasPromoCode}
+              onChange={(e) => setHasPromoCode(e.target.checked)}
+            />
+            J'ai un code de réduction
+          </label>
+
+          {hasPromoCode && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, background: "var(--cream)", borderRadius: 10, padding: 12 }}>
+              {shopGroups.map((sg) => {
+                const result = promoResults[sg.shopId];
+                return (
+                  <div key={sg.shopId}>
+                    <div style={{ fontSize: 11, color: "var(--ink-soft)", marginBottom: 4 }}>Code pour {sg.shopName}</div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <input
+                        placeholder="ex: PROMO10"
+                        value={promoInputs[sg.shopId] || ""}
+                        onChange={(e) => setPromoInputs((p) => ({ ...p, [sg.shopId]: e.target.value.toUpperCase() }))}
+                        style={{ flex: 1, minWidth: 0, padding: 10, fontSize: 13, border: "1px solid var(--line)", borderRadius: 8, boxSizing: "border-box" }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleVerifyPromo(sg.shopId)}
+                        disabled={promoChecking[sg.shopId]}
+                        style={{ fontSize: 12, padding: "10px 14px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--white)", fontWeight: 600, whiteSpace: "nowrap" }}
+                      >
+                        {promoChecking[sg.shopId] ? "..." : "Vérifier"}
+                      </button>
+                    </div>
+                    {result && (
+                      <p style={{ fontSize: 12, margin: "6px 0 0", color: result.valid ? "var(--green-dark)" : "var(--terracotta-dark)" }}>
+                        {result.message}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 
