@@ -49,6 +49,8 @@ const orderSchema = new mongoose.Schema(
     },
     expectedDeliveryHours: { type: Number, default: 48 },
     itemsTotal: { type: Number, required: true },
+    discountAmount: { type: Number, default: 0 },
+    appliedPromoCodes: [{ shop: mongoose.Schema.Types.ObjectId, code: String }],
     commissionAmount: { type: Number, required: true, default: 0 },
     deliveryFee: { type: Number, default: 0 },
     grandTotal: { type: Number, required: true },

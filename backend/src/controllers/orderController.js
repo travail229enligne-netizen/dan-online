@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const Shop = require("../models/Shop");
+const Promotion = require("../models/Promotion");
 const User = require("../models/User");
 const { resolveCommissionRate } = require("../utils/commission");
 const { notify } = require("../utils/notify");
@@ -9,7 +10,7 @@ const { verifyTransaction } = require("../utils/kkiapay");
 const { sendEmail } = require("../utils/email");
 
 const createOrder = asyncHandler(async (req, res) => {
-  const { items, deliveryAddress, deliveryPhone, deliveryCity, selfDelivery, paymentMethod } = req.body;
+  const { items, deliveryAddress, deliveryPhone, deliveryCity, selfDelivery, paymentMethod, promoCodes } = req.body;
   if (!items || items.length === 0) {
     return res.status(400).json({ message: "Le panier est vide." });
   }
@@ -73,7 +74,52 @@ const createOrder = asyncHandler(async (req, res) => {
     }
   }
 
-  const grandTotal = itemsTotal + deliveryFee;
+  let discountAmount = 0;
+  const appliedPromoCodes = [];
+
+  if (promoCodes && typeof promoCodes === "object") {
+    for (const shopId of Object.keys(promoCodes)) {
+      const code = (promoCodes[shopId] || "").trim().toUpperCase();
+      if (!code) continue;
+
+      const promo = await Promotion.findOne({ shop: shopId, code });
+      if (!promo || !promo.active) continue;
+
+      const now = new Date();
+      if (promo.startDate && now < promo.startDate) continue;
+      if (promo.endDate && now > promo.endDate) continue;
+      if (promo.usageLimit && promo.timesUsed >= promo.usageLimit) continue;
+
+      const shopItems = orderItems.filter((it) => it.shop.toString() === shopId);
+      const eligibleItems =
+        promo.appliesTo === "products"
+          ? shopItems.filter((it) => promo.products.some((p) => p.toString() === it.product.toString()))
+          : shopItems;
+
+      if (eligibleItems.length === 0) continue;
+
+      const eligibleSubtotal = eligibleItems.reduce((sum, it) => sum + it.price * it.quantity, 0);
+      const shopDiscount =
+        promo.type === "percent"
+          ? (eligibleSubtotal * promo.value) / 100
+          : Math.min(promo.value, eligibleSubtotal);
+
+      if (shopDiscount <= 0) continue;
+
+      discountAmount += shopDiscount;
+      appliedPromoCodes.push({ shop: shopId, code });
+
+      promo.timesUsed += 1;
+      await promo.save();
+    }
+  }
+
+  if (discountAmount > 0 && itemsTotal > 0) {
+    const ratio = (itemsTotal - discountAmount) / itemsTotal;
+    commissionAmount = commissionAmount * ratio;
+  }
+
+  const grandTotal = Math.max(0, itemsTotal - discountAmount) + deliveryFee;
 
   const order = await Order.create({
     client: req.user._id,
@@ -86,6 +132,8 @@ const createOrder = asyncHandler(async (req, res) => {
     paymentMethod: method,
     paymentStatus: "pending",
     itemsTotal,
+    discountAmount,
+    appliedPromoCodes,
     commissionAmount,
     deliveryFee,
     grandTotal,
