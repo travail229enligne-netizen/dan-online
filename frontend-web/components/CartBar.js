@@ -12,9 +12,11 @@ export default function CartBar() {
       style={{
         position: "fixed",
         bottom: 16,
-        left: 16,
         right: 16,
         zIndex: 40,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-end",
       }}
     >
       {expanded && (
@@ -24,10 +26,12 @@ export default function CartBar() {
             border: "1px solid var(--line)",
             borderRadius: 16,
             padding: 14,
-            marginBottom: 8,
-            maxHeight: "50vh",
+            marginBottom: 10,
+            width: "min(88vw, 340px)",
+            maxHeight: "60vh",
             overflowY: "auto",
-            boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+            boxSizing: "border-box",
           }}
         >
           {items.map((it) => (
@@ -77,43 +81,71 @@ export default function CartBar() {
               </button>
             </div>
           ))}
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingTop: 12,
+              marginTop: 4,
+            }}
+          >
+            <div style={{ fontWeight: 700, fontSize: 15 }}>
+              {total.toLocaleString("fr-FR")} FCFA
+            </div>
+            <a
+              href="/commande"
+              style={{
+                background: "var(--ink)",
+                color: "var(--white)",
+                fontWeight: 700,
+                fontSize: 13,
+                padding: "10px 18px",
+                borderRadius: 10,
+              }}
+            >
+              Passer la commande
+            </a>
+          </div>
         </div>
       )}
 
-      <div
+      <button
+        onClick={() => setExpanded(!expanded)}
+        aria-label="Voir le panier"
         style={{
+          position: "relative",
+          width: 56,
+          height: 56,
+          borderRadius: "50%",
           background: "var(--ink)",
           color: "var(--white)",
-          borderRadius: 16,
-          padding: "12px 16px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          fontSize: 24,
           boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
         }}
       >
-        <button onClick={() => setExpanded(!expanded)} style={{ textAlign: "left", color: "var(--white)", background: "transparent", border: "none", padding: 0 }}>
-          <div style={{ fontSize: 12, opacity: 0.8 }}>
-            {count} article{count > 1 ? "s" : ""} {expanded ? "▼" : "▲"}
-          </div>
-          <div style={{ fontWeight: 700, fontSize: 15 }}>
-            {total.toLocaleString("fr-FR")} FCFA
-          </div>
-        </button>
-        <a
-          href="/commande"
+        🛒
+        <span
           style={{
-            background: "var(--white)",
-            color: "var(--ink)",
+            position: "absolute",
+            top: -4,
+            right: -4,
+            width: 22,
+            height: 22,
+            borderRadius: "50%",
+            background: "var(--terracotta)",
+            color: "var(--white)",
+            fontSize: 12,
             fontWeight: 700,
-            fontSize: 13,
-            padding: "10px 18px",
-            borderRadius: 10,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          Passer la commande
-        </a>
-      </div>
+          {count > 9 ? "9+" : count}
+        </span>
+      </button>
     </div>
   );
 }
