@@ -27,7 +27,7 @@ export default function Confidentialite() {
           <div style={card}>
             <h2 style={h2}>Données que nous collectons</h2>
             <p style={p}>
-              Lors de la création de ton compte et de l'utilisation d'Shopizzy, nous collectons :
+              Lors de la création de ton compte et de l'utilisation de Shopizzy, nous collectons :
               nom, numéro de téléphone, email (facultatif), adresse de livraison, ville, photo de
               profil (facultative). Pour les marchands : informations de la boutique, logo,
               localisation. Pour les commandes : détail des articles, adresse et téléphone de
@@ -86,7 +86,7 @@ export default function Confidentialite() {
           <div style={card}>
             <h2 style={h2}>Modifications de cette politique</h2>
             <p style={p}>
-              Cette politique peut évoluer avec le développement d'Shopizzy. Toute mise à jour
+              Cette politique peut évoluer avec le développement de Shopizzy. Toute mise à jour
               importante te sera signalée directement sur la plateforme.
             </p>
           </div>

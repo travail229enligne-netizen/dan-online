@@ -62,7 +62,7 @@ export default function MentionsLegales() {
             <p style={p}>
               Le nom « Shopizzy », son logo, ainsi que l'ensemble des éléments graphiques et
               techniques du site (hors contenus publiés par les boutiques partenaires) sont la
-              propriété d'Shopizzy. Toute reproduction non autorisée est interdite.
+              propriété de Shopizzy. Toute reproduction non autorisée est interdite.
             </p>
           </div>
         </div>

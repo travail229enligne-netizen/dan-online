@@ -14,7 +14,7 @@ export default function APropos() {
       <Header hideSearchBar />
       <main className="container" style={{ paddingTop: 24, paddingBottom: 60 }}>
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: 24, marginBottom: 6 }}>
-          À propos d'Shopizzy
+          À propos de Shopizzy
         </h1>
         <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 24 }}>
           Tout ce qui se vend, à portée de main.

@@ -88,7 +88,7 @@ export default function Cgu() {
               Shopizzy met tout en œuvre pour assurer le bon fonctionnement de la plateforme,
               mais n'est pas responsable de la qualité intrinsèque des produits vendus par les
               marchands tiers, ni des retards ou incidents imputables à un livreur indépendant.
-              La responsabilité d'Shopizzy se limite à son rôle d'intermédiaire technique entre
+              La responsabilité de Shopizzy se limite à son rôle d'intermédiaire technique entre
               les utilisateurs.
             </p>
           </div>
