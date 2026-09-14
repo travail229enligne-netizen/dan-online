@@ -200,9 +200,9 @@ export default function BoutiquePublique() {
                   {following ? "Suivi ✓" : "Suivre"}
                 </button>
               )}
-              {callHref && (
+              {shop._id && (
                 <a
-                  href={callHref}
+                  href={`/messages/${shop._id}`}
                   style={{
                     background: "rgba(255,255,255,0.18)",
                     color: "var(--white)",
@@ -214,7 +214,7 @@ export default function BoutiquePublique() {
                     whiteSpace: "nowrap",
                   }}
                 >
-                  📞 Contacter
+                  💬 Contacter
                 </a>
               )}
             </div>
