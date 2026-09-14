@@ -36,7 +36,7 @@ app.use(express.json());
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
 app.get("/", (req, res) => {
-  res.json({ message: "API Shopizzy - Le Marché de Dantokpa chez vous", status: "ok" });
+  res.json({ message: "API Shopyz - Le Marché de Dantokpa chez vous", status: "ok" });
 });
 app.get("/api/health", (req, res) => res.json({ status: "healthy", uptime: process.uptime() }));
 
@@ -75,5 +75,5 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Serveur Shopizzy démarré sur le port ${PORT} (${process.env.NODE_ENV || "development"})`);
+  console.log(`Serveur Shopyz démarré sur le port ${PORT} (${process.env.NODE_ENV || "development"})`);
 });

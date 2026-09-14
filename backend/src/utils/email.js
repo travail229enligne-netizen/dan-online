@@ -9,7 +9,7 @@ async function sendEmail(to, subject, html) {
   }
   try {
     await resend.emails.send({
-      from: "Shopizzy <onboarding@resend.dev>",
+      from: "Shopyz <onboarding@resend.dev>",
       to,
       subject,
       html,

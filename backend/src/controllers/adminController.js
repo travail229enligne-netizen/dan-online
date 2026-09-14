@@ -32,7 +32,7 @@ const validateShop = asyncHandler(async (req, res) => {
     approve ? "shop_validated" : "shop_rejected",
     approve ? "Boutique validée" : "Boutique refusée",
     approve
-      ? `Ta boutique "${shop.name}" est maintenant active sur Shopizzy.`
+      ? `Ta boutique "${shop.name}" est maintenant active sur Shopyz.`
       : `Ta boutique "${shop.name}" n'a pas été validée. Contacte le support pour en savoir plus.`,
     "/marchand/boutique"
   );
