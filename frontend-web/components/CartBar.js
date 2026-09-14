@@ -3,6 +3,8 @@ import { useCart } from "../lib/cart";
 
 const BUTTON_SIZE = 56;
 const MARGIN = 16;
+const PANEL_GAP = 10;
+const EDGE_PADDING = 8;
 
 export default function CartBar() {
   const { items, count, total, updateQuantity, removeFromCart } = useCart();
@@ -19,7 +21,7 @@ export default function CartBar() {
     }
   }, [pos]);
 
-  const clamp = (x, y) => {
+  const clampButton = (x, y) => {
     const maxX = window.innerWidth - BUTTON_SIZE - 4;
     const maxY = window.innerHeight - BUTTON_SIZE - 4;
     return { x: Math.min(Math.max(4, x), maxX), y: Math.min(Math.max(4, y), maxY) };
@@ -44,7 +46,7 @@ export default function CartBar() {
     const dx = e.clientX - info.startX;
     const dy = e.clientY - info.startY;
     if (Math.abs(dx) > 4 || Math.abs(dy) > 4) info.moved = true;
-    setPos(clamp(info.originX + dx, info.originY + dy));
+    setPos(clampButton(info.originX + dx, info.originY + dy));
   };
 
   const handlePointerUp = () => {
@@ -63,31 +65,31 @@ export default function CartBar() {
 
   if (count === 0 || !pos) return null;
 
-  const panelAbove = pos.y > window.innerHeight / 2;
+  const panelWidth = Math.min(340, window.innerWidth * 0.88);
+  const desiredPanelLeft = pos.x + BUTTON_SIZE / 2 - panelWidth / 2;
+  const panelLeft = Math.min(Math.max(EDGE_PADDING, desiredPanelLeft), window.innerWidth - panelWidth - EDGE_PADDING);
+
+  const buttonCenterY = pos.y + BUTTON_SIZE / 2;
+  const openUpward = buttonCenterY > window.innerHeight / 2;
+
+  const panelStyle = openUpward
+    ? { bottom: window.innerHeight - pos.y + PANEL_GAP }
+    : { top: pos.y + BUTTON_SIZE + PANEL_GAP };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        left: pos.x,
-        top: pos.y,
-        zIndex: 40,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: pos.x > window.innerWidth / 2 ? "flex-end" : "flex-start",
-      }}
-    >
+    <>
       {expanded && (
         <div
           style={{
-            order: panelAbove ? -1 : 1,
-            marginBottom: panelAbove ? 10 : 0,
-            marginTop: panelAbove ? 0 : 10,
+            position: "fixed",
+            left: panelLeft,
+            ...panelStyle,
+            zIndex: 41,
             background: "var(--white)",
             border: "1px solid var(--line)",
             borderRadius: 16,
             padding: 14,
-            width: "min(88vw, 340px)",
+            width: panelWidth,
             maxHeight: "50vh",
             overflowY: "auto",
             boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
@@ -159,7 +161,10 @@ export default function CartBar() {
         onClick={handleClick}
         aria-label="Voir le panier"
         style={{
-          position: "relative",
+          position: "fixed",
+          left: pos.x,
+          top: pos.y,
+          zIndex: 40,
           width: BUTTON_SIZE,
           height: BUTTON_SIZE,
           borderRadius: "50%",
@@ -192,6 +197,6 @@ export default function CartBar() {
           {count > 9 ? "9+" : count}
         </span>
       </button>
-    </div>
+    </>
   );
 }
