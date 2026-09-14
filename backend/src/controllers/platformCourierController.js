@@ -19,12 +19,12 @@ const addPlatformCourier = asyncHandler(async (req, res) => {
 
   const courierUser = await User.findOne({ phone: phone.trim() });
   if (!courierUser) {
-    return res.status(404).json({ message: "Aucun compte EasyShop n'est associé à ce numéro. Le livreur doit d'abord créer un compte." });
+    return res.status(404).json({ message: "Aucun compte Shopizzy n'est associé à ce numéro. Le livreur doit d'abord créer un compte." });
   }
 
   const alreadyAdded = await PlatformCourier.findOne({ user: courierUser._id });
   if (alreadyAdded) {
-    return res.status(400).json({ message: "Ce livreur est déjà dans la liste EasyShop." });
+    return res.status(400).json({ message: "Ce livreur est déjà dans la liste Shopizzy." });
   }
 
   const courier = await PlatformCourier.create({

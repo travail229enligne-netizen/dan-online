@@ -9,7 +9,7 @@ export default function CommandeLivraison() {
   const [order, setOrder] = useState(undefined);
   const [myCouriers, setMyCouriers] = useState([]);
   const [platformCouriers, setPlatformCouriers] = useState([]);
-  const [useEasyShop, setUseEasyShop] = useState(false);
+  const [useShopizzy, setUseShopizzy] = useState(false);
   const [selectedCourier, setSelectedCourier] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -22,7 +22,7 @@ export default function CommandeLivraison() {
     api.get("/platform-couriers").then((r) => setPlatformCouriers(r.data)).catch(() => setPlatformCouriers([]));
   }, [id]);
 
-  const couriers = useEasyShop ? platformCouriers : myCouriers;
+  const couriers = useShopizzy ? platformCouriers : myCouriers;
 
   const handleSend = async () => {
     if (!selectedCourier) {
@@ -127,9 +127,9 @@ export default function CommandeLivraison() {
         }}
       >
         {couriers.length === 0 ? (
-          useEasyShop ? (
+          useShopizzy ? (
             <p style={{ fontSize: 14, color: "var(--ink-soft)", margin: 0 }}>
-              Aucun livreur EasyShop n'est disponible pour le moment.
+              Aucun livreur Shopizzy n'est disponible pour le moment.
             </p>
           ) : (
             <div style={{ textAlign: "center" }}>
@@ -143,7 +143,7 @@ export default function CommandeLivraison() {
           )
         ) : (
           <label style={{ fontSize: 13, fontWeight: 600 }}>
-            Choisir un livreur {useEasyShop ? "EasyShop" : ""}
+            Choisir un livreur {useShopizzy ? "Shopizzy" : ""}
             <select
               value={selectedCourier}
               onChange={(e) => setSelectedCourier(e.target.value)}
@@ -166,13 +166,13 @@ export default function CommandeLivraison() {
           <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, fontWeight: 600 }}>
             <input
               type="checkbox"
-              checked={useEasyShop}
+              checked={useShopizzy}
               onChange={(e) => {
-                setUseEasyShop(e.target.checked);
+                setUseShopizzy(e.target.checked);
                 setSelectedCourier("");
               }}
             />
-            Confier la livraison à EasyShop
+            Confier la livraison à Shopizzy
           </label>
         </div>
 

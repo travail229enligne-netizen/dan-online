@@ -1,6 +1,6 @@
 {
-  "name": "EasyShop",
-  "short_name": "EasyShop",
+  "name": "Shopizzy",
+  "short_name": "Shopizzy",
   "description": "Boutiques, restaurants, supermarches et artisans du Benin, livres chez vous.",
   "start_url": "/",
   "display": "standalone",

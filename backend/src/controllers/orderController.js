@@ -176,7 +176,7 @@ const createOrder = asyncHandler(async (req, res) => {
 
     await sendEmail(
       client.email,
-      "Confirmation de votre commande EasyShop",
+      "Confirmation de votre commande Shopizzy",
       `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #111;">
           <h2 style="color: #111;">Merci pour votre commande, ${client.name} !</h2>
@@ -185,7 +185,7 @@ const createOrder = asyncHandler(async (req, res) => {
           <p style="font-weight: bold; font-size: 16px;">Total : ${grandTotal.toLocaleString("fr-FR")} FCFA</p>
           <p>${paymentLine}</p>
           <p style="color: #666; font-size: 13px;">Livraison estimée sous 48h à l'adresse : ${deliveryAddress}${deliveryCity ? `, ${deliveryCity}` : ""}.</p>
-          <p style="color: #666; font-size: 13px;">Merci de votre confiance,<br/>L'équipe EasyShop</p>
+          <p style="color: #666; font-size: 13px;">Merci de votre confiance,<br/>L'équipe Shopizzy</p>
         </div>
       `
     );

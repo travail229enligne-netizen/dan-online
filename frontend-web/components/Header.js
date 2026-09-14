@@ -87,7 +87,7 @@ export default function Header({ hideSearchBar = false }) {
               ☰
             </button>
             <a href="/" style={{ display: "flex", alignItems: "center" }}>
-              <h1 style={{ color: "var(--ink)", fontSize: 22 }}>EasyShop</h1>
+              <h1 style={{ color: "var(--ink)", fontSize: 22 }}>Shopizzy</h1>
             </a>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -163,7 +163,7 @@ export default function Header({ hideSearchBar = false }) {
           >
             <div style={{ padding: "0 20px 16px", borderBottom: "1px solid var(--line)" }}>
               <div style={{ fontFamily: "var(--font-display)", fontSize: 18, color: "var(--ink)" }}>
-                EasyShop
+                Shopizzy
               </div>
             </div>
 

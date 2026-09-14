@@ -129,10 +129,10 @@ export default function BoutiquePublique() {
   const certifiedLabel = shop.isProfessional ? "Boutique professionnelle certifiée" : "Boutique vérifiée";
   const callHref = shop.owner?.phone ? `tel:${shop.owner.phone}` : null;
 
-  const pageTitle = `${shop.name}${shop.city ? ` à ${shop.city}` : ""} | EasyShop`;
+  const pageTitle = `${shop.name}${shop.city ? ` à ${shop.city}` : ""} | Shopizzy`;
   const pageDescription = shop.description
     ? shop.description.slice(0, 155)
-    : `Découvrez les produits de ${shop.name} sur EasyShop, la marketplace du Bénin.`;
+    : `Découvrez les produits de ${shop.name} sur Shopizzy, la marketplace du Bénin.`;
   const pageImage = shop.logoUrl || "";
   const pageUrl = typeof window !== "undefined" ? window.location.href : "";
 

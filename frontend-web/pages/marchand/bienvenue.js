@@ -14,7 +14,7 @@ export default function Bienvenue() {
           Bienvenue{user?.name ? `, ${user.name}` : ""} !
         </h1>
         <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 24, lineHeight: 1.5 }}>
-          Ton compte marchand est prêt. Il ne reste plus qu'une étape avant de vendre sur EasyShop :
+          Ton compte marchand est prêt. Il ne reste plus qu'une étape avant de vendre sur Shopizzy :
           créer ta boutique.
         </p>
         <button

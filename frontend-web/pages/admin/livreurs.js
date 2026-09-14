@@ -35,7 +35,7 @@ export default function AdminLivreurs() {
   };
 
   const handleRemove = async (userId) => {
-    if (!window.confirm("Retirer ce livreur de la liste EasyShop ?")) return;
+    if (!window.confirm("Retirer ce livreur de la liste Shopizzy ?")) return;
     setBusy(userId);
     try {
       await api.delete(`/admin/platform-couriers/${userId}`);
@@ -62,10 +62,10 @@ export default function AdminLivreurs() {
     <>
       <Header hideSearchBar />
       <main className="container" style={{ paddingTop: 24, paddingBottom: 60 }}>
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, marginBottom: 4 }}>Livreurs EasyShop</h1>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, marginBottom: 4 }}>Livreurs Shopizzy</h1>
         <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 20 }}>
           Ajoute les livreurs disponibles pour tous les marchands, à partir de leur numéro de téléphone.
-          Ils doivent déjà avoir un compte EasyShop.
+          Ils doivent déjà avoir un compte Shopizzy.
         </p>
 
         <form
@@ -110,13 +110,13 @@ export default function AdminLivreurs() {
         </form>
 
         <h2 style={{ fontSize: 16, marginBottom: 12, fontWeight: 700 }}>
-          Livreurs EasyShop {couriers && `(${couriers.length})`}
+          Livreurs Shopizzy {couriers && `(${couriers.length})`}
         </h2>
 
         {couriers === undefined && <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Chargement...</p>}
 
         {couriers && couriers.length === 0 && (
-          <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucun livreur EasyShop ajouté pour l'instant.</p>
+          <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucun livreur Shopizzy ajouté pour l'instant.</p>
         )}
 
         {couriers && couriers.length > 0 && (

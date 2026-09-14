@@ -63,10 +63,10 @@ export default function ProduitDetail() {
   const unitPrice = priceForQty(product, numericQty);
   const total = unitPrice * numericQty;
 
-  const pageTitle = `${product.name} - ${product.price?.toLocaleString("fr-FR")} FCFA | EasyShop`;
+  const pageTitle = `${product.name} - ${product.price?.toLocaleString("fr-FR")} FCFA | Shopizzy`;
   const pageDescription = product.description
     ? product.description.slice(0, 155)
-    : `Achetez ${product.name} sur EasyShop, la marketplace du Bénin. Livraison rapide, paiement à la livraison.`;
+    : `Achetez ${product.name} sur Shopizzy, la marketplace du Bénin. Livraison rapide, paiement à la livraison.`;
   const pageImage = product.images?.[0] || "";
   const pageUrl = typeof window !== "undefined" ? window.location.href : "";
 

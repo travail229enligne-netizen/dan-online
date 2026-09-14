@@ -128,7 +128,7 @@ export default function Booster() {
       <MerchantLayout title="Booster ma visibilité">
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, marginBottom: 4 }}>Booster ma visibilité</h1>
         <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 20 }}>
-          Fais apparaître ta boutique ou un produit en priorité sur EasyShop.
+          Fais apparaître ta boutique ou un produit en priorité sur Shopizzy.
         </p>
 
         <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 18, display: "flex", flexDirection: "column", gap: 16, boxSizing: "border-box" }}>

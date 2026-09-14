@@ -2,8 +2,8 @@ import Header from "../components/Header";
 
 const faqs = [
   {
-    q: "Comment fonctionne EasyShop ?",
-    a: "EasyShop est une marketplace qui réunit des boutiques, restaurants, supermarchés, grossistes et artisans partenaires au Bénin. Tu parcours les produits, tu commandes, et la boutique concernée prépare et organise la livraison chez toi.",
+    q: "Comment fonctionne Shopizzy ?",
+    a: "Shopizzy est une marketplace qui réunit des boutiques, restaurants, supermarchés, grossistes et artisans partenaires au Bénin. Tu parcours les produits, tu commandes, et la boutique concernée prépare et organise la livraison chez toi.",
   },
   {
     q: "Comment puis-je payer ma commande ?",
@@ -11,23 +11,23 @@ const faqs = [
   },
   {
     q: "Qui livre ma commande ?",
-    a: "Chaque boutique organise sa livraison, soit avec son propre livreur, soit en confiant la course à un livreur du réseau EasyShop. Dans les deux cas, tu peux suivre l'avancement et échanger directement avec le livreur via la messagerie.",
+    a: "Chaque boutique organise sa livraison, soit avec son propre livreur, soit en confiant la course à un livreur du réseau Shopizzy. Dans les deux cas, tu peux suivre l'avancement et échanger directement avec le livreur via la messagerie.",
   },
   {
     q: "Que faire si je ne reçois pas ma commande ou si un article ne correspond pas ?",
     a: "Contacte directement la boutique via la messagerie intégrée à ta commande. Si le problème persiste, notre équipe support peut intervenir — voir la page Nous contacter.",
   },
   {
-    q: "Comment devenir marchand sur EasyShop ?",
+    q: "Comment devenir marchand sur Shopizzy ?",
     a: "Crée un compte, choisis « Je suis marchand » lors de l'inscription, puis renseigne les informations de ta boutique (nom, catégorie, localisation, type de commerce). Ta boutique est vérifiée par notre équipe avant d'être visible publiquement.",
   },
   {
-    q: "EasyShop prend-il une commission sur les ventes ?",
+    q: "Shopizzy prend-il une commission sur les ventes ?",
     a: "Oui, une commission est appliquée sur chaque vente réalisée par une boutique partenaire. Le taux dépend de la catégorie de produit et peut varier ; il est toujours indiqué au marchand dans son tableau de bord.",
   },
   {
     q: "Comment un marchand reçoit-il ses paiements ?",
-    a: "Les revenus d'une boutique s'accumulent dans son portefeuille EasyShop au fur et à mesure des commandes livrées et payées. Le marchand peut ensuite demander un retrait vers son compte Mobile Money.",
+    a: "Les revenus d'une boutique s'accumulent dans son portefeuille Shopizzy au fur et à mesure des commandes livrées et payées. Le marchand peut ensuite demander un retrait vers son compte Mobile Money.",
   },
   {
     q: "Puis-je suivre une boutique que j'aime ?",
@@ -52,7 +52,7 @@ export default function Faq() {
           Foire aux questions
         </h1>
         <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 24 }}>
-          Les réponses aux questions les plus fréquentes sur EasyShop.
+          Les réponses aux questions les plus fréquentes sur Shopizzy.
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

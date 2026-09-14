@@ -24,7 +24,7 @@ export default function Cgu() {
           <div style={card}>
             <h2 style={h2}>1. Objet</h2>
             <p style={p}>
-              EasyShop est une plateforme de marketplace mettant en relation des vendeurs
+              Shopizzy est une plateforme de marketplace mettant en relation des vendeurs
               partenaires (boutiques, restaurants, supermarchés, grossistes, artisans) et des
               acheteurs au Bénin. L'utilisation de la plateforme implique l'acceptation pleine et
               entière des présentes conditions.
@@ -47,7 +47,7 @@ export default function Cgu() {
               conformité légale, de la qualité et de la disponibilité de ce qu'il propose à la
               vente. La vente de produits illicites, contrefaits ou dangereux est strictement
               interdite et entraîne la suspension immédiate du compte concerné. La création d'une
-              boutique est soumise à validation par l'équipe EasyShop avant mise en ligne
+              boutique est soumise à validation par l'équipe Shopizzy avant mise en ligne
               publique.
             </p>
           </div>
@@ -57,7 +57,7 @@ export default function Cgu() {
             <p style={p}>
               Une commande peut être réglée en ligne via Kkiapay (Mobile Money, carte) ou en
               espèces à la livraison, selon les options proposées. Une commission est prélevée
-              par EasyShop sur chaque vente réalisée par un marchand ; son taux est indiqué au
+              par Shopizzy sur chaque vente réalisée par un marchand ; son taux est indiqué au
               marchand dans son espace dédié et peut varier selon la catégorie de produit.
             </p>
           </div>
@@ -66,7 +66,7 @@ export default function Cgu() {
             <h2 style={h2}>5. Livraison</h2>
             <p style={p}>
               La livraison est organisée par le marchand, soit avec son propre livreur, soit en
-              confiant la commande à un livreur du réseau EasyShop. EasyShop agit dans ce cas
+              confiant la commande à un livreur du réseau Shopizzy. Shopizzy agit dans ce cas
               comme intermédiaire de mise en relation et ne garantit pas de délai de livraison
               précis, celui-ci dépendant de facteurs logistiques indépendants de la plateforme.
             </p>
@@ -77,7 +77,7 @@ export default function Cgu() {
             <p style={p}>
               Toute question relative à une commande (retard, article manquant ou non conforme)
               doit d'abord être adressée à la boutique concernée via la messagerie intégrée. En
-              l'absence de résolution, l'utilisateur peut solliciter le support EasyShop, qui
+              l'absence de résolution, l'utilisateur peut solliciter le support Shopizzy, qui
               interviendra en tant que médiateur entre les parties.
             </p>
           </div>
@@ -85,10 +85,10 @@ export default function Cgu() {
           <div style={card}>
             <h2 style={h2}>7. Limitation de responsabilité</h2>
             <p style={p}>
-              EasyShop met tout en œuvre pour assurer le bon fonctionnement de la plateforme,
+              Shopizzy met tout en œuvre pour assurer le bon fonctionnement de la plateforme,
               mais n'est pas responsable de la qualité intrinsèque des produits vendus par les
               marchands tiers, ni des retards ou incidents imputables à un livreur indépendant.
-              La responsabilité d'EasyShop se limite à son rôle d'intermédiaire technique entre
+              La responsabilité d'Shopizzy se limite à son rôle d'intermédiaire technique entre
               les utilisateurs.
             </p>
           </div>
@@ -96,7 +96,7 @@ export default function Cgu() {
           <div style={card}>
             <h2 style={h2}>8. Suspension de compte</h2>
             <p style={p}>
-              EasyShop se réserve le droit de suspendre ou supprimer tout compte ne respectant
+              Shopizzy se réserve le droit de suspendre ou supprimer tout compte ne respectant
               pas les présentes conditions, notamment en cas de fraude, de non-respect des
               obligations légales, ou de comportement nuisible envers d'autres utilisateurs.
             </p>

@@ -237,7 +237,7 @@ const addCourier = asyncHandler(async (req, res) => {
 
   const courierUser = await User.findOne({ phone: phone.trim() });
   if (!courierUser) {
-    return res.status(404).json({ message: "Aucun compte EasyShop n'est associe a ce numero. Le livreur doit d'abord creer un compte." });
+    return res.status(404).json({ message: "Aucun compte Shopizzy n'est associe a ce numero. Le livreur doit d'abord creer un compte." });
   }
 
   const alreadyAdded = shop.couriers.some((c) => c.user.toString() === courierUser._id.toString());
