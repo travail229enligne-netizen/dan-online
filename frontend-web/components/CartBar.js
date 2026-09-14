@@ -1,34 +1,94 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useCart } from "../lib/cart";
+
+const BUTTON_SIZE = 56;
+const MARGIN = 16;
 
 export default function CartBar() {
   const { items, count, total, updateQuantity, removeFromCart } = useCart();
   const [expanded, setExpanded] = useState(false);
+  const [pos, setPos] = useState(null);
+  const dragInfo = useRef({ dragging: false, moved: false, startX: 0, startY: 0, originX: 0, originY: 0 });
 
-  if (count === 0) return null;
+  useEffect(() => {
+    if (typeof window !== "undefined" && pos === null) {
+      setPos({
+        x: window.innerWidth - BUTTON_SIZE - MARGIN,
+        y: window.innerHeight - BUTTON_SIZE - MARGIN - 20,
+      });
+    }
+  }, [pos]);
+
+  const clamp = (x, y) => {
+    const maxX = window.innerWidth - BUTTON_SIZE - 4;
+    const maxY = window.innerHeight - BUTTON_SIZE - 4;
+    return { x: Math.min(Math.max(4, x), maxX), y: Math.min(Math.max(4, y), maxY) };
+  };
+
+  const handlePointerDown = (e) => {
+    dragInfo.current = {
+      dragging: true,
+      moved: false,
+      startX: e.clientX,
+      startY: e.clientY,
+      originX: pos.x,
+      originY: pos.y,
+    };
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+  };
+
+  const handlePointerMove = (e) => {
+    const info = dragInfo.current;
+    if (!info.dragging) return;
+    const dx = e.clientX - info.startX;
+    const dy = e.clientY - info.startY;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) info.moved = true;
+    setPos(clamp(info.originX + dx, info.originY + dy));
+  };
+
+  const handlePointerUp = () => {
+    dragInfo.current.dragging = false;
+    window.removeEventListener("pointermove", handlePointerMove);
+    window.removeEventListener("pointerup", handlePointerUp);
+  };
+
+  const handleClick = () => {
+    if (dragInfo.current.moved) {
+      dragInfo.current.moved = false;
+      return;
+    }
+    setExpanded((e) => !e);
+  };
+
+  if (count === 0 || !pos) return null;
+
+  const panelAbove = pos.y > window.innerHeight / 2;
 
   return (
     <div
       style={{
         position: "fixed",
-        bottom: 16,
-        right: 16,
+        left: pos.x,
+        top: pos.y,
         zIndex: 40,
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-end",
+        alignItems: pos.x > window.innerWidth / 2 ? "flex-end" : "flex-start",
       }}
     >
       {expanded && (
         <div
           style={{
+            order: panelAbove ? -1 : 1,
+            marginBottom: panelAbove ? 10 : 0,
+            marginTop: panelAbove ? 0 : 10,
             background: "var(--white)",
             border: "1px solid var(--line)",
             borderRadius: 16,
             padding: 14,
-            marginBottom: 10,
             width: "min(88vw, 340px)",
-            maxHeight: "60vh",
+            maxHeight: "50vh",
             overflowY: "auto",
             boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
             boxSizing: "border-box",
@@ -82,28 +142,11 @@ export default function CartBar() {
             </div>
           ))}
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              paddingTop: 12,
-              marginTop: 4,
-            }}
-          >
-            <div style={{ fontWeight: 700, fontSize: 15 }}>
-              {total.toLocaleString("fr-FR")} FCFA
-            </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 12, marginTop: 4 }}>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>{total.toLocaleString("fr-FR")} FCFA</div>
             <a
               href="/commande"
-              style={{
-                background: "var(--ink)",
-                color: "var(--white)",
-                fontWeight: 700,
-                fontSize: 13,
-                padding: "10px 18px",
-                borderRadius: 10,
-              }}
+              style={{ background: "var(--ink)", color: "var(--white)", fontWeight: 700, fontSize: 13, padding: "10px 18px", borderRadius: 10 }}
             >
               Passer la commande
             </a>
@@ -112,17 +155,20 @@ export default function CartBar() {
       )}
 
       <button
-        onClick={() => setExpanded(!expanded)}
+        onPointerDown={handlePointerDown}
+        onClick={handleClick}
         aria-label="Voir le panier"
         style={{
           position: "relative",
-          width: 56,
-          height: 56,
+          width: BUTTON_SIZE,
+          height: BUTTON_SIZE,
           borderRadius: "50%",
           background: "var(--ink)",
           color: "var(--white)",
           fontSize: 24,
           boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
+          touchAction: "none",
+          cursor: "grab",
         }}
       >
         🛒
