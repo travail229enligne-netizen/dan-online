@@ -87,7 +87,7 @@ export default function Header({ hideSearchBar = false }) {
               ☰
             </button>
             <a href="/" style={{ display: "flex", alignItems: "center" }}>
-              <h1 style={{ color: "var(--ink)", fontSize: 22 }}>Shopyz</h1>
+              <AnimatedLogo />
             </a>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
