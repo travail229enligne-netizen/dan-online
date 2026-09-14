@@ -111,6 +111,18 @@ export default function Commandes() {
                     </div>
                   </div>
 
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                    {shopIds.map((shopId) => (
+                      <a
+                        key={shopId}
+                        href={`/messages/${shopId}`}
+                        style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 20, border: "1px solid var(--line)", color: "var(--ink)" }}
+                      >
+                        💬 Contacter
+                      </a>
+                    ))}
+                  </div>
+
                   {order.items.map((it) => (
                     <div key={it.product} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "3px 0" }}>
                       <span>{it.quantity}x {it.name}</span>
