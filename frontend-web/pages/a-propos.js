@@ -14,7 +14,7 @@ export default function APropos() {
       <Header hideSearchBar />
       <main className="container" style={{ paddingTop: 24, paddingBottom: 60 }}>
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: 24, marginBottom: 6 }}>
-          À propos de Shopizzy
+          À propos de Shopyz
         </h1>
         <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 24 }}>
           Tout ce qui se vend, à portée de main.
@@ -24,7 +24,7 @@ export default function APropos() {
           <div style={card}>
             <h2 style={{ fontSize: 16, marginBottom: 10 }}>Notre mission</h2>
             <p style={{ fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.6, margin: 0 }}>
-              Shopizzy est né d'une idée simple : rassembler la richesse et la diversité des marchés béninois,
+              Shopyz est né d'une idée simple : rassembler la richesse et la diversité des marchés béninois,
               à l'image du grand marché de Dantokpa, sur une seule plateforme en ligne. Boutiques, restaurants,
               supermarchés, grossistes et artisans y proposent leurs produits, comparables, commandables et
               livrables en toute simplicité.
@@ -35,7 +35,7 @@ export default function APropos() {
             <h2 style={{ fontSize: 16, marginBottom: 10 }}>Comment ça marche</h2>
             <p style={{ fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.6, margin: 0 }}>
               Chaque vendeur reste maître de sa boutique : ses produits, ses prix, ses conditions de livraison.
-              Shopizzy fournit l'outil — recherche, paiement en ligne ou en espèces, messagerie, suivi de
+              Shopyz fournit l'outil — recherche, paiement en ligne ou en espèces, messagerie, suivi de
               commande — et s'assure que chaque boutique partenaire est vérifiée avant sa mise en ligne.
             </p>
           </div>

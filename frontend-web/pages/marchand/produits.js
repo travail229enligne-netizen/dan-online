@@ -216,7 +216,7 @@ export default function MerchantProduits() {
           marginTop: 4,
           marginBottom: 4,
         }}>
-          Ta boutique est en attente de validation par l'équipe Shopizzy. Tu pourras ajouter des {itemLabel}s une fois validée.
+          Ta boutique est en attente de validation par l'équipe Shopyz. Tu pourras ajouter des {itemLabel}s une fois validée.
         </div>
       )}
 

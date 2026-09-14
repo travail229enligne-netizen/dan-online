@@ -36,7 +36,7 @@ export default function ProduitsPage() {
       <main className="container" style={{ paddingTop: 20, paddingBottom: 60 }}>
         <h1 style={{ fontSize: 20, marginBottom: 4 }}>Tous les produits</h1>
         <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 18 }}>
-          Retrouve tous les produits et plats disponibles sur Shopizzy.
+          Retrouve tous les produits et plats disponibles sur Shopyz.
         </p>
 
         <form onSubmit={handleSubmit} style={{ position: "relative", marginBottom: 22 }}>

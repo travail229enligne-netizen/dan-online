@@ -9,7 +9,7 @@ export default function CommandeLivraison() {
   const [order, setOrder] = useState(undefined);
   const [myCouriers, setMyCouriers] = useState([]);
   const [platformCouriers, setPlatformCouriers] = useState([]);
-  const [useShopizzy, setUseShopizzy] = useState(false);
+  const [useShopyz, setUseShopyz] = useState(false);
   const [selectedCourier, setSelectedCourier] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -22,7 +22,7 @@ export default function CommandeLivraison() {
     api.get("/platform-couriers").then((r) => setPlatformCouriers(r.data)).catch(() => setPlatformCouriers([]));
   }, [id]);
 
-  const couriers = useShopizzy ? platformCouriers : myCouriers;
+  const couriers = useShopyz ? platformCouriers : myCouriers;
 
   const handleSend = async () => {
     if (!selectedCourier) {
@@ -127,9 +127,9 @@ export default function CommandeLivraison() {
         }}
       >
         {couriers.length === 0 ? (
-          useShopizzy ? (
+          useShopyz ? (
             <p style={{ fontSize: 14, color: "var(--ink-soft)", margin: 0 }}>
-              Aucun livreur Shopizzy n'est disponible pour le moment.
+              Aucun livreur Shopyz n'est disponible pour le moment.
             </p>
           ) : (
             <div style={{ textAlign: "center" }}>
@@ -143,7 +143,7 @@ export default function CommandeLivraison() {
           )
         ) : (
           <label style={{ fontSize: 13, fontWeight: 600 }}>
-            Choisir un livreur {useShopizzy ? "Shopizzy" : ""}
+            Choisir un livreur {useShopyz ? "Shopyz" : ""}
             <select
               value={selectedCourier}
               onChange={(e) => setSelectedCourier(e.target.value)}
@@ -166,13 +166,13 @@ export default function CommandeLivraison() {
           <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, fontWeight: 600 }}>
             <input
               type="checkbox"
-              checked={useShopizzy}
+              checked={useShopyz}
               onChange={(e) => {
-                setUseShopizzy(e.target.checked);
+                setUseShopyz(e.target.checked);
                 setSelectedCourier("");
               }}
             />
-            Confier la livraison à Shopizzy
+            Confier la livraison à Shopyz
           </label>
         </div>
 

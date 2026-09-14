@@ -191,7 +191,7 @@ export default function AdminDashboard() {
   };
 
   const removePlatformCourier = async (userId) => {
-    if (!window.confirm("Retirer ce livreur de la liste Shopizzy ?")) return;
+    if (!window.confirm("Retirer ce livreur de la liste Shopyz ?")) return;
     setCourierBusy(userId);
     try {
       await api.delete(`/admin/platform-couriers/${userId}`);
@@ -330,11 +330,11 @@ export default function AdminDashboard() {
         </section>
 
         <section style={sectionBlock}>
-          <h2 style={sectionTitle}>Livreurs Shopizzy</h2>
+          <h2 style={sectionTitle}>Livreurs Shopyz</h2>
           <div style={card}>
             <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 0, marginBottom: 14 }}>
               Ajoute les livreurs disponibles pour tous les marchands, à partir de leur numéro de téléphone.
-              Ils doivent déjà avoir un compte Shopizzy.
+              Ils doivent déjà avoir un compte Shopyz.
             </p>
 
             <form onSubmit={handleAddCourier} style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
@@ -360,7 +360,7 @@ export default function AdminDashboard() {
             </form>
 
             {platformCouriers.length === 0 ? (
-              <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: 0 }}>Aucun livreur Shopizzy ajouté pour l'instant.</p>
+              <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: 0 }}>Aucun livreur Shopyz ajouté pour l'instant.</p>
             ) : (
               <div style={{ borderTop: "1px solid var(--line)" }}>
                 {platformCouriers.map((c) => (

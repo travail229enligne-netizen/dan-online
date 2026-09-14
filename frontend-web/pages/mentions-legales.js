@@ -24,7 +24,7 @@ export default function MentionsLegales() {
           <div style={card}>
             <h2 style={h2}>Éditeur du site</h2>
             <p style={p}>
-              La plateforme Shopizzy est exploitée par une entreprise établie à Cotonou, Bénin.
+              La plateforme Shopyz est exploitée par une entreprise établie à Cotonou, Bénin.
             </p>
           </div>
 
@@ -39,7 +39,7 @@ export default function MentionsLegales() {
           <div style={card}>
             <h2 style={h2}>Hébergement</h2>
             <p style={p}>
-              Le site et l'application Shopizzy sont hébergés par des prestataires cloud tiers
+              Le site et l'application Shopyz sont hébergés par des prestataires cloud tiers
               (hébergement du site web, de l'application serveur et de la base de données),
               ainsi que par un service de gestion des paiements en ligne (Kkiapay) pour les
               transactions Mobile Money et carte bancaire.
@@ -49,9 +49,9 @@ export default function MentionsLegales() {
           <div style={card}>
             <h2 style={h2}>Nature de l'activité</h2>
             <p style={p}>
-              Shopizzy est une plateforme de marketplace qui met en relation des vendeurs
+              Shopyz est une plateforme de marketplace qui met en relation des vendeurs
               (boutiques, restaurants, supermarchés, grossistes, artisans) et des acheteurs au
-              Bénin. Sauf mention contraire, Shopizzy n'est pas elle-même vendeuse des produits
+              Bénin. Sauf mention contraire, Shopyz n'est pas elle-même vendeuse des produits
               proposés sur la plateforme : chaque boutique partenaire reste responsable de son
               catalogue, de ses prix et de la conformité de ses produits.
             </p>
@@ -60,9 +60,9 @@ export default function MentionsLegales() {
           <div style={card}>
             <h2 style={h2}>Propriété intellectuelle</h2>
             <p style={p}>
-              Le nom « Shopizzy », son logo, ainsi que l'ensemble des éléments graphiques et
+              Le nom « Shopyz », son logo, ainsi que l'ensemble des éléments graphiques et
               techniques du site (hors contenus publiés par les boutiques partenaires) sont la
-              propriété de Shopizzy. Toute reproduction non autorisée est interdite.
+              propriété de Shopyz. Toute reproduction non autorisée est interdite.
             </p>
           </div>
         </div>

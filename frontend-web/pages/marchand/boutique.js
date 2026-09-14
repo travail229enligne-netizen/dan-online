@@ -229,7 +229,7 @@ export default function Boutique() {
         <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 20 }}>
           {existingShop
             ? existingShop.status === "pending"
-              ? "En attente de validation par l'équipe Shopizzy."
+              ? "En attente de validation par l'équipe Shopyz."
               : existingShop.status === "closed"
               ? "Ta boutique est fermée et n'apparaît plus publiquement."
               : "Boutique active sur le marché."
@@ -268,7 +268,7 @@ export default function Boutique() {
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <a
-                href={`https://wa.me/?text=${encodeURIComponent(`Découvre ma boutique ${form.name} sur Shopizzy :\n${getShopUrl()}`)}`}
+                href={`https://wa.me/?text=${encodeURIComponent(`Découvre ma boutique ${form.name} sur Shopyz :\n${getShopUrl()}`)}`}
                 target="_blank"
                 rel="noreferrer"
                 style={{ flex: 1, textAlign: "center", fontSize: 13, padding: "10px 12px", borderRadius: 10, background: "var(--ink)", color: "var(--white)", fontWeight: 600 }}

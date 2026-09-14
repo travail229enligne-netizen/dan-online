@@ -59,7 +59,7 @@ export default function Livreurs() {
       <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, marginBottom: 4 }}>Mes livreurs</h1>
       <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 20 }}>
         Ajoute les livreurs avec qui tu travailles, à partir de leur numéro de téléphone. Ils doivent déjà
-        avoir un compte Shopizzy (client ou marchand).
+        avoir un compte Shopyz (client ou marchand).
       </p>
 
       <form

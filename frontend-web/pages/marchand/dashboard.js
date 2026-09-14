@@ -80,7 +80,7 @@ export default function MerchantDashboard() {
             marginBottom: 4,
           }}
         >
-          Ta boutique est en attente de validation par l'équipe Shopizzy. Tu pourras ajouter des produits une fois validée.
+          Ta boutique est en attente de validation par l'équipe Shopyz. Tu pourras ajouter des produits une fois validée.
         </div>
       )}
 

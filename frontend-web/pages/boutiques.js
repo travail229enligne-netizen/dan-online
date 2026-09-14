@@ -55,7 +55,7 @@ export default function Boutiques() {
           {businessType ? businessLabels[businessType] || "Toutes les boutiques" : "Toutes les boutiques"}
         </h1>
         <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 18 }}>
-          Boutiques, restaurants, supermarchés, grossistes et artisans partenaires de Shopizzy.
+          Boutiques, restaurants, supermarchés, grossistes et artisans partenaires de Shopyz.
         </p>
 
         {businessType && (

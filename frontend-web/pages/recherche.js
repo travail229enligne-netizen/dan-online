@@ -197,7 +197,7 @@ export default function Recherche() {
 
         {!searched && (
           <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>
-            Tape un mot-clé pour rechercher parmi les produits, boutiques, catégories et collections de Shopizzy.
+            Tape un mot-clé pour rechercher parmi les produits, boutiques, catégories et collections de Shopyz.
           </p>
         )}
 
