@@ -7,9 +7,9 @@ import { useAuth } from "../../../lib/auth";
 const CLOUD_NAME = "op1wrztj";
 const UPLOAD_PRESET = "dan-online";
 
-function whatsappBase(phone) {
+function telLink(phone) {
   if (!phone) return null;
-  return `https://wa.me/${phone.replace(/[^0-9]/g, "")}`;
+  return `tel:${phone.replace(/[^0-9+]/g, "")}`;
 }
 
 function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, responding, uploadingProof, onSubmitPaymentProof, uploadingPaymentProof }) {
@@ -291,7 +291,7 @@ export default function ConversationById() {
   const phone = conversation.type === "shop_courier"
     ? (user.role === "marchand" ? conversation.courier?.phone : conversation.shop?.owner?.phone)
     : (user.role === "marchand" ? conversation.client?.phone : conversation.shop?.owner?.phone);
-  const waBase = whatsappBase(phone);
+  const phoneLink = telLink(phone);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100dvh", boxSizing: "border-box", overflow: "hidden" }}>
@@ -310,11 +310,8 @@ export default function ConversationById() {
             )}
             <h1 style={{ fontSize: 18 }}>{title || "Conversation"}</h1>
           </a>
-          {waBase && (
-            <div style={{ display: "flex", gap: 8 }}>
-              <a href={waBase} target="_blank" rel="noreferrer" title="Appel audio via WhatsApp" style={{ fontSize: 18 }}>📞</a>
-              <a href={waBase} target="_blank" rel="noreferrer" title="Appel vidéo via WhatsApp" style={{ fontSize: 18 }}>🎥</a>
-            </div>
+          {phoneLink && (
+            <a href={phoneLink} title="Appeler" style={{ fontSize: 18 }}>📞</a>
           )}
         </div>
 
