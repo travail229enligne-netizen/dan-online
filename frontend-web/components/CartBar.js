@@ -168,7 +168,7 @@ export default function CartBar() {
           width: BUTTON_SIZE,
           height: BUTTON_SIZE,
           borderRadius: "50%",
-          background: "var(--ink)",
+          background: "#D4AF37",
           color: "var(--white)",
           fontSize: 24,
           boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
