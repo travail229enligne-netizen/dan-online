@@ -4,14 +4,13 @@ const bcrypt = require("bcryptjs");
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    phone: { type: String, required: true, trim: true },
-    password: { type: String, required: true },
+    email: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
+    phone: { type: String, required: true, unique: true, trim: true },
+    password: { type: String },
     role: { type: String, enum: ["client", "marchand", "admin"], default: "client" },
     isActive: { type: Boolean, default: true },
     shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop" },
     address: { type: String, default: "" },
-
     avatarUrl: { type: String, default: "" },
     bio: { type: String, default: "", maxlength: 200 },
     locationLabel: { type: String, default: "" },
@@ -25,19 +24,21 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+  if (!this.isModified("password") || !this.password) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
 
 userSchema.methods.matchPassword = async function (candidate) {
+  if (!this.password) return false;
   return bcrypt.compare(candidate, this.password);
 };
 
 userSchema.methods.toSafeObject = function () {
   const obj = this.toObject();
   delete obj.password;
+  obj.hasPassword = !!this.password;
   return obj;
 };
 

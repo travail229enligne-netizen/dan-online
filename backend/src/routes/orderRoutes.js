@@ -11,12 +11,12 @@ const {
   submitPaymentProof,
   updateOrderStatus,
 } = require("../controllers/orderController");
-const { protect } = require("../middleware/auth");
+const { protect, optionalAuth } = require("../middleware/auth");
 const { authorize } = require("../middleware/roles");
 
 const router = express.Router();
 
-router.post("/", protect, authorize("client"), createOrder);
+router.post("/", optionalAuth, createOrder);
 router.get("/mine", protect, authorize("client"), getMyOrders);
 router.get("/pending-payment", protect, authorize("client"), getPendingPaymentOrder);
 router.get("/shop", protect, authorize("marchand"), getShopOrders);

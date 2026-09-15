@@ -9,9 +9,10 @@ const cities = ["Cotonou", "Porto-Novo", "Abomey-Calavi", "Parakou", "Bohicon"];
 
 export default function Commande() {
   const { items, total, clearCart } = useCart();
-  const { user, loading } = useAuth();
+  const { user, loading, setSession, setPassword } = useAuth();
   const router = useRouter();
   const [form, setForm] = useState({
+    name: user?.name || "",
     deliveryAddress: user?.address || "",
     deliveryPhone: user?.phone || "",
     deliveryCity: "",
@@ -20,6 +21,7 @@ export default function Commande() {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [shopFees, setShopFees] = useState([]);
   const [error, setError] = useState("");
+  const [requireLogin, setRequireLogin] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(null);
 
@@ -27,6 +29,11 @@ export default function Commande() {
   const [promoInputs, setPromoInputs] = useState({});
   const [promoResults, setPromoResults] = useState({});
   const [promoChecking, setPromoChecking] = useState({});
+
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordSaved, setPasswordSaved] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
 
   const shopIds = [...new Set(items.map((it) => it.shopId).filter(Boolean))];
 
@@ -86,14 +93,15 @@ export default function Commande() {
   const totalDiscount = Object.values(promoResults).reduce((sum, r) => sum + (r.valid ? r.discount : 0), 0);
   const grandTotal = Math.max(0, total - totalDiscount) + totalDeliveryFee;
 
-  if (!loading && !user) {
-    if (typeof window !== "undefined") router.push("/connexion?next=/commande");
-    return null;
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setRequireLogin(false);
+
+    if (!user && !form.name.trim()) {
+      setError("Renseigne ton nom complet pour continuer.");
+      return;
+    }
     if (!form.deliveryAddress || !form.deliveryPhone) {
       setError("Renseigne ton adresse et ton téléphone avant de continuer.");
       return;
@@ -115,6 +123,7 @@ export default function Commande() {
     try {
       const { data } = await api.post("/orders", {
         items: items.map((it) => ({ productId: it.productId, quantity: it.quantity })),
+        name: form.name,
         deliveryAddress: form.deliveryAddress,
         deliveryPhone: form.deliveryPhone,
         deliveryCity: form.deliveryCity,
@@ -122,12 +131,40 @@ export default function Commande() {
         paymentMethod,
         promoCodes,
       });
+
+      if (data.token) {
+        setSession(data.token, data.user);
+      }
+
       setSuccess(data);
       clearCart();
     } catch (err) {
-      setError(err.response?.data?.message || "Impossible de créer la commande.");
+      if (err.response?.status === 409 && err.response?.data?.requireLogin) {
+        setRequireLogin(true);
+        setError(err.response.data.message);
+      } else {
+        setError(err.response?.data?.message || "Impossible de créer la commande.");
+      }
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleSetPassword = async (e) => {
+    e.preventDefault();
+    setPasswordError("");
+    if (newPassword.length < 6) {
+      setPasswordError("Le mot de passe doit contenir au moins 6 caractères.");
+      return;
+    }
+    setPasswordSaving(true);
+    try {
+      await setPassword(newPassword);
+      setPasswordSaved(true);
+    } catch (err) {
+      setPasswordError(err.response?.data?.message || "Impossible d'enregistrer le mot de passe.");
+    } finally {
+      setPasswordSaving(false);
     }
   };
 
@@ -146,6 +183,37 @@ export default function Commande() {
               ? "Tu pourras régler en ligne dès que ton livreur sera en route."
               : "Prévois le montant en espèces pour le livreur."}
           </p>
+
+          {!passwordSaved && success.user && !success.user.hasPassword && (
+            <div style={{ maxWidth: 360, margin: "24px auto 0", background: "var(--cream)", borderRadius: 10, padding: 16, textAlign: "left" }}>
+              <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
+                Crée un mot de passe pour suivre ta commande et être informé des nouveaux articles
+              </p>
+              <form onSubmit={handleSetPassword} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <input
+                  type="password"
+                  placeholder="Mot de passe (min. 6 caractères)"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  style={{ padding: 10, border: "1px solid var(--line)", borderRadius: 8, boxSizing: "border-box" }}
+                />
+                {passwordError && <p style={{ color: "var(--terracotta-dark)", fontSize: 12 }}>{passwordError}</p>}
+                <button className="btn-primary" type="submit" disabled={passwordSaving}>
+                  {passwordSaving ? "Enregistrement..." : "Créer mon mot de passe"}
+                </button>
+              </form>
+              <p style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 8 }}>
+                Note bien ce mot de passe, il te permettra de te reconnecter avec ton numéro de téléphone.
+              </p>
+            </div>
+          )}
+
+          {passwordSaved && (
+            <p style={{ marginTop: 20, fontSize: 13, color: "var(--green-dark)" }}>
+              Mot de passe enregistré. Tu peux te reconnecter avec ton téléphone à tout moment.
+            </p>
+          )}
+
           <a href="/commandes" className="btn-primary" style={{ display: "inline-block", marginTop: 16 }}>
             Voir mes commandes
           </a>
@@ -225,6 +293,18 @@ export default function Commande() {
             boxSizing: "border-box",
           }}
         >
+          {!user && (
+            <label style={{ fontSize: 12 }}>
+              Nom complet
+              <input
+                required
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8, boxSizing: "border-box" }}
+              />
+            </label>
+          )}
+
           <label style={{ fontSize: 12 }}>
             Adresse de livraison
             <input
@@ -363,7 +443,16 @@ export default function Commande() {
             </div>
           )}
 
-          {error && <p style={{ color: "var(--terracotta-dark)", fontSize: 13 }}>{error}</p>}
+          {error && (
+            <div>
+              <p style={{ color: "var(--terracotta-dark)", fontSize: 13 }}>{error}</p>
+              {requireLogin && (
+                <a href={`/connexion?next=/commande`} className="btn-primary" style={{ display: "inline-block", marginTop: 8, fontSize: 13 }}>
+                  Se connecter
+                </a>
+              )}
+            </div>
+          )}
 
           <button className="btn-primary" type="submit" disabled={submitting || items.length === 0}>
             {submitting ? "Traitement..." : "Confirmer la commande"}

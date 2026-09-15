@@ -12,9 +12,16 @@ const generateToken = (id) =>
 const register = asyncHandler(async (req, res) => {
   const { name, email, phone, password, role, address } = req.body;
 
-  const existing = await User.findOne({ email });
-  if (existing) {
-    return res.status(400).json({ message: "Cet email est déjà utilisé." });
+  if (email) {
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return res.status(400).json({ message: "Cet email est déjà utilisé." });
+    }
+  }
+
+  const existingPhone = await User.findOne({ phone });
+  if (existingPhone) {
+    return res.status(400).json({ message: "Ce numéro de téléphone est déjà utilisé." });
   }
 
   const user = await User.create({
@@ -33,13 +40,21 @@ const register = asyncHandler(async (req, res) => {
 });
 
 // @route   POST /api/auth/login
-// @access  Public
+// @access  Public - accepte email OU téléphone dans le champ "identifier"
 const login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email });
+  const { email, phone, identifier, password } = req.body;
+  const value = (identifier || email || phone || "").trim();
+
+  if (!value || !password) {
+    return res.status(400).json({ message: "Identifiant et mot de passe requis." });
+  }
+
+  const user = await User.findOne({
+    $or: [{ email: value.toLowerCase() }, { phone: value }],
+  });
 
   if (!user || !(await user.matchPassword(password))) {
-    return res.status(401).json({ message: "Email ou mot de passe incorrect." });
+    return res.status(401).json({ message: "Identifiant ou mot de passe incorrect." });
   }
 
   res.json({
@@ -74,6 +89,28 @@ const updateProfile = asyncHandler(async (req, res) => {
   res.json({ user: user.toSafeObject() });
 });
 
+// @route   PUT /api/auth/set-password
+// @access  Private - permet à un compte créé silencieusement (sans mot de passe) d'en définir un
+const setPassword = asyncHandler(async (req, res) => {
+  const { password } = req.body;
+
+  if (!password || password.length < 6) {
+    return res.status(400).json({ message: "Le mot de passe doit contenir au moins 6 caractères." });
+  }
+
+  const user = await User.findById(req.user._id);
+  if (!user) return res.status(404).json({ message: "Utilisateur introuvable." });
+
+  if (user.password) {
+    return res.status(400).json({ message: "Un mot de passe est déjà défini sur ce compte." });
+  }
+
+  user.password = password;
+  await user.save();
+
+  res.json({ user: user.toSafeObject() });
+});
+
 // @route   GET /api/auth/user/:id
 // @access  Public - profil public, ne renvoie que ce que l'utilisateur a choisi de partager
 const getPublicProfile = asyncHandler(async (req, res) => {
@@ -96,4 +133,4 @@ const getPublicProfile = asyncHandler(async (req, res) => {
   res.json(publicProfile);
 });
 
-module.exports = { register, login, getMe, updateProfile, getPublicProfile };
+module.exports = { register, login, getMe, updateProfile, setPassword, getPublicProfile };

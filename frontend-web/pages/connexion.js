@@ -6,7 +6,7 @@ import { useAuth } from "../lib/auth";
 export default function Connexion() {
   const { login } = useAuth();
   const router = useRouter();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ identifier: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -15,7 +15,7 @@ export default function Connexion() {
     setError("");
     setLoading(true);
     try {
-      const user = await login(form.email, form.password);
+      const user = await login(form.identifier, form.password);
       router.push(user.role === "marchand" ? "/marchand/dashboard" : "/");
     } catch (err) {
       setError(err.response?.data?.message || "Connexion impossible.");
@@ -42,12 +42,11 @@ export default function Connexion() {
           }}
         >
           <label style={{ fontSize: 12 }}>
-            Email
+            Email ou téléphone
             <input
               required
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              value={form.identifier}
+              onChange={(e) => setForm({ ...form, identifier: e.target.value })}
               style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
             />
           </label>

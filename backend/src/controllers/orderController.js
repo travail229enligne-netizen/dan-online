@@ -1,4 +1,5 @@
 const asyncHandler = require("express-async-handler");
+const jwt = require("jsonwebtoken");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const Shop = require("../models/Shop");
@@ -9,10 +10,50 @@ const { notify } = require("../utils/notify");
 const { verifyTransaction } = require("../utils/kkiapay");
 const { sendEmail } = require("../utils/email");
 
+const generateToken = (id) =>
+  jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "30d",
+  });
+
 const createOrder = asyncHandler(async (req, res) => {
-  const { items, deliveryAddress, deliveryPhone, deliveryCity, selfDelivery, paymentMethod, promoCodes } = req.body;
+  const { items, name, deliveryAddress, deliveryPhone, deliveryCity, selfDelivery, paymentMethod, promoCodes } = req.body;
+
   if (!items || items.length === 0) {
     return res.status(400).json({ message: "Le panier est vide." });
+  }
+
+  let currentUser = req.user;
+  let freshToken = null;
+
+  if (!currentUser) {
+    if (!deliveryPhone || !name) {
+      return res.status(400).json({ message: "Nom et téléphone requis pour passer commande." });
+    }
+
+    const existing = await User.findOne({ phone: deliveryPhone.trim() });
+
+    if (existing && existing.password) {
+      return res.status(409).json({
+        requireLogin: true,
+        message: "Ce numéro est déjà associé à un compte. Connectez-vous pour continuer.",
+      });
+    }
+
+    if (existing) {
+      existing.name = name;
+      if (deliveryAddress) existing.address = deliveryAddress;
+      await existing.save();
+      currentUser = existing;
+    } else {
+      currentUser = await User.create({
+        name,
+        phone: deliveryPhone.trim(),
+        address: deliveryAddress || "",
+        role: "client",
+      });
+    }
+
+    freshToken = generateToken(currentUser._id);
   }
 
   const method = paymentMethod === "kkiapay" ? "kkiapay" : "cod";
@@ -103,7 +144,6 @@ const createOrder = asyncHandler(async (req, res) => {
         promo.type === "percent"
           ? (eligibleSubtotal * promo.value) / 100
           : Math.min(promo.value, eligibleSubtotal);
-
       if (shopDiscount <= 0) continue;
 
       discountAmount += shopDiscount;
@@ -122,7 +162,7 @@ const createOrder = asyncHandler(async (req, res) => {
   const grandTotal = Math.max(0, itemsTotal - discountAmount) + deliveryFee;
 
   const order = await Order.create({
-    client: req.user._id,
+    client: currentUser._id,
     items: orderItems,
     deliveryAddress,
     deliveryPhone,
@@ -158,7 +198,7 @@ const createOrder = asyncHandler(async (req, res) => {
   }
 
   await notify(
-    req.user._id,
+    currentUser._id,
     "order_status",
     "Merci pour votre commande",
     method === "kkiapay"
@@ -167,7 +207,7 @@ const createOrder = asyncHandler(async (req, res) => {
     "/commandes"
   );
 
-  const client = await User.findById(req.user._id);
+  const client = await User.findById(currentUser._id);
   if (client?.email) {
     const itemsHtml = orderItems.map((it) => `<li>${it.quantity} × ${it.name} — ${(it.price * it.quantity).toLocaleString("fr-FR")} FCFA</li>`).join("");
     const paymentLine = method === "kkiapay"
@@ -191,7 +231,13 @@ const createOrder = asyncHandler(async (req, res) => {
     );
   }
 
-  res.status(201).json(order);
+  const response = order.toObject();
+  if (freshToken) {
+    response.token = freshToken;
+    response.user = currentUser.toSafeObject();
+  }
+
+  res.status(201).json(response);
 });
 
 const getMyOrders = asyncHandler(async (req, res) => {
@@ -199,8 +245,6 @@ const getMyOrders = asyncHandler(async (req, res) => {
   res.json(orders);
 });
 
-// @route   GET /api/orders/pending-payment
-// @access  Private (client) - detecte s'il existe une commande en attente de paiement en ligne
 const getPendingPaymentOrder = asyncHandler(async (req, res) => {
   const order = await Order.findOne({
     client: req.user._id,
@@ -423,7 +467,7 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   if (status === "delivered" && order.paymentMethod === "cod" && order.paymentStatus !== "paid") {
     order.paymentStatus = "paid";
     order.paidAt = new Date();
-  order.status = "delivered";
+    order.status = "delivered";
   }
   await order.save();
 

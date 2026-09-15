@@ -24,8 +24,8 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = async (email, password) => {
-    const { data } = await api.post("/auth/login", { email, password });
+  const login = async (identifier, password) => {
+    const { data } = await api.post("/auth/login", { identifier, password });
     window.localStorage.setItem("dan_online_token", data.token);
     setUser(data.user);
     return data.user;
@@ -38,6 +38,19 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
+  // Connecte l'utilisateur à partir d'un token déjà obtenu ailleurs
+  // (ex: après une commande passée sans compte, qui en crée un silencieusement)
+  const setSession = (token, userData) => {
+    window.localStorage.setItem("dan_online_token", token);
+    setUser(userData);
+  };
+
+  const setPassword = async (password) => {
+    const { data } = await api.put("/auth/set-password", { password });
+    setUser(data.user);
+    return data.user;
+  };
+
   const logout = () => {
     window.localStorage.removeItem("dan_online_token");
     setUser(null);
@@ -45,7 +58,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, setUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, setUser, setSession, setPassword }}>
       {children}
     </AuthContext.Provider>
   );
