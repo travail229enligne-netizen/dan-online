@@ -16,6 +16,7 @@ export default function MarchandCommandes() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(null);
+  const [contacting, setContacting] = useState(null);
 
   const load = () => {
     api
@@ -45,6 +46,16 @@ export default function MarchandCommandes() {
       load();
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const handleContactClient = async (order) => {
+    setContacting(order._id);
+    try {
+      const { data } = await api.post(`/messages/start-client-from-order/${order._id}`);
+      router.push(`/messages/c/${data._id}`);
+    } finally {
+      setContacting(null);
     }
   };
 
@@ -101,47 +112,66 @@ export default function MarchandCommandes() {
                 </div>
               )}
 
-              {o.status === "pending" && (
-                <button
-                  className="btn-primary"
-                  style={{ marginTop: 10, fontSize: 13, padding: "10px 16px" }}
-                  onClick={() => handleConfirm(o)}
-                  disabled={updating === o._id}
-                >
-                  {updating === o._id ? "..." : "Confirmer"}
-                </button>
-              )}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
+                {(o.status === "pending" || o.status === "confirmed") && (
+                  <button
+                    style={{
+                      fontSize: 13,
+                      padding: "10px 16px",
+                      borderRadius: 10,
+                      border: "1px solid var(--line)",
+                      background: "var(--white)",
+                      fontWeight: 600,
+                    }}
+                    onClick={() => handleContactClient(o)}
+                    disabled={contacting === o._id}
+                  >
+                    {contacting === o._id ? "..." : "💬 Contacter"}
+                  </button>
+                )}
 
-              {o.status === "confirmed" && (
-                <button
-                  className="btn-primary"
-                  style={{ marginTop: 10, fontSize: 13, padding: "10px 16px" }}
-                  onClick={() => router.push(`/marchand/commande-livraison/${o._id}`)}
-                >
-                  Marquer en livraison
-                </button>
-              )}
+                {o.status === "pending" && (
+                  <button
+                    className="btn-primary"
+                    style={{ fontSize: 13, padding: "10px 16px" }}
+                    onClick={() => handleConfirm(o)}
+                    disabled={updating === o._id}
+                  >
+                    {updating === o._id ? "..." : "Confirmer"}
+                  </button>
+                )}
 
-              {o.courierStatus === "unavailable" && (
-                <button
-                  className="btn-primary"
-                  style={{ marginTop: 10, fontSize: 13, padding: "10px 16px" }}
-                  onClick={() => router.push(`/marchand/commande-livraison/${o._id}`)}
-                >
-                  Contacter un autre livreur
-                </button>
-              )}
+                {o.status === "confirmed" && (
+                  <button
+                    className="btn-primary"
+                    style={{ fontSize: 13, padding: "10px 16px" }}
+                    onClick={() => router.push(`/marchand/commande-livraison/${o._id}`)}
+                  >
+                    Marquer en livraison
+                  </button>
+                )}
 
-              {canMarkDelivered && (
-                <button
-                  className="btn-primary"
-                  style={{ marginTop: 10, fontSize: 13, padding: "10px 16px" }}
-                  onClick={() => handleMarkDelivered(o)}
-                  disabled={updating === o._id}
-                >
-                  {updating === o._id ? "..." : "Marquer livrée"}
-                </button>
-              )}
+                {o.courierStatus === "unavailable" && (
+                  <button
+                    className="btn-primary"
+                    style={{ fontSize: 13, padding: "10px 16px" }}
+                    onClick={() => router.push(`/marchand/commande-livraison/${o._id}`)}
+                  >
+                    Contacter un autre livreur
+                  </button>
+                )}
+
+                {canMarkDelivered && (
+                  <button
+                    className="btn-primary"
+                    style={{ fontSize: 13, padding: "10px 16px" }}
+                    onClick={() => handleMarkDelivered(o)}
+                    disabled={updating === o._id}
+                  >
+                    {updating === o._id ? "..." : "Marquer livrée"}
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}

@@ -32,6 +32,28 @@ const startConversation = asyncHandler(async (req, res) => {
   res.json(conversation);
 });
 
+// @route   POST /api/messages/start-client-from-order/:orderId
+// @access  Private (marchand) - demarre ou recupere une conversation avec le client d'une commande
+const startClientConversationFromOrder = asyncHandler(async (req, res) => {
+  const shop = await Shop.findOne({ owner: req.user._id });
+  if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
+
+  const order = await Order.findById(req.params.orderId);
+  if (!order) return res.status(404).json({ message: "Commande introuvable." });
+
+  const belongsToShop = order.items.some((it) => it.shop.toString() === shop._id.toString());
+  if (!belongsToShop) {
+    return res.status(403).json({ message: "Cette commande n'appartient pas a ta boutique." });
+  }
+
+  let conversation = await Conversation.findOne({ type: "client_shop", client: order.client, shop: shop._id });
+  if (!conversation) {
+    conversation = await Conversation.create({ type: "client_shop", client: order.client, shop: shop._id, order: order._id });
+  }
+
+  res.json(conversation);
+});
+
 // @route   POST /api/messages/start-courier
 // @access  Private (marchand) - demarre/recupere une conversation avec un livreur
 // body: { courierId, orderId? } - orderId est optionnel: s'il est fourni, assigne la commande et envoie le bilan
@@ -154,4 +176,4 @@ const sendMessage = asyncHandler(async (req, res) => {
   res.status(201).json(message);
 });
 
-module.exports = { getConversations, startConversation, startCourierConversation, getMessages, sendMessage };
+module.exports = { getConversations, startConversation, startClientConversationFromOrder, startCourierConversation, getMessages, sendMessage };
