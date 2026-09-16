@@ -418,6 +418,9 @@ export default function Header({ hideSearchBar = false }) {
                       Espace administrateur
                     </a>
                   )}
+                  <a href="/contact" style={{ background: "var(--cream)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600 }}>
+                    🚩 Signaler un problème
+                  </a>
                   <button
                     onClick={logout}
                     style={{ background: "var(--cream)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: "var(--terracotta-dark)", textAlign: "left" }}
