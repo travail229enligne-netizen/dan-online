@@ -218,7 +218,15 @@ export default function AdminDashboard() {
     <>
       <Header hideSearchBar />
       <main className="container" style={{ paddingTop: 24, paddingBottom: 60 }}>
-        <h1 style={{ fontSize: 22, marginBottom: 24 }}>Espace administrateur</h1>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 10 }}>
+          <h1 style={{ fontSize: 22, margin: 0 }}>Espace administrateur</h1>
+          <a
+            href="/admin/signalements"
+            style={{ fontSize: 13, fontWeight: 600, padding: "8px 14px", borderRadius: 10, border: "1px solid var(--line)", color: "var(--ink)" }}
+          >
+            🚩 Signalements
+          </a>
+        </div>
 
         {overview && (
           <section style={sectionBlock}>
