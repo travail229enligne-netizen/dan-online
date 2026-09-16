@@ -1,117 +1,115 @@
 import Header from "../components/Header";
 
-const card = {
-  background: "var(--white)",
-  border: "1px solid var(--line)",
-  borderRadius: "var(--radius-md)",
-  padding: 18,
-  boxSizing: "border-box",
-};
-
-const h2 = { fontSize: 16, marginBottom: 10 };
-const p = { fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.6, margin: 0 };
-
-export default function Cgu() {
+export default function CGU() {
   return (
     <>
-      <Header hideSearchBar />
-      <main className="container" style={{ paddingTop: 24, paddingBottom: 60 }}>
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: 24, marginBottom: 24 }}>
-          Conditions générales d'utilisation
+      <Header hideSearchBar={true} />
+      <main className="container" style={{ padding: "32px 16px", maxWidth: 720, margin: "0 auto" }}>
+        <h1 style={{ fontSize: 24, color: "var(--ink)", marginBottom: 8 }}>
+          Conditions Générales d'Utilisation
         </h1>
+        <p style={{ fontSize: 12, color: "var(--ink-soft)", marginBottom: 24 }}>
+          Dernière mise à jour : {new Date().toLocaleDateString("fr-FR")}
+        </p>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={card}>
-            <h2 style={h2}>1. Objet</h2>
-            <p style={p}>
-              Shopyz est une plateforme de marketplace mettant en relation des vendeurs
-              partenaires (boutiques, restaurants, supermarchés, grossistes, artisans) et des
-              acheteurs au Bénin. L'utilisation de la plateforme implique l'acceptation pleine et
-              entière des présentes conditions.
-            </p>
-          </div>
+        <Section title="1. Objet">
+          Les présentes Conditions Générales d'Utilisation (CGU) encadrent l'accès et l'utilisation
+          de la plateforme Shopyz, une marketplace numérique mettant en relation des marchands
+          (boutiques, restaurants, supermarchés, grossistes, artisans) et des clients pour l'achat
+          et la vente de produits et services. En utilisant Shopyz, tout utilisateur (client ou
+          marchand) accepte sans réserve les présentes CGU.
+        </Section>
 
-          <div style={card}>
-            <h2 style={h2}>2. Comptes utilisateurs</h2>
-            <p style={p}>
-              La création d'un compte (client, marchand ou livreur) nécessite des informations
-              exactes et à jour. Chaque utilisateur est responsable de la confidentialité de ses
-              identifiants et de toute activité effectuée depuis son compte.
-            </p>
-          </div>
+        <Section title="2. Acceptation obligatoire">
+          L'accès aux fonctionnalités de Shopyz est conditionné à la lecture et à l'acceptation
+          expresse des présentes CGU dès la première connexion. Tout utilisateur qui refuse ces
+          conditions ne pourra pas utiliser la plateforme.
+        </Section>
 
-          <div style={card}>
-            <h2 style={h2}>3. Rôle et responsabilités des marchands</h2>
-            <p style={p}>
-              Chaque marchand est seul responsable de l'exactitude de ses fiches produits, de la
-              conformité légale, de la qualité et de la disponibilité de ce qu'il propose à la
-              vente. La vente de produits illicites, contrefaits ou dangereux est strictement
-              interdite et entraîne la suspension immédiate du compte concerné. La création d'une
-              boutique est soumise à validation par l'équipe Shopyz avant mise en ligne
-              publique.
-            </p>
-          </div>
+        <Section title="3. Produits et services interdits">
+          Shopyz interdit strictement la vente de tout produit ou service illicite, contrefait,
+          dangereux ou dont la commercialisation est prohibée par la législation béninoise et les
+          conventions internationales applicables. Cela inclut notamment, sans s'y limiter : les
+          armes, stupéfiants, médicaments non homologués, produits contrefaits, et tout bien ou
+          service dont la vente constitue une infraction pénale. Tout marchand publiant un produit
+          illicite verra son compte suspendu ou supprimé, sans préjudice des poursuites judiciaires
+          applicables.
+        </Section>
 
-          <div style={card}>
-            <h2 style={h2}>4. Commandes et paiement</h2>
-            <p style={p}>
-              Une commande peut être réglée en ligne via Kkiapay (Mobile Money, carte) ou en
-              espèces à la livraison, selon les options proposées. Une commission est prélevée
-              par Shopyz sur chaque vente réalisée par un marchand ; son taux est indiqué au
-              marchand dans son espace dédié et peut varier selon la catégorie de produit.
-            </p>
-          </div>
+        <Section title="4. Exigence de transparence">
+          Conformément à la loi n° 2017-20 du 20 avril 2018 portant Code du numérique en
+          République du Bénin (livre quatrième, "Commerce électronique", articles 326 à 378), qui
+          s'applique à toute commande, contrat ou transaction conclu en ligne, Shopyz exige de
+          chaque marchand une transparence totale sur la description, le prix, la disponibilité et
+          l'origine des produits ou services proposés. Toute information trompeuse ou mensongère
+          constitue une violation des présentes CGU.
+        </Section>
 
-          <div style={card}>
-            <h2 style={h2}>5. Livraison</h2>
-            <p style={p}>
-              La livraison est organisée par le marchand, soit avec son propre livreur, soit en
-              confiant la commande à un livreur du réseau Shopyz. Shopyz agit dans ce cas
-              comme intermédiaire de mise en relation et ne garantit pas de délai de livraison
-              précis, celui-ci dépendant de facteurs logistiques indépendants de la plateforme.
-            </p>
-          </div>
+        <Section title="5. Règles de la plateforme">
+          Les règles de Shopyz sont simples : vendre et acheter en toute sécurité, avec
+          transparence. Chaque marchand s'engage à honorer les commandes acceptées, et chaque
+          client s'engage à régler les commandes qu'il passe. Shopyz agit comme intermédiaire
+          technique et n'est pas partie au contrat de vente conclu entre le marchand et le client.
+        </Section>
 
-          <div style={card}>
-            <h2 style={h2}>6. Annulation, retours et litiges</h2>
-            <p style={p}>
-              Toute question relative à une commande (retard, article manquant ou non conforme)
-              doit d'abord être adressée à la boutique concernée via la messagerie intégrée. En
-              l'absence de résolution, l'utilisateur peut solliciter le support Shopyz, qui
-              interviendra en tant que médiateur entre les parties.
-            </p>
-          </div>
+        <Section title="6. Frais de plateforme et commissions">
+          L'utilisation de Shopyz par les marchands pour vendre leurs produits est gratuite à
+          l'inscription. En contrepartie, une commission est prélevée par Shopyz sur chaque vente
+          réalisée via la plateforme, afin d'assurer la maintenance, l'hébergement, la sécurité et
+          le développement continu du service. Ce prélèvement constitue la contrepartie
+          contractuelle de l'accès à la plateforme et de ses services (visibilité, paiement,
+          messagerie, logistique).
+        </Section>
 
-          <div style={card}>
-            <h2 style={h2}>7. Limitation de responsabilité</h2>
-            <p style={p}>
-              Shopyz met tout en œuvre pour assurer le bon fonctionnement de la plateforme,
-              mais n'est pas responsable de la qualité intrinsèque des produits vendus par les
-              marchands tiers, ni des retards ou incidents imputables à un livreur indépendant.
-              La responsabilité de Shopyz se limite à son rôle d'intermédiaire technique entre
-              les utilisateurs.
-            </p>
-          </div>
+        <Section title="7. Interdiction de contournement des commissions">
+          Toute tentative visant à détourner une vente initiée sur Shopyz afin d'éviter le
+          prélèvement de la commission (par exemple en redirigeant un client vers une transaction
+          hors plateforme après une mise en relation effectuée via Shopyz) constitue une violation
+          grave des présentes CGU et de l'accord contractuel liant le marchand à la plateforme.
+          Une telle manœuvre peut entraîner la suspension immédiate et définitive du compte
+          marchand, ainsi que des poursuites judiciaires conformément à la loi n° 2017-20 portant
+          Code du numérique en République du Bénin et, le cas échéant, à la Convention des Nations
+          Unies sur l'utilisation de communications électroniques dans les contrats internationaux
+          (New York, 2005), à laquelle le Bénin est partie.
+        </Section>
 
-          <div style={card}>
-            <h2 style={h2}>8. Suspension de compte</h2>
-            <p style={p}>
-              Shopyz se réserve le droit de suspendre ou supprimer tout compte ne respectant
-              pas les présentes conditions, notamment en cas de fraude, de non-respect des
-              obligations légales, ou de comportement nuisible envers d'autres utilisateurs.
-            </p>
-          </div>
+        <Section title="8. Obligations du client — commandes et paiement">
+          Tout client qui passe une commande sur Shopyz s'engage à la régler selon le mode de
+          paiement choisi (espèces à la livraison ou Mobile Money). Le refus répété de payer une
+          commande livrée, ou tout comportement visant à nuire au bon fonctionnement de la
+          plateforme, peut entraîner des sanctions, y compris la suspension ou la suppression
+          définitive du compte client.
+        </Section>
 
-          <div style={card}>
-            <h2 style={h2}>9. Droit applicable</h2>
-            <p style={p}>
-              Les présentes conditions sont régies par le droit béninois. En cas de litige, les
-              parties s'efforceront de trouver une solution amiable avant tout recours
-              contentieux.
-            </p>
-          </div>
-        </div>
+        <Section title="9. Responsabilité">
+          Shopyz met en œuvre les moyens raisonnables pour assurer la sécurité et la fiabilité de
+          la plateforme, mais ne peut être tenu responsable des litiges directs entre marchands et
+          clients concernant la qualité, la conformité ou la livraison des produits, sauf en cas de
+          manquement propre à ses obligations techniques et contractuelles.
+        </Section>
+
+        <Section title="10. Modification des CGU">
+          Shopyz se réserve le droit de modifier les présentes CGU à tout moment. Les utilisateurs
+          seront informés de toute modification substantielle et devront accepter la nouvelle
+          version pour continuer à utiliser la plateforme.
+        </Section>
+
+        <Section title="11. Contact">
+          Pour toute question relative aux présentes CGU, l'utilisateur peut contacter Shopyz via
+          la page "Nous contacter".
+        </Section>
       </main>
     </>
+  );
+}
+
+function Section({ title, children }) {
+  return (
+    <section style={{ marginBottom: 24 }}>
+      <h2 style={{ fontSize: 15, color: "var(--ink)", marginBottom: 8, fontWeight: 700 }}>
+        {title}
+      </h2>
+      <p style={{ fontSize: 13, color: "var(--ink-soft)", lineHeight: 1.7 }}>{children}</p>
+    </section>
   );
 }
