@@ -59,6 +59,7 @@ app.use("/api/hero-images", require("./routes/heroImageRoutes"));
 app.use("/api/platform-couriers", require("./routes/platformCourierRoutes"));
 app.use("/api/promotions", require("./routes/promotionRoutes"));
 app.use("/api/fairs", require("./routes/fairRoutes"));
+app.use("/api/reports", require("./routes/reportRoutes"));
 
 // 404
 app.use((req, res) => {
