@@ -225,24 +225,6 @@ export default function Header({ hideSearchBar = false }) {
                 Foires
               </a>
 
-              {user?.role === "marchand" && (
-                <a
-                  href="/marchand/guide"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "12px 14px",
-                    borderRadius: 10,
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: "var(--ink)",
-                    marginBottom: 4,
-                  }}
-                >
-                  📘 Guide complet
-                </a>
-              )}
-
               <button
                 onClick={() => setCatOpen(!catOpen)}
                 style={{
