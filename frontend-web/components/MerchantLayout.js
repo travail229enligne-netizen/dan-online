@@ -14,6 +14,7 @@ const navItems = [
   { href: "/marchand/collections", label: "Collections", icon: "🗂️" },
   { href: "/marchand/promotions", label: "Promotions", icon: "🏷️" },
   { href: "/marchand/foires", label: "Foires", icon: "🎪" },
+  { href: "/marchand/guide", label: "Guide complet", icon: "📘" },
   { href: "/messages", label: "Messages", icon: "💬" },
   { href: "/marchand/commandes", label: "Commandes", icon: "🧾" },
   { href: "/compte", label: "Mon compte", icon: "👤" },
