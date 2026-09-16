@@ -14,21 +14,21 @@ export default function Bienvenue() {
           Bienvenue{user?.name ? `, ${user.name}` : ""} !
         </h1>
         <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 24, lineHeight: 1.5 }}>
-          Ton compte marchand est prêt. Il ne reste plus qu'une étape avant de vendre sur Shopyz :
-          créer ta boutique.
+          Ton compte marchand est prêt. Avant de te lancer, jette un œil à notre guide complet :
+          il t'accompagne de la création de ta boutique jusqu'à tes premiers revenus.
         </p>
         <button
           className="btn-primary"
-          onClick={() => router.push("/marchand/boutique")}
+          onClick={() => router.push("/marchand/guide")}
           style={{ width: "100%", marginBottom: 12 }}
         >
-          Créer ma boutique
+          Voir le guide complet
         </button>
         <button
-          onClick={() => router.push("/marchand/dashboard")}
+          onClick={() => router.push("/marchand/boutique")}
           style={{ fontSize: 13, color: "var(--ink-soft)", textDecoration: "underline" }}
         >
-          Plus tard, aller au tableau de bord
+          Passer directement à la création de ma boutique
         </button>
       </div>
     </MerchantLayout>

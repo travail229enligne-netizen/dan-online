@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useAuth } from "../lib/auth";
 import api from "../lib/api";
 import SearchBar from "./SearchBar";
+import AnimatedLogo from "./AnimatedLogo";
 
 export default function Header({ hideSearchBar = false }) {
   const { user, logout } = useAuth();
@@ -87,7 +88,7 @@ export default function Header({ hideSearchBar = false }) {
               ☰
             </button>
             <a href="/" style={{ display: "flex", alignItems: "center" }}>
-              <h1 style={{ color: "var(--ink)", fontSize: 22 }}>Shopyz</h1>
+              <AnimatedLogo />
             </a>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -403,9 +404,14 @@ export default function Header({ hideSearchBar = false }) {
                     🛵 Portefeuille livreur
                   </a>
                   {user.role === "marchand" && (
-                    <a href="/marchand/dashboard" style={{ background: "var(--cream)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600 }}>
-                      Tableau de bord marchand
-                    </a>
+                    <>
+                      <a href="/marchand/dashboard" style={{ background: "var(--cream)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600 }}>
+                        Tableau de bord marchand
+                      </a>
+                      <a href="/marchand/guide" style={{ background: "var(--cream)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600 }}>
+                        📘 Guide complet
+                      </a>
+                    </>
                   )}
                   {user.role === "admin" && (
                     <a href="/admin/dashboard" style={{ background: "var(--cream)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600 }}>
