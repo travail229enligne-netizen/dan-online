@@ -16,6 +16,7 @@ export default function Inscription() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -121,14 +122,33 @@ export default function Inscription() {
           </label>
           <label style={{ fontSize: 12 }}>
             Mot de passe
-            <input
-              required
-              type="password"
-              minLength={6}
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              style={{ width: "100%", padding: 10, marginTop: 4, border: "1px solid var(--line)", borderRadius: 8 }}
-            />
+            <div style={{ position: "relative", marginTop: 4 }}>
+              <input
+                required
+                type={showPassword ? "text" : "password"}
+                minLength={6}
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                style={{ width: "100%", padding: 10, paddingRight: 40, border: "1px solid var(--line)", borderRadius: 8 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                style={{
+                  position: "absolute",
+                  right: 8,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "transparent",
+                  fontSize: 16,
+                  padding: 4,
+                  color: "var(--ink-soft)",
+                }}
+              >
+                {showPassword ? "🙈" : "👁️"}
+              </button>
+            </div>
           </label>
           {error && <p style={{ color: "var(--terracotta-dark)", fontSize: 13 }}>{error}</p>}
           <button className="btn-primary" type="submit" disabled={loading}>
