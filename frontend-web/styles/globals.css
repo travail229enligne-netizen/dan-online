@@ -72,3 +72,59 @@ button {
   margin: 0 auto;
   padding: 0 20px;
 }
+
+/* --- Sélecteur de langue (Google Translate) --- */
+
+/* Empêche la barre bleue de Google de décaler toute la page vers le bas */
+body {
+  top: 0 !important;
+}
+
+/* Cache la bannière/iframe pleine largeur que Google ajoute automatiquement */
+.goog-te-banner-frame,
+.skiptranslate > iframe {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+}
+
+/* Cache le tooltip/surbrillance jaune que Google ajoute sur le texte traduit */
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
+}
+
+/* Widget conteneur : discret, aligné avec le reste du header */
+.translate-widget {
+  display: flex;
+  align-items: center;
+}
+
+.translate-widget .goog-te-gadget {
+  font-family: var(--font-body) !important;
+  font-size: 0 !important;
+}
+
+.translate-widget .goog-te-gadget-simple {
+  background: var(--cream) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  padding: 6px 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  cursor: pointer;
+}
+
+.translate-widget .goog-te-gadget-simple span {
+  font-family: var(--font-body) !important;
+  font-size: 13px !important;
+  color: var(--ink) !important;
+}
+
+.translate-widget .goog-te-gadget-icon {
+  display: none !important;
+}
+
+.translate-widget img {
+  display: none !important;
+}

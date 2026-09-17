@@ -4,6 +4,7 @@ import { useAuth } from "../lib/auth";
 import api from "../lib/api";
 import SearchBar from "./SearchBar";
 import AnimatedLogo from "./AnimatedLogo";
+import GoogleTranslate from "./GoogleTranslate";
 
 export default function Header({ hideSearchBar = false }) {
   const { user, logout } = useAuth();
@@ -91,7 +92,8 @@ export default function Header({ hideSearchBar = false }) {
               <AnimatedLogo />
             </a>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <GoogleTranslate />
             {user && (
               <a href="/notifications" aria-label="Notifications" style={{ color: "var(--ink)", position: "relative" }}>
                 <span style={{ fontSize: 20 }}>🔔</span>
