@@ -93,3 +93,23 @@ body {
   background: none !important;
   box-shadow: none !important;
 }
+
+/* Cache la bulle "Cette traduction vous a-t-elle été utile ?" qui apparaît
+   au double-clic/appui long sur un texte traduit */
+.goog-te-balloon-frame {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Cache l'onglet flottant que Google ajoute parfois en bas de l'écran */
+.goog-te-ftab,
+.goog-te-ftab-float {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Empêche le halo/soulignement pointillé que Google ajoute aux mots traduits
+   (source de la bulle au clic) */
+font[style*="vertical-align"] {
+  text-decoration: none !important;
+}

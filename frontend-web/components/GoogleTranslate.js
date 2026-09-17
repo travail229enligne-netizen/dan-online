@@ -8,10 +8,11 @@ const LANGUAGES = [
   { code: "es", label: "Español", flag: "🇪🇸" },
   { code: "pt", label: "Português", flag: "🇵🇹" },
   { code: "ar", label: "العربية", flag: "🇸🇦" },
+  { code: "zh-CN", label: "中文", flag: "🇨🇳" },
 ];
 
 function getCookieLang() {
-  const match = document.cookie.match(/googtrans=\/fr\/(\w+)/);
+  const match = document.cookie.match(/googtrans=\/fr\/([\w-]+)/);
   return match ? match[1] : "fr";
 }
 
@@ -70,7 +71,6 @@ export default function GoogleTranslate() {
 
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
-      {/* Widget Google réel, caché — nécessaire pour que la traduction fonctionne */}
       <div id="google_translate_element" style={{ display: "none" }} />
 
       <button
