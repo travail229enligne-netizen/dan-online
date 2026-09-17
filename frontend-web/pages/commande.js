@@ -18,7 +18,7 @@ export default function Commande() {
     deliveryCity: "",
   });
   const [selfDelivery, setSelfDelivery] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("cod");
+  const paymentMethod = "kkiapay";
   const [shopFees, setShopFees] = useState([]);
   const [error, setError] = useState("");
   const [requireLogin, setRequireLogin] = useState(false);
@@ -179,9 +179,7 @@ export default function Commande() {
             Total : <strong>{success.grandTotal.toLocaleString("fr-FR")} FCFA</strong>
           </p>
           <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>
-            {success.paymentMethod === "kkiapay"
-              ? "Tu pourras régler en ligne dès que ton livreur sera en route."
-              : "Prévois le montant en espèces pour le livreur."}
+            Tu pourras régler en ligne dès que ton livreur sera en route.
           </p>
 
           {!passwordSaved && success.user && !success.user.hasPassword && (
@@ -352,53 +350,10 @@ export default function Commande() {
             />
           </label>
 
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Mode de paiement</div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("cod")}
-                style={{
-                  flex: 1,
-                  padding: 12,
-                  borderRadius: 10,
-                  border: `2px solid ${paymentMethod === "cod" ? "var(--terracotta)" : "var(--line)"}`,
-                  background: paymentMethod === "cod" ? "var(--terracotta)" : "var(--white)",
-                  color: paymentMethod === "cod" ? "var(--white)" : "var(--ink)",
-                  fontWeight: 600,
-                  fontSize: 13,
-                }}
-              >
-                💵 Espèces
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("kkiapay")}
-                style={{
-                  flex: 1,
-                  padding: 12,
-                  borderRadius: 10,
-                  border: `2px solid ${paymentMethod === "kkiapay" ? "var(--terracotta)" : "var(--line)"}`,
-                  background: paymentMethod === "kkiapay" ? "var(--terracotta)" : "var(--white)",
-                  color: paymentMethod === "kkiapay" ? "var(--white)" : "var(--ink)",
-                  fontWeight: 600,
-                  fontSize: 13,
-                }}
-              >
-                💳 Mobile Money
-              </button>
-            </div>
+          <div style={{ fontSize: 12, background: "var(--cream)", padding: 10, borderRadius: 8, lineHeight: 1.6 }}>
+            💳 Paiement Mobile Money — tu ne paies rien maintenant. Le paiement se déclenche automatiquement
+            dès que ton livreur envoie la preuve de livraison. Pas de livraison, pas de paiement.
           </div>
-
-          {paymentMethod === "cod" ? (
-            <div style={{ fontSize: 12, background: "var(--cream)", padding: 10, borderRadius: 8 }}>
-              💵 Tu paieras en espèces directement au livreur à la réception de ta commande.
-            </div>
-          ) : (
-            <div style={{ fontSize: 12, background: "var(--cream)", padding: 10, borderRadius: 8 }}>
-              💳 Tu pourras régler en ligne dès que ton livreur sera en route avec ta commande.
-            </div>
-          )}
 
           <label style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
             <input

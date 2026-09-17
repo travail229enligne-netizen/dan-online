@@ -8,7 +8,6 @@ const {
   payOrder,
   respondAsCourier,
   submitDeliveryProof,
-  submitPaymentProof,
   updateOrderStatus,
 } = require("../controllers/orderController");
 const { protect, optionalAuth } = require("../middleware/auth");
@@ -24,7 +23,6 @@ router.get("/:id", protect, getOrderById);
 router.put("/:id/pay", protect, authorize("client"), payOrder);
 router.put("/:id/courier-response", protect, respondAsCourier);
 router.put("/:id/delivery-proof", protect, submitDeliveryProof);
-router.put("/:id/payment-proof", protect, submitPaymentProof);
 router.put("/:id/status", protect, authorize("marchand", "admin"), updateOrderStatus);
 
 module.exports = router;
