@@ -30,6 +30,28 @@ function setLanguage(code) {
   window.location.reload();
 }
 
+// Supprime du DOM tout élément que Google ajoute pour la bulle
+// d'évaluation ou l'onglet flottant, dès qu'il apparaît.
+function stripGoogleExtras(node) {
+  if (!(node instanceof HTMLElement)) return;
+
+  const selectors = [
+    ".goog-te-balloon-frame",
+    ".goog-te-ftab",
+    ".goog-te-ftab-float",
+    ".goog-tooltip",
+    ".goog-tooltip-content",
+  ];
+
+  selectors.forEach((sel) => {
+    if (node.matches?.(sel)) {
+      node.remove();
+      return;
+    }
+    node.querySelectorAll?.(sel).forEach((el) => el.remove());
+  });
+}
+
 export default function GoogleTranslate() {
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState("fr");
@@ -38,7 +60,18 @@ export default function GoogleTranslate() {
   useEffect(() => {
     setCurrent(getCookieLang());
 
-    if (window.googleTranslateElementInit) return;
+    // Observe tout le document : dès qu'un noeud est ajouté (par Google ou
+    // autre), on vérifie s'il s'agit d'un élément indésirable et on le retire.
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => stripGoogleExtras(node));
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    if (window.googleTranslateElementInit) {
+      return () => observer.disconnect();
+    }
 
     window.googleTranslateElementInit = () => {
       new window.google.translate.TranslateElement(
@@ -55,6 +88,8 @@ export default function GoogleTranslate() {
     script.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
     script.async = true;
     document.body.appendChild(script);
+
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
