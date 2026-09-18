@@ -42,7 +42,11 @@ const getProducts = asyncHandler(async (req, res) => {
 });
 
 const getProductById = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id)
+  const product = await Product.findByIdAndUpdate(
+    req.params.id,
+    { $inc: { viewCount: 1 } },
+    { new: true }
+  )
     .populate("shop", "name slug isVerified businessType")
     .populate("category", "name icon");
   if (!product) return res.status(404).json({ message: "Produit introuvable." });
@@ -114,6 +118,27 @@ const deleteProduct = asyncHandler(async (req, res) => {
   res.json({ message: "Produit supprimé." });
 });
 
+// @route   GET /api/products/:id/stats
+// @access  Private (marchand, doit posseder le produit)
+// Renvoie le nombre de vues, le nombre de commandes, et le taux de
+// transformation vues -> commandes.
+const getProductStats = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id).populate("shop");
+  if (!product) return res.status(404).json({ message: "Produit introuvable." });
+  if (product.shop.owner.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ message: "Ce produit ne vous appartient pas." });
+  }
+
+  const viewCount = product.viewCount || 0;
+  const soldCount = product.soldCount || 0;
+
+  res.json({
+    viewCount,
+    soldCount,
+    conversionRate: viewCount > 0 ? Math.round((soldCount / viewCount) * 1000) / 10 : 0,
+  });
+});
+
 // @route   POST /api/products/import
 // @access  Private (marchand, boutique de type supermarche uniquement)
 // Attend un body JSON: { csv: "nom,prix,stock,unite\n..." }
@@ -155,7 +180,7 @@ const importProductsCSV = asyncHandler(async (req, res) => {
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    const lineNum = i + 2; // +2: en-tete + index base 1
+    const lineNum = i + 2;
 
     const name = (row.nom || row.name || "").trim();
     const price = Number(row.prix || row.price);
@@ -195,4 +220,12 @@ const importProductsCSV = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { getProducts, getProductById, createProduct, updateProduct, deleteProduct, importProductsCSV };
+module.exports = {
+  getProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  importProductsCSV,
+  getProductStats,
+};

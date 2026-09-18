@@ -61,6 +61,9 @@ export default function MerchantProduits() {
   const [busy, setBusy] = useState(null);
   const [shareOpen, setShareOpen] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [statsOpenId, setStatsOpenId] = useState(null);
+  const [statsData, setStatsData] = useState({});
+  const [statsLoading, setStatsLoading] = useState(null);
 
   const getProductUrl = (id) =>
     typeof window !== "undefined" ? `${window.location.origin}/produit/${id}` : "";
@@ -75,6 +78,25 @@ export default function MerchantProduits() {
       setTimeout(() => setCopiedId(null), 2000);
     } catch (err) {
       alert("Impossible de copier le lien.");
+    }
+  };
+
+  const toggleStats = async (id) => {
+    if (statsOpenId === id) {
+      setStatsOpenId(null);
+      return;
+    }
+    setStatsOpenId(id);
+    if (!statsData[id]) {
+      setStatsLoading(id);
+      try {
+        const { data } = await api.get(`/products/${id}/stats`);
+        setStatsData((prev) => ({ ...prev, [id]: data }));
+      } catch {
+        setStatsData((prev) => ({ ...prev, [id]: null }));
+      } finally {
+        setStatsLoading(null);
+      }
     }
   };
 
@@ -557,143 +579,200 @@ export default function MerchantProduits() {
                 <div
                   key={p._id}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    justifyContent: "space-between",
                     padding: 14,
                     borderTop: i > 0 ? "1px solid var(--line)" : "none",
-                    flexWrap: "wrap",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    {p.images && p.images[0] ? (
-                      <img
-                        src={p.images[0]}
-                        alt={p.name}
-                        style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", border: "1px solid var(--line)" }}
-                      />
-                    ) : (
-                      <div style={{ width: 44, height: 44, borderRadius: 8, background: "var(--cream)", border: "1px solid var(--line)" }} />
-                    )}
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>
-                        {p.name}
-                        {p.isDailySpecial && (
-                          <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, color: "var(--terracotta-dark)" }}>
-                            ⭐ PLAT DU JOUR
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-                        Stock: {p.stock} {p.unit}
-                        {p.prepTimeMinutes ? ` · ${p.prepTimeMinutes} min` : ""}
-                      </div>
-                      <div style={{ fontWeight: 700, color: "var(--terracotta-dark)", fontSize: 13 }}>
-                        {p.price.toLocaleString("fr-FR")} FCFA
-                        {p.priceTiers?.length > 0 && (
-                          <span style={{ fontWeight: 400, fontSize: 11, color: "var(--ink-soft)" }}>
-                            {" "}+ {p.priceTiers.length} palier{p.priceTiers.length > 1 ? "s" : ""}
-                          </span>
-                        )}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      {p.images && p.images[0] ? (
+                        <img
+                          src={p.images[0]}
+                          alt={p.name}
+                          style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", border: "1px solid var(--line)" }}
+                        />
+                      ) : (
+                        <div style={{ width: 44, height: 44, borderRadius: 8, background: "var(--cream)", border: "1px solid var(--line)" }} />
+                      )}
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>
+                          {p.name}
+                          {p.isDailySpecial && (
+                            <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, color: "var(--terracotta-dark)" }}>
+                              ⭐ PLAT DU JOUR
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+                          Stock: {p.stock} {p.unit}
+                          {p.prepTimeMinutes ? ` · ${p.prepTimeMinutes} min` : ""}
+                        </div>
+                        <div style={{ fontWeight: 700, color: "var(--terracotta-dark)", fontSize: 13 }}>
+                          {p.price.toLocaleString("fr-FR")} FCFA
+                          {p.priceTiers?.length > 0 && (
+                            <span style={{ fontWeight: 400, fontSize: 11, color: "var(--ink-soft)" }}>
+                              {" "}+ {p.priceTiers.length} palier{p.priceTiers.length > 1 ? "s" : ""}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button
-                        onClick={() => setShareOpen(shareOpen === p._id ? null : p._id)}
-                        style={{
-                          fontSize: 12,
-                          padding: "8px 14px",
-                          borderRadius: 8,
-                          border: "1px solid var(--line)",
-                          background: shareOpen === p._id ? "var(--ink)" : "var(--white)",
-                          color: shareOpen === p._id ? "var(--white)" : "var(--ink)",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Partager
-                      </button>
-                      <button
-                        onClick={() => startEdit(p)}
-                        style={{
-                          fontSize: 12,
-                          padding: "8px 14px",
-                          borderRadius: 8,
-                          border: "1px solid var(--line)",
-                          background: "var(--white)",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Modifier
-                      </button>
-                      <button
-                        onClick={() => handleDelete(p._id, p.name)}
-                        disabled={busy === p._id}
-                        style={{
-                          fontSize: 12,
-                          padding: "8px 14px",
-                          borderRadius: 8,
-                          border: "1px solid var(--line)",
-                          color: "var(--terracotta-dark)",
-                          background: "var(--white)",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Supprimer
-                      </button>
-                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <button
+                          onClick={() => toggleStats(p._id)}
+                          style={{
+                            fontSize: 12,
+                            padding: "8px 14px",
+                            borderRadius: 8,
+                            border: "1px solid var(--line)",
+                            background: statsOpenId === p._id ? "var(--ink)" : "var(--white)",
+                            color: statsOpenId === p._id ? "var(--white)" : "var(--ink)",
+                            fontWeight: 600,
+                          }}
+                        >
+                          📊 Statistiques
+                        </button>
+                        <button
+                          onClick={() => setShareOpen(shareOpen === p._id ? null : p._id)}
+                          style={{
+                            fontSize: 12,
+                            padding: "8px 14px",
+                            borderRadius: 8,
+                            border: "1px solid var(--line)",
+                            background: shareOpen === p._id ? "var(--ink)" : "var(--white)",
+                            color: shareOpen === p._id ? "var(--white)" : "var(--ink)",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Partager
+                        </button>
+                        <button
+                          onClick={() => startEdit(p)}
+                          style={{
+                            fontSize: 12,
+                            padding: "8px 14px",
+                            borderRadius: 8,
+                            border: "1px solid var(--line)",
+                            background: "var(--white)",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Modifier
+                        </button>
+                        <button
+                          onClick={() => handleDelete(p._id, p.name)}
+                          disabled={busy === p._id}
+                          style={{
+                            fontSize: 12,
+                            padding: "8px 14px",
+                            borderRadius: 8,
+                            border: "1px solid var(--line)",
+                            color: "var(--terracotta-dark)",
+                            background: "var(--white)",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Supprimer
+                        </button>
+                      </div>
 
-                    {shareOpen === p._id && (
-                      <div
-                        style={{
-                          width: "100%",
-                          minWidth: 260,
-                          background: "var(--cream)",
-                          borderRadius: 10,
-                          padding: 12,
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 8,
-                          boxSizing: "border-box",
-                        }}
-                      >
-                        <div style={{ display: "flex", gap: 6 }}>
-                          <input
-                            readOnly
-                            value={getProductUrl(p._id)}
-                            onFocus={(e) => e.target.select()}
-                            style={{ flex: 1, minWidth: 0, padding: 8, fontSize: 11, border: "1px solid var(--line)", borderRadius: 8, background: "var(--white)" }}
-                          />
-                          <button
-                            onClick={() => handleCopyLink(p._id)}
-                            style={{ fontSize: 11, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--white)", fontWeight: 600, whiteSpace: "nowrap" }}
-                          >
-                            {copiedId === p._id ? "Copié !" : "Copier"}
-                          </button>
+                      {shareOpen === p._id && (
+                        <div
+                          style={{
+                            width: "100%",
+                            minWidth: 260,
+                            background: "var(--cream)",
+                            borderRadius: 10,
+                            padding: 12,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 8,
+                            boxSizing: "border-box",
+                          }}
+                        >
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <input
+                              readOnly
+                              value={getProductUrl(p._id)}
+                              onFocus={(e) => e.target.select()}
+                              style={{ flex: 1, minWidth: 0, padding: 8, fontSize: 11, border: "1px solid var(--line)", borderRadius: 8, background: "var(--white)" }}
+                            />
+                            <button
+                              onClick={() => handleCopyLink(p._id)}
+                              style={{ fontSize: 11, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--white)", fontWeight: 600, whiteSpace: "nowrap" }}
+                            >
+                              {copiedId === p._id ? "Copié !" : "Copier"}
+                            </button>
+                          </div>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <a
+                              href={`https://wa.me/?text=${encodeURIComponent(`${p.name} — ${p.price.toLocaleString("fr-FR")} FCFA\n${getProductUrl(p._id)}`)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ flex: 1, textAlign: "center", fontSize: 12, padding: "8px 10px", borderRadius: 8, background: "var(--ink)", color: "var(--white)", fontWeight: 600 }}
+                            >
+                              💬 WhatsApp
+                            </a>
+                            <a
+                              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getProductUrl(p._id))}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ flex: 1, textAlign: "center", fontSize: 12, padding: "8px 10px", borderRadius: 8, background: "var(--ink)", color: "var(--white)", fontWeight: 600 }}
+                            >
+                              📘 Facebook
+                            </a>
+                          </div>
                         </div>
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <a
-                            href={`https://wa.me/?text=${encodeURIComponent(`${p.name} — ${p.price.toLocaleString("fr-FR")} FCFA\n${getProductUrl(p._id)}`)}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={{ flex: 1, textAlign: "center", fontSize: 12, padding: "8px 10px", borderRadius: 8, background: "var(--ink)", color: "var(--white)", fontWeight: 600 }}
-                          >
-                            💬 WhatsApp
-                          </a>
-                          <a
-                            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getProductUrl(p._id))}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={{ flex: 1, textAlign: "center", fontSize: 12, padding: "8px 10px", borderRadius: 8, background: "var(--ink)", color: "var(--white)", fontWeight: 600 }}
-                          >
-                            📘 Facebook
-                          </a>
-                        </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
+
+                  {statsOpenId === p._id && (
+                    <div
+                      style={{
+                        marginTop: 12,
+                        background: "var(--cream)",
+                        borderRadius: 10,
+                        padding: 14,
+                      }}
+                    >
+                      {statsLoading === p._id && (
+                        <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: 0 }}>Chargement des statistiques...</p>
+                      )}
+                      {statsLoading !== p._id && statsData[p._id] === null && (
+                        <p style={{ fontSize: 12, color: "var(--terracotta-dark)", margin: 0 }}>
+                          Impossible de charger les statistiques.
+                        </p>
+                      )}
+                      {statsLoading !== p._id && statsData[p._id] && (
+                        <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+                          <div>
+                            <div style={{ fontSize: 20, fontWeight: 800 }}>{statsData[p._id].viewCount}</div>
+                            <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>👁️ Vues de la fiche</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 20, fontWeight: 800 }}>{statsData[p._id].soldCount}</div>
+                            <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>🧾 Commandes passées</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 20, fontWeight: 800, color: "var(--terracotta-dark)" }}>
+                              {statsData[p._id].conversionRate}%
+                            </div>
+                            <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>📈 Taux de transformation</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
               {products.length === 0 && (

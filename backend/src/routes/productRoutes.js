@@ -6,6 +6,7 @@ const {
   updateProduct,
   deleteProduct,
   importProductsCSV,
+  getProductStats,
 } = require("../controllers/productController");
 const { protect } = require("../middleware/auth");
 const { authorize } = require("../middleware/roles");
@@ -15,6 +16,7 @@ const router = express.Router();
 router.get("/", getProducts);
 router.post("/import", protect, authorize("marchand"), importProductsCSV);
 router.get("/:id", getProductById);
+router.get("/:id/stats", protect, authorize("marchand"), getProductStats);
 router.post("/", protect, authorize("marchand"), createProduct);
 router.put("/:id", protect, authorize("marchand"), updateProduct);
 router.delete("/:id", protect, authorize("marchand"), deleteProduct);

@@ -14,15 +14,17 @@ const productSchema = new mongoose.Schema(
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
     name: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
-    price: { type: Number, required: true, min: 0 }, // prix detail (1 unite)
+    price: { type: Number, required: true, min: 0 },
     unit: { type: String, default: "unité" },
     stock: { type: Number, required: true, default: 0, min: 0 },
     images: [{ type: String }],
-    priceTiers: [priceTierSchema], // paliers gros/demi-gros, tries par minQty croissant
+    priceTiers: [priceTierSchema],
     isActive: { type: Boolean, default: true },
     featuredUntil: { type: Date, default: null },
     soldCount: { type: Number, default: 0 },
-    // Champs specifiques restaurant (utilises seulement si la boutique est de type "restaurant")
+    // Nombre de fois que la fiche produit a ete consultee, utilise dans les
+    // statistiques de performance cote marchand (vues vs commandes)
+    viewCount: { type: Number, default: 0 },
     prepTimeMinutes: { type: Number, default: null },
     isDailySpecial: { type: Boolean, default: false },
   },
