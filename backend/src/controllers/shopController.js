@@ -265,6 +265,19 @@ const removeCourier = asyncHandler(async (req, res) => {
   res.json(shop.couriers);
 });
 
+// @route   PUT /api/shops/me/products-onboarding-done
+// @access  Private (marchand) - marque comme vue la redirection automatique
+// vers l'ajout de produits apres validation de la boutique
+const markProductsOnboardingDone = asyncHandler(async (req, res) => {
+  const shop = await Shop.findOne({ owner: req.user._id });
+  if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
+
+  shop.productsOnboardingDone = true;
+  await shop.save();
+
+  res.json({ ok: true });
+});
+
 module.exports = {
   getShops,
   getMyShop,
@@ -279,4 +292,5 @@ module.exports = {
   getMyCouriers,
   addCourier,
   removeCourier,
+  markProductsOnboardingDone,
 };

@@ -30,31 +30,31 @@ const shopSchema = new mongoose.Schema(
       enum: ["boutique", "restaurant", "supermarche", "grossiste", "artisan"],
       default: "boutique",
     },
-    // "Allée numérique" = emplacement virtuel, ex: "Allée 3, N°45"
     city: { type: String, default: "" },
     location: {
       allee: { type: String, default: "" },
       numero: { type: String, default: "" },
     },
-    deliveryZones: [deliveryZoneSchema], // tarifs de livraison par ville
-    couriers: [courierSchema], // livreurs ajoutes par le marchand
+    deliveryZones: [deliveryZoneSchema],
+    couriers: [courierSchema],
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
-    isVerified: { type: Boolean, default: false }, // badge "Vérifié"
-    isProfessional: { type: Boolean, default: false }, // badge "Boutique professionnelle" accorde par admin
+    isVerified: { type: Boolean, default: false },
+    isProfessional: { type: Boolean, default: false },
     featuredUntil: { type: Date, default: null },
     status: {
       type: String,
       enum: ["pending", "active", "suspended", "closed"],
       default: "pending",
     },
-    // Loyer de l'emplacement virtuel (abonnement plateforme)
+    // Indique si le marchand a deja ete redirige automatiquement vers
+    // l'ajout de produits apres la premiere validation de sa boutique
+    productsOnboardingDone: { type: Boolean, default: false },
     rent: {
       amount: { type: Number, default: 0 },
       period: { type: String, enum: ["monthly", "yearly"], default: "monthly" },
       lastPaidAt: { type: Date, default: null },
       nextDueAt: { type: Date, default: null },
     },
-    // Commission spécifique à cette boutique (sinon valeur par défaut de la plateforme)
     commissionRate: { type: Number, default: null },
     rating: { type: Number, default: 0 },
   },

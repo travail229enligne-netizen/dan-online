@@ -24,7 +24,7 @@ export default function Inscription() {
     setLoading(true);
     try {
       const user = await register(form);
-      router.push(user.role === "marchand" ? "/marchand/bienvenue" : "/");
+      router.push(user.role === "marchand" ? "/marchand/boutique" : "/");
     } catch (err) {
       setError(err.response?.data?.message || "Inscription impossible.");
     } finally {

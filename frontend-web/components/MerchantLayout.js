@@ -4,6 +4,7 @@ import { useAuth } from "../lib/auth";
 import api from "../lib/api";
 
 const navItems = [
+  { href: "/", label: "Accueil", icon: "🏠" },
   { href: "/marchand/dashboard", label: "Tableau de bord", icon: "📊" },
   { href: "/marchand/boutique", label: "Ma boutique", icon: "🏪" },
   { href: "/marchand/produits", label: "Produits", icon: "📦" },
@@ -42,6 +43,44 @@ export default function MerchantLayout({ children, title }) {
     const interval = setInterval(load, 15000);
     return () => clearInterval(interval);
   }, [user]);
+
+  // Redirection automatique vers l'ajout de produits, une seule fois,
+  // juste après que la boutique du marchand ait ete validee par l'admin.
+  useEffect(() => {
+    if (!user || user.role !== "marchand") return;
+    if (router.pathname === "/marchand/produits") return;
+
+    api
+      .get("/shops/me")
+      .then((r) => {
+        const shop = r.data;
+        if (shop && shop.status === "active" && !shop.productsOnboardingDone) {
+          api.put("/shops/me/products-onboarding-done", {}).catch(() => {});
+          router.push("/marchand/produits");
+        }
+      })
+      .catch(() => {});
+  }, [user, router.pathname]);
+
+  const navLink = (href, label, showDot) => (
+    <a
+      href={href}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "12px 14px",
+        borderRadius: 10,
+        fontSize: 14,
+        fontWeight: router.pathname === href ? 700 : 500,
+        color: router.pathname === href ? "var(--white)" : "var(--ink)",
+        background: router.pathname === href ? "var(--ink)" : "transparent",
+        marginBottom: 4,
+      }}
+    >
+      {label}
+    </a>
+  );
 
   if (loading) return null;
 

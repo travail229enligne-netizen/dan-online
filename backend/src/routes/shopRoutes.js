@@ -13,6 +13,7 @@ const {
   getMyCouriers,
   addCourier,
   removeCourier,
+  markProductsOnboardingDone,
 } = require("../controllers/shopController");
 const { protect } = require("../middleware/auth");
 const { authorize } = require("../middleware/roles");
@@ -25,6 +26,7 @@ router.get("/me/stats", protect, authorize("marchand"), getMyShopStats);
 router.get("/me/chart", protect, authorize("marchand"), getMyShopChart);
 router.put("/me/close", protect, authorize("marchand"), closeMyShop);
 router.put("/me/reopen", protect, authorize("marchand"), reopenMyShop);
+router.put("/me/products-onboarding-done", protect, authorize("marchand"), markProductsOnboardingDone);
 router.get("/me/couriers", protect, authorize("marchand"), getMyCouriers);
 router.post("/me/couriers", protect, authorize("marchand"), addCourier);
 router.delete("/me/couriers/:userId", protect, authorize("marchand"), removeCourier);

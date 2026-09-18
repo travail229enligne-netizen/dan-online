@@ -65,6 +65,9 @@ export default function MerchantProduits() {
   const getProductUrl = (id) =>
     typeof window !== "undefined" ? `${window.location.origin}/produit/${id}` : "";
 
+  const getShopUrl = () =>
+    shop && typeof window !== "undefined" ? `${window.location.origin}/boutique/${shop.slug}` : "";
+
   const handleCopyLink = async (id) => {
     try {
       await navigator.clipboard.writeText(getProductUrl(id));
@@ -181,9 +184,29 @@ export default function MerchantProduits() {
 
   return (
     <MerchantLayout title={isRestaurant ? "Mes plats" : "Mes produits"}>
-      <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, marginBottom: 4 }}>
-        {isRestaurant ? "Mes plats" : "Mes produits"}
-      </h1>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22 }}>
+          {isRestaurant ? "Mes plats" : "Mes produits"}
+        </h1>
+        {shop && shop.status === "active" && (
+          <a
+            href={getShopUrl()}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              fontSize: 13,
+              padding: "8px 14px",
+              borderRadius: 10,
+              border: "1px solid var(--line)",
+              background: "var(--white)",
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+            }}
+          >
+            🔗 Voir ma boutique
+          </a>
+        )}
+      </div>
       <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 20 }}>
         Ajoute tes {itemLabel}s un par un, comme des étiquettes sur ton étal.
       </p>
@@ -227,7 +250,6 @@ export default function MerchantProduits() {
               {editingId ? `Modifier le ${itemLabel}` : `Ajouter un ${itemLabel}`}
             </h2>
 
-            {/* --- Étiquette de prix (aperçu live) --- */}
             <div
               style={{
                 position: "relative",
