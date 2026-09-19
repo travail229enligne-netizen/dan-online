@@ -62,26 +62,6 @@ export default function MerchantLayout({ children, title }) {
       .catch(() => {});
   }, [user, router.pathname]);
 
-  const navLink = (href, label, showDot) => (
-    <a
-      href={href}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "12px 14px",
-        borderRadius: 10,
-        fontSize: 14,
-        fontWeight: router.pathname === href ? 700 : 500,
-        color: router.pathname === href ? "var(--white)" : "var(--ink)",
-        background: router.pathname === href ? "var(--ink)" : "transparent",
-        marginBottom: 4,
-      }}
-    >
-      {label}
-    </a>
-  );
-
   if (loading) return null;
 
   if (!user) {
@@ -194,6 +174,7 @@ export default function MerchantLayout({ children, title }) {
               padding: "20px 0",
               display: "flex",
               flexDirection: "column",
+              overflowY: "auto",
             }}
           >
             <div style={{ padding: "0 20px 16px", borderBottom: "1px solid var(--line)" }}>
@@ -242,7 +223,7 @@ export default function MerchantLayout({ children, title }) {
               })}
             </div>
 
-            <div style={{ padding: "12px 20px", borderTop: "1px solid var(--line)" }}>
+            <div style={{ padding: "12px 20px", borderTop: "1px solid var(--line)", flexShrink: 0 }}>
               <button
                 onClick={logout}
                 style={{ fontSize: 13, color: "var(--terracotta-dark)", fontWeight: 600 }}
