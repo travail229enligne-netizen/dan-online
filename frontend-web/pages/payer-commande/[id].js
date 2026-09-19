@@ -30,7 +30,7 @@ export default function PayerCommande() {
     window.openKkiapayWidget({
       amount: order.grandTotal,
       key: process.env.NEXT_PUBLIC_KKIAPAY_PUBLIC_KEY,
-      sandbox: true,
+      sandbox: process.env.NEXT_PUBLIC_KKIAPAY_SANDBOX === "true",
       phone: order.deliveryPhone,
       data: JSON.stringify({ userId: user?._id, orderId: order._id }),
     });
