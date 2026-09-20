@@ -17,7 +17,24 @@ const getProducts = asyncHandler(async (req, res) => {
   const filter = { isActive: true };
   if (category) filter.category = category;
   if (shop) filter.shop = shop;
-  if (search && search.trim()) filter.name = { $regex: search.trim(), $options: "i" };
+
+  if (search && search.trim()) {
+    const term = search.trim();
+    const regex = { $regex: term, $options: "i" };
+
+    // Cherche aussi parmi les boutiques dont le nom correspond au terme,
+    // pour remonter leurs produits meme si le nom/description du produit
+    // ne contient pas le mot tape (ex: chercher "Bodystore" trouve ses produits)
+    const matchingShops = await Shop.find({ status: "active", name: regex }).select("_id");
+    const matchingShopIds = matchingShops.map((s) => s._id);
+
+    filter.$or = [
+      { name: regex },
+      { description: regex },
+      ...(matchingShopIds.length > 0 ? [{ shop: { $in: matchingShopIds } }] : []),
+    ];
+  }
+
   if (minPrice) filter.price = { ...filter.price, $gte: Number(minPrice) };
   if (maxPrice) filter.price = { ...filter.price, $lte: Number(maxPrice) };
   if (wholesale === "true") filter.priceTiers = { $exists: true, $not: { $size: 0 } };
@@ -120,8 +137,6 @@ const deleteProduct = asyncHandler(async (req, res) => {
 
 // @route   GET /api/products/:id/stats
 // @access  Private (marchand, doit posseder le produit)
-// Renvoie le nombre de vues, le nombre de commandes, et le taux de
-// transformation vues -> commandes.
 const getProductStats = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id).populate("shop");
   if (!product) return res.status(404).json({ message: "Produit introuvable." });
