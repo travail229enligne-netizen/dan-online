@@ -436,7 +436,7 @@ export default function ConversationById() {
             <h1 style={{ fontSize: 18, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title || "Conversation"}</h1>
           </a>
           {phoneLink && (
-            <a href={phoneLink} title="Appeler" style={{ fontSize: 18, flexShrink: 0 }}>📞</a>
+            <a href={phoneLink} title="Appeler" style={{ fontSize: 18, flexShrink: 0, marginRight: 10 }}>📞</a>
           )}
         </div>
 
