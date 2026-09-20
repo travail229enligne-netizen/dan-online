@@ -12,7 +12,14 @@ function telLink(phone) {
   return `tel:${phone.replace(/[^0-9+]/g, "")}`;
 }
 
-function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, responding, uploadingProof }) {
+function formatDuration(seconds) {
+  const s = Math.round(seconds || 0);
+  const m = Math.floor(s / 60);
+  const rest = s % 60;
+  return `${m}:${rest.toString().padStart(2, "0")}`;
+}
+
+function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, responding, uploadingProof, onSubmitPaymentProof, uploadingPaymentProof }) {
   if (!order) {
     return (
       <div style={{ flexShrink: 0, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", maxWidth: "90%", alignSelf: "flex-start" }}>
@@ -60,8 +67,12 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
         <div style={{ marginTop: 8, color: "var(--ink-soft)", lineHeight: 1.6 }}>
           <div>📍 {order.deliveryAddress}{order.deliveryCity ? `, ${order.deliveryCity}` : ""}</div>
           <div>📞 {order.deliveryPhone}</div>
-          <div style={{ fontWeight: 600, color: order.paymentStatus === "paid" ? "var(--green-dark)" : "var(--terracotta-dark)" }}>
-            {order.paymentStatus === "paid" ? "💳 Réglée en ligne" : "💳 Le client réglera en ligne après la livraison"}
+          <div style={{ fontWeight: 600, color: order.paymentMethod === "kkiapay" && order.paymentStatus === "paid" ? "var(--green-dark)" : "var(--terracotta-dark)" }}>
+            {order.paymentMethod === "kkiapay"
+              ? order.paymentStatus === "paid"
+                ? "💳 Réglée en ligne"
+                : "💳 Le client réglera en ligne après la livraison"
+              : `💵 À encaisser : ${(order.grandTotal || 0).toLocaleString("fr-FR")} FCFA`}
           </div>
         </div>
 
@@ -99,9 +110,26 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
               ✅ Preuve de livraison
             </div>
             <img src={order.deliveryProofUrl} alt="Preuve de livraison" style={{ width: "100%", display: "block" }} />
-            <div style={{ padding: "8px 10px", fontSize: 11, color: order.paymentStatus === "paid" ? "var(--green-dark)" : "var(--terracotta-dark)", fontWeight: 600 }}>
-              {order.paymentStatus === "paid" ? "✅ Client a payé en ligne" : "⏳ En attente du paiement du client"}
+            {order.paymentMethod === "kkiapay" && (
+              <div style={{ padding: "8px 10px", fontSize: 11, color: order.paymentStatus === "paid" ? "var(--green-dark)" : "var(--terracotta-dark)", fontWeight: 600 }}>
+                {order.paymentStatus === "paid" ? "✅ Client a payé en ligne" : "⏳ En attente du paiement du client"}
+              </div>
+            )}
+          </div>
+        )}
+
+        {isCourier && order.deliveryProofUrl && order.paymentMethod === "cod" && order.paymentStatus !== "paid" && (
+          <button className="btn-primary" onClick={onSubmitPaymentProof} disabled={uploadingPaymentProof} style={{ width: "100%", marginTop: 10, fontSize: 13, padding: 10 }}>
+            {uploadingPaymentProof ? "Envoi de la preuve..." : "📸 Preuve du paiement"}
+          </button>
+        )}
+
+        {order.paymentProofUrl && (
+          <div style={{ marginTop: 12, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }}>
+            <div style={{ padding: "6px 10px", background: "#e8f5ee", fontSize: 11, fontWeight: 700, color: "var(--green-dark)" }}>
+              ✅ Preuve de paiement en espèces
             </div>
+            <img src={order.paymentProofUrl} alt="Preuve de paiement" style={{ width: "100%", display: "block" }} />
           </div>
         )}
       </div>
@@ -122,6 +150,35 @@ function ImageBubble({ url, caption, isMine }) {
   );
 }
 
+function VoiceBubble({ url, duration, isMine }) {
+  return (
+    <div
+      style={{
+        flexShrink: 0,
+        alignSelf: isMine ? "flex-end" : "flex-start",
+        maxWidth: "75%",
+        borderRadius: 14,
+        padding: "10px 12px",
+        background: isMine ? "var(--ink)" : "var(--white)",
+        border: isMine ? "none" : "1px solid var(--line)",
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: 16 }}>🎤</span>
+        <audio controls src={url} style={{ height: 34, maxWidth: 200 }} />
+      </div>
+      {duration > 0 && (
+        <span style={{ fontSize: 11, color: isMine ? "rgba(255,255,255,0.7)" : "var(--ink-soft)" }}>
+          {formatDuration(duration)}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function ConversationById() {
   const router = useRouter();
   const { id } = router.query;
@@ -137,6 +194,16 @@ export default function ConversationById() {
   const bottomRef = useRef(null);
   const fileRef = useRef(null);
   const proofFileRef = useRef(null);
+  const paymentProofFileRef = useRef(null);
+  const [uploadingPaymentProof, setUploadingPaymentProof] = useState(false);
+
+  const [recording, setRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const [uploadingVoice, setUploadingVoice] = useState(false);
+  const [voiceError, setVoiceError] = useState("");
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const recordTimerRef = useRef(null);
 
   const load = () => {
     if (!id) return;
@@ -178,11 +245,11 @@ export default function ConversationById() {
     }
   };
 
-  const uploadToCloudinary = async (file) => {
+  const uploadToCloudinary = async (file, resourceType = "auto") => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", UPLOAD_PRESET);
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: formData });
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, { method: "POST", body: formData });
     const data = await res.json();
     return data.secure_url;
   };
@@ -192,7 +259,7 @@ export default function ConversationById() {
     if (!file) return;
     setUploading(true);
     try {
-      const url = await uploadToCloudinary(file);
+      const url = await uploadToCloudinary(file, "image");
       await api.post(`/messages/${id}`, { imageUrl: url });
       load();
     } catch {
@@ -222,7 +289,7 @@ export default function ConversationById() {
     if (!file) return;
     setUploadingProof(true);
     try {
-      const url = await uploadToCloudinary(file);
+      const url = await uploadToCloudinary(file, "image");
       await api.put(`/orders/${orderId}/delivery-proof`, { imageUrl: url });
       await api.post(`/messages/${id}`, { text: "📸 Preuve de livraison envoyée." });
       load();
@@ -233,6 +300,97 @@ export default function ConversationById() {
       if (proofFileRef.current) proofFileRef.current.value = "";
     }
   };
+
+  const handleSubmitPaymentProofClick = () => {
+    paymentProofFileRef.current?.click();
+  };
+
+  const handlePaymentProofPick = async (e, orderId) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingPaymentProof(true);
+    try {
+      const url = await uploadToCloudinary(file, "image");
+      await api.put(`/orders/${orderId}/payment-proof`, { imageUrl: url });
+      await api.post(`/messages/${id}`, { text: "📸 Preuve de paiement envoyée." });
+      load();
+    } catch (err) {
+      alert(err.response?.data?.message || "Impossible d'envoyer la preuve de paiement.");
+    } finally {
+      setUploadingPaymentProof(false);
+      if (paymentProofFileRef.current) paymentProofFileRef.current.value = "";
+    }
+  };
+
+  const startRecording = async () => {
+    setVoiceError("");
+    if (!navigator.mediaDevices || !window.MediaRecorder) {
+      setVoiceError("L'enregistrement audio n'est pas supporté sur cet appareil.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        stream.getTracks().forEach((track) => track.stop());
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setRecording(true);
+      setRecordSeconds(0);
+      recordTimerRef.current = setInterval(() => {
+        setRecordSeconds((s) => s + 1);
+      }, 1000);
+    } catch {
+      setVoiceError("Impossible d'accéder au micro. Vérifie les autorisations.");
+    }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && recording) {
+      mediaRecorderRef.current.onstop = () => {
+        mediaRecorderRef.current.stream?.getTracks().forEach((t) => t.stop());
+      };
+      mediaRecorderRef.current.stop();
+    }
+    clearInterval(recordTimerRef.current);
+    setRecording(false);
+    setRecordSeconds(0);
+    audioChunksRef.current = [];
+  };
+
+  const stopAndSendRecording = () => {
+    if (!mediaRecorderRef.current || !recording) return;
+    const finalDuration = recordSeconds;
+    mediaRecorderRef.current.onstop = async () => {
+      mediaRecorderRef.current.stream?.getTracks().forEach((t) => t.stop());
+      const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+      audioChunksRef.current = [];
+      setUploadingVoice(true);
+      try {
+        const file = new File([blob], `vocal-${Date.now()}.webm`, { type: "audio/webm" });
+        const url = await uploadToCloudinary(file, "video");
+        await api.post(`/messages/${id}`, { audioUrl: url, audioDuration: finalDuration });
+        load();
+      } catch {
+        setVoiceError("Impossible d'envoyer le message vocal.");
+      } finally {
+        setUploadingVoice(false);
+      }
+    };
+    mediaRecorderRef.current.stop();
+    clearInterval(recordTimerRef.current);
+    setRecording(false);
+    setRecordSeconds(0);
+  };
+
+  useEffect(() => {
+    return () => clearInterval(recordTimerRef.current);
+  }, []);
 
   if (loading || !conversation) return null;
 
@@ -286,8 +444,14 @@ export default function ConversationById() {
                   uploadingProof={uploadingProof}
                   onRespond={(available) => handleRespond(order._id, available)}
                   onSubmitProof={handleSubmitProofClick}
+                  onSubmitPaymentProof={handleSubmitPaymentProofClick}
+                  uploadingPaymentProof={uploadingPaymentProof}
                 />
               );
+            }
+
+            if (m.kind === "voice" && m.audioUrl) {
+              return <VoiceBubble key={m._id} url={m.audioUrl} duration={m.audioDuration} isMine={isMine} />;
             }
 
             if (m.imageUrl) {
@@ -318,14 +482,66 @@ export default function ConversationById() {
           }}
         />
 
-        <form onSubmit={handleSend} style={{ display: "flex", gap: 8, paddingTop: 8, borderTop: "1px solid var(--line)", alignItems: "center", flexShrink: 0 }}>
-          <input ref={fileRef} type="file" accept="image/*" onChange={handleImagePick} style={{ display: "none" }} />
-          <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Envoyer une image" style={{ fontSize: 20, padding: "6px 8px", flexShrink: 0 }}>
-            {uploading ? "..." : "📷"}
-          </button>
-          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Écris un message..." style={{ flex: 1, minWidth: 0, padding: 10, border: "1px solid var(--line)", borderRadius: 20, fontSize: 13, boxSizing: "border-box" }} />
-          <button className="btn-primary" disabled={sending || !text.trim()} style={{ borderRadius: 20, padding: "10px 18px", flexShrink: 0 }}>Envoyer</button>
-        </form>
+        <input
+          ref={paymentProofFileRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          style={{ display: "none" }}
+          onChange={(e) => {
+            const orderId = Object.keys(orderCache).find(
+              (oid) => orderCache[oid].deliveryProofUrl && orderCache[oid].paymentMethod === "cod" && orderCache[oid].paymentStatus !== "paid"
+            );
+            if (orderId) handlePaymentProofPick(e, orderId);
+          }}
+        />
+
+        {voiceError && (
+          <p style={{ fontSize: 12, color: "var(--terracotta-dark)", marginBottom: 6, flexShrink: 0 }}>{voiceError}</p>
+        )}
+
+        {recording ? (
+          <div style={{ display: "flex", gap: 8, paddingTop: 8, borderTop: "1px solid var(--line)", alignItems: "center", flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={cancelRecording}
+              aria-label="Annuler l'enregistrement"
+              style={{ fontSize: 18, padding: "6px 10px", color: "var(--terracotta-dark)", flexShrink: 0 }}
+            >
+              ✕
+            </button>
+            <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--ink-soft)" }}>
+              <span style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--terracotta-dark)", display: "inline-block" }} />
+              Enregistrement... {formatDuration(recordSeconds)}
+            </div>
+            <button
+              type="button"
+              onClick={stopAndSendRecording}
+              className="btn-primary"
+              style={{ borderRadius: 20, padding: "10px 18px", flexShrink: 0 }}
+            >
+              Envoyer
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSend} style={{ display: "flex", gap: 8, paddingTop: 8, borderTop: "1px solid var(--line)", alignItems: "center", flexShrink: 0 }}>
+            <input ref={fileRef} type="file" accept="image/*" onChange={handleImagePick} style={{ display: "none" }} />
+            <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Envoyer une image" style={{ fontSize: 20, padding: "6px 8px", flexShrink: 0 }}>
+              {uploading ? "..." : "📷"}
+            </button>
+            <button
+              type="button"
+              onClick={startRecording}
+              disabled={uploadingVoice}
+              aria-label="Enregistrer un message vocal"
+              style={{ fontSize: 20, padding: "6px 8px", flexShrink: 0 }}
+            >
+              {uploadingVoice ? "..." : "🎤"}
+            </button>
+            <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Écris un message..." style={{ flex: 1, minWidth: 0, padding: 10, border: "1px solid var(--line)", borderRadius: 20, fontSize: 13, boxSizing: "border-box" }} />
+            <button className="btn-primary" disabled={sending || !text.trim()} style={{ borderRadius: 20, padding: "10px 18px", flexShrink: 0 }}>Envoyer</button>
+          </form>
+        )}
       </main>
     </div>
   );

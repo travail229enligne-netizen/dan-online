@@ -135,8 +135,10 @@ const getMessages = asyncHandler(async (req, res) => {
 // @route   POST /api/messages/:conversationId
 // @access  Private (participant a la conversation)
 const sendMessage = asyncHandler(async (req, res) => {
-  const { text, imageUrl } = req.body;
-  if ((!text || !text.trim()) && !imageUrl) return res.status(400).json({ message: "Message vide." });
+  const { text, imageUrl, audioUrl, audioDuration } = req.body;
+  if ((!text || !text.trim()) && !imageUrl && !audioUrl) {
+    return res.status(400).json({ message: "Message vide." });
+  }
 
   const conversation = await Conversation.findById(req.params.conversationId).populate("shop");
   if (!conversation) return res.status(404).json({ message: "Conversation introuvable." });
@@ -151,11 +153,19 @@ const sendMessage = asyncHandler(async (req, res) => {
   const senderRole = isCourier ? "livreur" : isClient ? "client" : "marchand";
   const recipient = isMerchant ? (conversation.client || conversation.courier) : conversation.shop.owner;
 
+  const lastMessagePreview = audioUrl
+    ? "🎤 Message vocal"
+    : text && text.trim()
+    ? text.trim()
+    : imageUrl
+    ? "Photo envoyée"
+    : "";
+
   await notify(
     recipient,
     "message",
     "Nouveau message",
-    text ? text.trim().slice(0, 80) : "Photo envoyée",
+    lastMessagePreview.slice(0, 80),
     `/messages/c/${conversation._id}`
   );
 
@@ -163,11 +173,14 @@ const sendMessage = asyncHandler(async (req, res) => {
     conversation: conversation._id,
     sender: req.user._id,
     senderRole,
+    kind: audioUrl ? "voice" : "text",
     text: text ? text.trim() : "",
     imageUrl: imageUrl || "",
+    audioUrl: audioUrl || "",
+    audioDuration: audioDuration || 0,
   });
 
-  conversation.lastMessage = text && text.trim() ? text.trim() : "Photo envoyée";
+  conversation.lastMessage = lastMessagePreview;
   conversation.lastMessageAt = new Date();
   if (isClient || isCourier) conversation.unreadForMerchant += 1;
   if (isMerchant) conversation.unreadForClient += 1;
