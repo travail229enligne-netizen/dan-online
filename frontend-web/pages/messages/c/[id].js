@@ -19,6 +19,17 @@ function formatDuration(seconds) {
   return `${m}:${rest.toString().padStart(2, "0")}`;
 }
 
+function MicIcon({ size = 18, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="9" y="2" width="6" height="12" rx="3" stroke={color} strokeWidth="1.6" />
+      <path d="M5 11a7 7 0 0 0 14 0" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M12 18v3" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M9 21h6" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, responding, uploadingProof, onSubmitPaymentProof, uploadingPaymentProof }) {
   if (!order) {
     return (
@@ -167,7 +178,7 @@ function VoiceBubble({ url, duration, isMine }) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ fontSize: 16 }}>🎤</span>
+        <MicIcon size={16} color={isMine ? "var(--white)" : "var(--ink)"} />
         <audio controls src={url} style={{ height: 34, maxWidth: 200 }} />
       </div>
       {duration > 0 && (
@@ -413,19 +424,19 @@ export default function ConversationById() {
         <Header hideSearchBar />
       </div>
       <main className="container" style={{ flex: "1 1 0%", minHeight: 0, display: "flex", flexDirection: "column", paddingTop: 16, paddingBottom: 12, boxSizing: "border-box", overflow: "hidden" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexShrink: 0 }}>
-          <a href={otherUserId ? `/profil/${otherUserId}` : "#"} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 12, flexShrink: 0 }}>
+          <a href={otherUserId ? `/profil/${otherUserId}` : "#"} style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
             {avatarUrl ? (
-              <img src={avatarUrl} alt={title} style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
+              <img src={avatarUrl} alt={title} style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
             ) : (
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--ink)", color: "var(--white)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--ink)", color: "var(--white)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
                 {title?.[0]?.toUpperCase()}
               </div>
             )}
-            <h1 style={{ fontSize: 18 }}>{title || "Conversation"}</h1>
+            <h1 style={{ fontSize: 18, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title || "Conversation"}</h1>
           </a>
           {phoneLink && (
-            <a href={phoneLink} title="Appeler" style={{ fontSize: 18 }}>📞</a>
+            <a href={phoneLink} title="Appeler" style={{ fontSize: 18, flexShrink: 0 }}>📞</a>
           )}
         </div>
 
@@ -534,9 +545,19 @@ export default function ConversationById() {
               onClick={startRecording}
               disabled={uploadingVoice}
               aria-label="Enregistrer un message vocal"
-              style={{ fontSize: 20, padding: "6px 8px", flexShrink: 0 }}
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: "50%",
+                border: "1px solid var(--line)",
+                background: "var(--cream)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
             >
-              {uploadingVoice ? "..." : "🎤"}
+              {uploadingVoice ? "..." : <MicIcon size={17} color="var(--ink)" />}
             </button>
             <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Écris un message..." style={{ flex: 1, minWidth: 0, padding: 10, border: "1px solid var(--line)", borderRadius: 20, fontSize: 13, boxSizing: "border-box" }} />
             <button className="btn-primary" disabled={sending || !text.trim()} style={{ borderRadius: 20, padding: "10px 18px", flexShrink: 0 }}>Envoyer</button>

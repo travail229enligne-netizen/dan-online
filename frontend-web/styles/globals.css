@@ -113,3 +113,10 @@ body {
 font[style*="vertical-align"] {
   text-decoration: none !important;
 }
+
+/* Empeche tout element de faire deborder la page horizontalement,
+   quelle que soit la largeur de l'ecran */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
