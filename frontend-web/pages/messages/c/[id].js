@@ -512,32 +512,38 @@ export default function ConversationById() {
         )}
 
         {recording ? (
-          <div style={{ display: "flex", gap: 8, paddingTop: 8, borderTop: "1px solid var(--line)", alignItems: "center", flexShrink: 0 }}>
+          <div style={{ display: "flex", gap: 6, paddingTop: 8, borderTop: "1px solid var(--line)", alignItems: "center", flexShrink: 0, width: "100%", boxSizing: "border-box" }}>
             <button
               type="button"
               onClick={cancelRecording}
               aria-label="Annuler l'enregistrement"
-              style={{ fontSize: 18, padding: "6px 10px", color: "var(--terracotta-dark)", flexShrink: 0 }}
+              style={{ fontSize: 16, padding: "6px 8px", color: "var(--terracotta-dark)", flexShrink: 0 }}
             >
               ✕
             </button>
-            <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--ink-soft)" }}>
-              <span style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--terracotta-dark)", display: "inline-block" }} />
-              Enregistrement... {formatDuration(recordSeconds)}
+            <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--ink-soft)", overflow: "hidden" }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--terracotta-dark)", display: "inline-block", flexShrink: 0 }} />
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Enregistrement... {formatDuration(recordSeconds)}</span>
             </div>
             <button
               type="button"
               onClick={stopAndSendRecording}
               className="btn-primary"
-              style={{ borderRadius: 20, padding: "10px 18px", flexShrink: 0 }}
+              style={{ borderRadius: 20, padding: "8px 14px", fontSize: 13, flexShrink: 0 }}
             >
               Envoyer
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSend} style={{ display: "flex", gap: 8, paddingTop: 8, borderTop: "1px solid var(--line)", alignItems: "center", flexShrink: 0 }}>
+          <form onSubmit={handleSend} style={{ display: "flex", gap: 6, paddingTop: 8, borderTop: "1px solid var(--line)", alignItems: "center", flexShrink: 0, width: "100%", boxSizing: "border-box" }}>
             <input ref={fileRef} type="file" accept="image/*" onChange={handleImagePick} style={{ display: "none" }} />
-            <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Envoyer une image" style={{ fontSize: 20, padding: "6px 8px", flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              aria-label="Envoyer une image"
+              style={{ fontSize: 18, padding: "4px 6px", flexShrink: 0, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center" }}
+            >
               {uploading ? "..." : "📷"}
             </button>
             <button
@@ -557,10 +563,21 @@ export default function ConversationById() {
                 flexShrink: 0,
               }}
             >
-              {uploadingVoice ? "..." : <MicIcon size={17} color="var(--ink)" />}
+              {uploadingVoice ? "..." : <MicIcon size={16} color="var(--ink)" />}
             </button>
-            <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Écris un message..." style={{ flex: 1, minWidth: 0, padding: 10, border: "1px solid var(--line)", borderRadius: 20, fontSize: 13, boxSizing: "border-box" }} />
-            <button className="btn-primary" disabled={sending || !text.trim()} style={{ borderRadius: 20, padding: "10px 18px", flexShrink: 0 }}>Envoyer</button>
+            <input
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Écris un message..."
+              style={{ flex: "1 1 0%", minWidth: 0, padding: "10px 12px", border: "1px solid var(--line)", borderRadius: 20, fontSize: 13, boxSizing: "border-box" }}
+            />
+            <button
+              className="btn-primary"
+              disabled={sending || !text.trim()}
+              style={{ borderRadius: 20, padding: "9px 14px", fontSize: 13, flexShrink: 0, whiteSpace: "nowrap" }}
+            >
+              Envoyer
+            </button>
           </form>
         )}
       </main>
