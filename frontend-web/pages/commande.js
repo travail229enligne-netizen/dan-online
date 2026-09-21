@@ -8,7 +8,7 @@ import api from "../lib/api";
 const cities = ["Cotonou", "Porto-Novo", "Abomey-Calavi", "Parakou", "Bohicon"];
 
 export default function Commande() {
-  const { items, total, clearCart } = useCart();
+  const { items, total, clearCart, removeFromCart } = useCart();
   const { user, loading, setSession, setPassword } = useAuth();
   const router = useRouter();
   const [form, setForm] = useState({
@@ -18,7 +18,7 @@ export default function Commande() {
     deliveryCity: "",
   });
   const [selfDelivery, setSelfDelivery] = useState(false);
-  const paymentMethod = "kkiapay";
+  const [paymentMethod, setPaymentMethod] = useState("cod");
   const [shopFees, setShopFees] = useState([]);
   const [error, setError] = useState("");
   const [requireLogin, setRequireLogin] = useState(false);
@@ -139,7 +139,15 @@ export default function Commande() {
       setSuccess(data);
       clearCart();
     } catch (err) {
-      if (err.response?.status === 409 && err.response?.data?.requireLogin) {
+      const code = err.response?.data?.code;
+      const productId = err.response?.data?.productId;
+
+      if (code === "PRODUCT_UNAVAILABLE" || code === "PRODUCT_OUT_OF_STOCK") {
+        if (productId) removeFromCart(productId);
+        setError(
+          `${err.response.data.message} Il a été retiré de ton panier — tu peux relancer ta commande avec le reste de tes articles.`
+        );
+      } else if (err.response?.status === 409 && err.response?.data?.requireLogin) {
         setRequireLogin(true);
         setError(err.response.data.message);
       } else {
@@ -179,7 +187,9 @@ export default function Commande() {
             Total : <strong>{success.grandTotal.toLocaleString("fr-FR")} FCFA</strong>
           </p>
           <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>
-            Tu pourras régler en ligne dès que ton livreur sera en route.
+            {success.paymentMethod === "kkiapay"
+              ? "Tu pourras régler en ligne dès que ton livreur sera en route."
+              : "Prévois le montant en espèces pour le livreur."}
           </p>
 
           {!passwordSaved && success.user && !success.user.hasPassword && (
@@ -350,10 +360,53 @@ export default function Commande() {
             />
           </label>
 
-          <div style={{ fontSize: 12, background: "var(--cream)", padding: 10, borderRadius: 8, lineHeight: 1.6 }}>
-            💳 Paiement Mobile Money — tu ne paies rien maintenant. Le paiement se déclenche automatiquement
-            dès que ton livreur envoie la preuve de livraison. Pas de livraison, pas de paiement.
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Mode de paiement</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("cod")}
+                style={{
+                  flex: 1,
+                  padding: 12,
+                  borderRadius: 10,
+                  border: `2px solid ${paymentMethod === "cod" ? "var(--terracotta)" : "var(--line)"}`,
+                  background: paymentMethod === "cod" ? "var(--terracotta)" : "var(--white)",
+                  color: paymentMethod === "cod" ? "var(--white)" : "var(--ink)",
+                  fontWeight: 600,
+                  fontSize: 13,
+                }}
+              >
+                💵 Espèces
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("kkiapay")}
+                style={{
+                  flex: 1,
+                  padding: 12,
+                  borderRadius: 10,
+                  border: `2px solid ${paymentMethod === "kkiapay" ? "var(--terracotta)" : "var(--line)"}`,
+                  background: paymentMethod === "kkiapay" ? "var(--terracotta)" : "var(--white)",
+                  color: paymentMethod === "kkiapay" ? "var(--white)" : "var(--ink)",
+                  fontWeight: 600,
+                  fontSize: 13,
+                }}
+              >
+                💳 Mobile Money
+              </button>
+            </div>
           </div>
+
+          {paymentMethod === "cod" ? (
+            <div style={{ fontSize: 12, background: "var(--cream)", padding: 10, borderRadius: 8 }}>
+              💵 Tu paieras en espèces directement au livreur à la réception de ta commande.
+            </div>
+          ) : (
+            <div style={{ fontSize: 12, background: "var(--cream)", padding: 10, borderRadius: 8 }}>
+              💳 Tu pourras régler en ligne dès que ton livreur sera en route avec ta commande.
+            </div>
+          )}
 
           <label style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
             <input

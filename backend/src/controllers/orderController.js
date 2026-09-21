@@ -16,7 +16,7 @@ const generateToken = (id) =>
   });
 
 const createOrder = asyncHandler(async (req, res) => {
-  const { items, name, deliveryAddress, deliveryPhone, deliveryCity, selfDelivery, promoCodes } = req.body;
+  const { items, name, deliveryAddress, deliveryPhone, deliveryCity, selfDelivery, paymentMethod, promoCodes } = req.body;
 
   if (!items || items.length === 0) {
     return res.status(400).json({ message: "Le panier est vide." });
@@ -56,7 +56,7 @@ const createOrder = asyncHandler(async (req, res) => {
     freshToken = generateToken(currentUser._id);
   }
 
-  const method = "kkiapay";
+  const method = paymentMethod === "kkiapay" ? "kkiapay" : "cod";
 
   let itemsTotal = 0;
   let commissionAmount = 0;
@@ -64,12 +64,26 @@ const createOrder = asyncHandler(async (req, res) => {
   const shopCache = {};
 
   for (const it of items) {
-    const product = await Product.findById(it.productId).populate("shop");
-    if (!product || !product.isActive) {
-      return res.status(400).json({ message: `Produit indisponible : ${it.productId}` });
+    const productDoc = await Product.findById(it.productId).populate("shop");
+
+    if (!productDoc || !productDoc.isActive) {
+      const label = productDoc ? productDoc.name : null;
+      return res.status(400).json({
+        code: "PRODUCT_UNAVAILABLE",
+        productId: it.productId,
+        message: label
+          ? `"${label}" n'est plus disponible. Retire-le de ton panier pour continuer.`
+          : "Un article de ton panier n'est plus disponible. Retire-le pour continuer.",
+      });
     }
+
+    const product = productDoc;
     if (product.stock < it.quantity) {
-      return res.status(400).json({ message: `Stock insuffisant pour ${product.name}.` });
+      return res.status(400).json({
+        code: "PRODUCT_OUT_OF_STOCK",
+        productId: it.productId,
+        message: `Stock insuffisant pour "${product.name}" (${product.stock} restant${product.stock > 1 ? "s" : ""}).`,
+      });
     }
 
     const lineTotal = product.price * it.quantity;
@@ -189,7 +203,9 @@ const createOrder = asyncHandler(async (req, res) => {
         s.owner,
         "new_order",
         "Nouvelle commande à préparer",
-        "Une nouvelle commande vient d'être passée. Le client réglera en ligne une fois la livraison effectuée.",
+        method === "kkiapay"
+          ? "Une nouvelle commande vient d'être passée. Le client réglera en ligne une fois la livraison effectuée."
+          : "Une nouvelle commande vient d'être passée sur votre boutique. Le règlement se fera en espèces à la livraison.",
         "/marchand/commandes"
       );
     }
@@ -199,13 +215,18 @@ const createOrder = asyncHandler(async (req, res) => {
     currentUser._id,
     "order_status",
     "Merci pour votre commande",
-    `Votre commande de ${grandTotal.toLocaleString("fr-FR")} FCFA a bien été enregistrée. Vous pourrez régler en ligne une fois la livraison effectuée.`,
+    method === "kkiapay"
+      ? `Votre commande de ${grandTotal.toLocaleString("fr-FR")} FCFA a bien été enregistrée. Vous pourrez régler en ligne une fois la livraison effectuée.`
+      : `Votre commande de ${grandTotal.toLocaleString("fr-FR")} FCFA a bien été enregistrée. Merci de prévoir le montant en espèces pour le livreur. Livraison estimée sous 48h.`,
     "/commandes"
   );
 
   const client = await User.findById(currentUser._id);
   if (client?.email) {
     const itemsHtml = orderItems.map((it) => `<li>${it.quantity} × ${it.name} — ${(it.price * it.quantity).toLocaleString("fr-FR")} FCFA</li>`).join("");
+    const paymentLine = method === "kkiapay"
+      ? "Vous pourrez régler en ligne une fois votre commande livrée."
+      : `Merci de prévoir <strong>${grandTotal.toLocaleString("fr-FR")} FCFA</strong> en espèces pour le livreur.`;
 
     await sendEmail(
       client.email,
@@ -216,7 +237,7 @@ const createOrder = asyncHandler(async (req, res) => {
           <p>Votre commande a bien été enregistrée et est en cours de préparation.</p>
           <ul style="padding-left: 18px;">${itemsHtml}</ul>
           <p style="font-weight: bold; font-size: 16px;">Total : ${grandTotal.toLocaleString("fr-FR")} FCFA</p>
-          <p>Vous pourrez régler en ligne une fois votre commande livrée.</p>
+          <p>${paymentLine}</p>
           <p style="color: #666; font-size: 13px;">Livraison estimée sous 48h à l'adresse : ${deliveryAddress}${deliveryCity ? `, ${deliveryCity}` : ""}.</p>
           <p style="color: #666; font-size: 13px;">Merci de votre confiance,<br/>L'équipe Shopyz</p>
         </div>
@@ -387,12 +408,60 @@ const submitDeliveryProof = asyncHandler(async (req, res) => {
     );
   }
 
+  if (order.paymentMethod === "kkiapay") {
+    await notify(
+      order.client,
+      "order_status",
+      "Ta commande a été livrée",
+      "Tu peux maintenant régler ta commande en ligne.",
+      `/payer-commande/${order._id}`
+    );
+  }
+
+  res.json(order);
+});
+
+const submitPaymentProof = asyncHandler(async (req, res) => {
+  const { imageUrl } = req.body;
+  if (!imageUrl) return res.status(400).json({ message: "Image requise." });
+
+  const order = await Order.findById(req.params.id).populate("items.shop");
+  if (!order) return res.status(404).json({ message: "Commande introuvable." });
+
+  const isCourier = order.assignedCourier && order.assignedCourier.toString() === req.user._id.toString();
+  if (!isCourier) {
+    return res.status(403).json({ message: "Accès non autorisé." });
+  }
+  if (order.paymentMethod !== "cod") {
+    return res.status(400).json({ message: "Cette commande n'utilise pas le paiement en espèces." });
+  }
+  if (!order.deliveryProofUrl) {
+    return res.status(400).json({ message: "La preuve de livraison doit être envoyée en premier." });
+  }
+
+  order.paymentProofUrl = imageUrl;
+  order.paymentStatus = "paid";
+  order.paidAt = new Date();
+  order.status = "delivered";
+  await order.save();
+
+  const shopOwners = [...new Set(order.items.map((it) => it.shop.owner.toString()))];
+  for (const ownerId of shopOwners) {
+    await notify(
+      ownerId,
+      "order_status",
+      "Commande livrée et payée",
+      "La preuve de paiement en espèces a été reçue. La commande est marquée comme livrée.",
+      "/marchand/commandes"
+    );
+  }
+
   await notify(
     order.client,
     "order_status",
-    "Ta commande a été livrée",
-    "Tu peux maintenant régler ta commande en ligne.",
-    `/payer-commande/${order._id}`
+    "Votre commande a été livrée",
+    "Votre commande a bien été livrée et réglée en espèces.",
+    "/commandes"
   );
 
   res.json(order);
@@ -409,6 +478,11 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   if (!order) return res.status(404).json({ message: "Commande introuvable." });
 
   order.status = status;
+  if (status === "delivered" && order.paymentMethod === "cod" && order.paymentStatus !== "paid") {
+    order.paymentStatus = "paid";
+    order.paidAt = new Date();
+    order.status = "delivered";
+  }
   await order.save();
 
   const statusLabels = {
@@ -433,5 +507,6 @@ module.exports = {
   payOrder,
   respondAsCourier,
   submitDeliveryProof,
+  submitPaymentProof,
   updateOrderStatus,
 };
