@@ -4,6 +4,7 @@ import Head from "next/head";
 import Header from "../../components/Header";
 import api from "../../lib/api";
 import { useCart } from "../../lib/cart";
+import { useAuth } from "../../lib/auth";
 
 function priceForQty(product, qty) {
   if (!product.priceTiers || product.priceTiers.length === 0) return product.price;
@@ -17,6 +18,7 @@ export default function ProduitDetail() {
   const router = useRouter();
   const { id } = router.query;
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const [product, setProduct] = useState(undefined);
   const [activeImage, setActiveImage] = useState(0);
   const [qty, setQty] = useState("1");
@@ -36,6 +38,16 @@ export default function ProduitDetail() {
     }, 3000);
     return () => clearInterval(interval);
   }, [images.length]);
+
+  const handleNegotiate = () => {
+    if (!user) {
+      router.push(`/connexion?next=/produit/${id}`);
+      return;
+    }
+    router.push(
+      `/messages/${product.shop._id}?produit=${encodeURIComponent(product.name)}&prix=${unitPrice}`
+    );
+  };
 
   if (product === undefined) {
     return (
@@ -192,18 +204,36 @@ export default function ProduitDetail() {
           />
         </div>
 
-        <button
-          className="btn-primary"
-          style={{ width: "100%", padding: 14, fontSize: 15 }}
-          disabled={product.stock === 0}
-          onClick={() => {
-            addToCart({ ...product, price: unitPrice }, numericQty);
-            setAdded(true);
-            setTimeout(() => setAdded(false), 2000);
-          }}
-        >
-          {product.stock === 0 ? "Indisponible" : added ? "Ajouté !" : "Ajouter au panier"}
-        </button>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button
+            type="button"
+            onClick={handleNegotiate}
+            style={{
+              flex: 1,
+              padding: 14,
+              fontSize: 14,
+              fontWeight: 600,
+              borderRadius: 14,
+              border: "1px solid var(--line)",
+              background: "var(--white)",
+              color: "var(--ink)",
+            }}
+          >
+            💬 Négocier
+          </button>
+          <button
+            className="btn-primary"
+            style={{ flex: 2, padding: 14, fontSize: 15 }}
+            disabled={product.stock === 0}
+            onClick={() => {
+              addToCart({ ...product, price: unitPrice }, numericQty);
+              setAdded(true);
+              setTimeout(() => setAdded(false), 2000);
+            }}
+          >
+            {product.stock === 0 ? "Indisponible" : added ? "Ajouté !" : "Ajouter au panier"}
+          </button>
+        </div>
       </main>
     </>
   );
