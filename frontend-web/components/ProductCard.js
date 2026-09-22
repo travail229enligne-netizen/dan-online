@@ -11,6 +11,7 @@ export default function ProductCard({ product, onAddToCart, isFavorite: initialF
   const [feedback, setFeedback] = useState("");
 
   const isFeatured = product.featuredUntil && new Date(product.featuredUntil) > new Date();
+  const productHref = `/produit/${product.slug || product._id}`;
 
   useEffect(() => {
     setIsFav(initialFav);
@@ -58,7 +59,7 @@ export default function ProductCard({ product, onAddToCart, isFavorite: initialF
         overflow: "hidden",
       }}
     >
-      <a href={`/produit/${product._id}`}>
+      <a href={productHref}>
         <div
           style={{
             height: 200,
@@ -144,7 +145,7 @@ export default function ProductCard({ product, onAddToCart, isFavorite: initialF
         </div>
       </a>
       <div style={{ padding: 12 }}>
-        <a href={`/produit/${product._id}`}>
+        <a href={productHref}>
           <div style={{ color: "var(--terracotta-dark)", fontWeight: 700 }}>
             {product.price?.toLocaleString("fr-FR")} FCFA
           </div>

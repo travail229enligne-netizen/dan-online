@@ -66,15 +66,15 @@ export default function MerchantProduits() {
   const [statsData, setStatsData] = useState({});
   const [statsLoading, setStatsLoading] = useState(null);
 
-  const getProductUrl = (id) =>
-    typeof window !== "undefined" ? `${window.location.origin}/produit/${id}` : "";
+  const getProductUrl = (idOrSlug) =>
+    typeof window !== "undefined" ? `${window.location.origin}/produit/${idOrSlug}` : "";
 
   const getShopUrl = () =>
     shop && typeof window !== "undefined" ? `${window.location.origin}/boutique/${shop.slug}` : "";
 
-  const handleCopyLink = async (id) => {
+  const handleCopyLink = async (idOrSlug) => {
     try {
-      await navigator.clipboard.writeText(getProductUrl(id));
+      await navigator.clipboard.writeText(getProductUrl(idOrSlug));
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
     } catch (err) {
@@ -843,12 +843,12 @@ export default function MerchantProduits() {
                           <div style={{ display: "flex", gap: 6 }}>
                             <input
                               readOnly
-                              value={getProductUrl(p._id)}
+                              value={getProductUrl(p.slug || p._id)}
                               onFocus={(e) => e.target.select()}
                               style={{ flex: 1, minWidth: 0, padding: 8, fontSize: 11, border: "1px solid var(--line)", borderRadius: 8, background: "var(--white)" }}
                             />
                             <button
-                              onClick={() => handleCopyLink(p._id)}
+                              onClick={() => handleCopyLink(p.slug || p._id)}
                               style={{ fontSize: 11, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--white)", fontWeight: 600, whiteSpace: "nowrap" }}
                             >
                               {copiedId === p._id ? "Copié !" : "Copier"}
@@ -856,7 +856,7 @@ export default function MerchantProduits() {
                           </div>
                           <div style={{ display: "flex", gap: 8 }}>
                             <a
-                              href={`https://wa.me/?text=${encodeURIComponent(`${p.name} — ${p.price.toLocaleString("fr-FR")} FCFA\n${getProductUrl(p._id)}`)}`}
+                              href={`https://wa.me/?text=${encodeURIComponent(`${p.name} — ${p.price.toLocaleString("fr-FR")} FCFA\n${getProductUrl(p.slug || p._id)}`)}`}
                               target="_blank"
                               rel="noreferrer"
                               style={{ flex: 1, textAlign: "center", fontSize: 12, padding: "8px 10px", borderRadius: 8, background: "var(--ink)", color: "var(--white)", fontWeight: 600 }}
@@ -864,7 +864,7 @@ export default function MerchantProduits() {
                               💬 WhatsApp
                             </a>
                             <a
-                              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getProductUrl(p._id))}`}
+                              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getProductUrl(p.slug || p._id))}`}
                               target="_blank"
                               rel="noreferrer"
                               style={{ flex: 1, textAlign: "center", fontSize: 12, padding: "8px 10px", borderRadius: 8, background: "var(--ink)", color: "var(--white)", fontWeight: 600 }}

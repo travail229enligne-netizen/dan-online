@@ -8,8 +8,6 @@ const priceTierSchema = new mongoose.Schema(
   { _id: false }
 );
 
-// Une option de variante (ex: "Sans fil"), avec un prix optionnel qui
-// remplace le prix de base du produit si le client la choisit.
 const variantOptionSchema = new mongoose.Schema(
   {
     label: { type: String, required: true, trim: true },
@@ -18,8 +16,6 @@ const variantOptionSchema = new mongoose.Schema(
   { _id: false }
 );
 
-// Un groupe de variantes (ex: "Type" avec les options "Avec fil"/"Sans fil",
-// ou "Couleur" avec "Rouge"/"Bleu"/"Noir")
 const variantGroupSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -33,6 +29,7 @@ const productSchema = new mongoose.Schema(
     shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", required: true },
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
     name: { type: String, required: true, trim: true },
+    slug: { type: String, unique: true, sparse: true, lowercase: true }, // lien lisible, ex: durag-original-a3f2
     description: { type: String, default: "" },
     price: { type: Number, required: true, min: 0 },
     unit: { type: String, default: "unité" },

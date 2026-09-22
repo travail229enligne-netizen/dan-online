@@ -1,4 +1,5 @@
 const asyncHandler = require("express-async-handler");
+const mongoose = require("mongoose");
 const { parse } = require("csv-parse/sync");
 const Product = require("../models/Product");
 const Shop = require("../models/Shop");
@@ -26,6 +27,26 @@ function sanitizeVariantGroups(groups) {
         })),
     }))
     .filter((g) => g.options.length > 0);
+}
+
+function slugify(name) {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+async function generateUniqueSlug(name) {
+  const base = slugify(name) || "produit";
+  for (let i = 0; i < 5; i++) {
+    const suffix = Math.random().toString(36).slice(2, 6);
+    const candidate = `${base}-${suffix}`;
+    const exists = await Product.findOne({ slug: candidate });
+    if (!exists) return candidate;
+  }
+  return `${base}-${Date.now().toString(36)}`;
 }
 
 const getProducts = asyncHandler(async (req, res) => {
@@ -71,15 +92,32 @@ const getProducts = asyncHandler(async (req, res) => {
   res.json({ products, total, page: Number(page), pages: Math.ceil(total / limit) });
 });
 
+// @route   GET /api/products/:id
+// @access  Public - accepte soit le slug (nouveau format), soit l'ancien
+// identifiant technique (liens deja partages, retrocompatibilite)
 const getProductById = asyncHandler(async (req, res) => {
-  const product = await Product.findByIdAndUpdate(
-    req.params.id,
+  const { id } = req.params;
+  const isValidObjectId = mongoose.Types.ObjectId.isValid(id);
+
+  const query = isValidObjectId ? { $or: [{ _id: id }, { slug: id }] } : { slug: id };
+
+  let product = await Product.findOneAndUpdate(
+    query,
     { $inc: { viewCount: 1 } },
     { new: true }
   )
     .populate("shop", "name slug isVerified businessType")
     .populate("category", "name icon");
+
   if (!product) return res.status(404).json({ message: "Produit introuvable." });
+
+  // Migration douce : les produits crees avant l'ajout des slugs n'en ont pas
+  // encore -> on leur en attribue un au premier chargement, sans rien casser.
+  if (!product.slug) {
+    product.slug = await generateUniqueSlug(product.name);
+    await product.save();
+  }
+
   res.json(product);
 });
 
@@ -91,10 +129,13 @@ const createProduct = asyncHandler(async (req, res) => {
   }
 
   const { name, description, price, unit, stock, category, images, priceTiers, variantGroups, prepTimeMinutes, isDailySpecial } = req.body;
+  const slug = await generateUniqueSlug(name);
+
   const product = await Product.create({
     shop: shop._id,
     category,
     name,
+    slug,
     description,
     price,
     unit,
@@ -113,7 +154,7 @@ const createProduct = asyncHandler(async (req, res) => {
       "message",
       "Nouveau produit",
       `${shop.name} vient d'ajouter "${name}".`,
-      `/produit/${product._id}`
+      `/produit/${product.slug}`
     );
   }
 
@@ -136,6 +177,9 @@ const updateProduct = asyncHandler(async (req, res) => {
   }
   if (req.body.variantGroups !== undefined) {
     product.variantGroups = sanitizeVariantGroups(req.body.variantGroups);
+  }
+  if (!product.slug) {
+    product.slug = await generateUniqueSlug(product.name);
   }
 
   await product.save();
@@ -230,9 +274,11 @@ const importProductsCSV = asyncHandler(async (req, res) => {
     }
 
     try {
+      const slug = await generateUniqueSlug(name);
       const product = await Product.create({
         shop: shop._id,
         name,
+        slug,
         description,
         price,
         unit,
