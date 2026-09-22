@@ -23,10 +23,21 @@ export default function ProduitDetail() {
   const [activeImage, setActiveImage] = useState(0);
   const [qty, setQty] = useState("1");
   const [added, setAdded] = useState(false);
+  const [selectedVariants, setSelectedVariants] = useState({});
 
   useEffect(() => {
     if (!id) return;
-    api.get(`/products/${id}`).then((r) => setProduct(r.data)).catch(() => setProduct(null));
+    api.get(`/products/${id}`).then((r) => {
+      setProduct(r.data);
+      // Pre-selectionne la premiere option de chaque groupe de variantes
+      if (r.data.variantGroups && r.data.variantGroups.length > 0) {
+        const defaults = {};
+        r.data.variantGroups.forEach((g) => {
+          if (g.options.length > 0) defaults[g.name] = g.options[0].label;
+        });
+        setSelectedVariants(defaults);
+      }
+    }).catch(() => setProduct(null));
   }, [id]);
 
   const images = product && product.images && product.images.length > 0 ? product.images : [null];
@@ -38,6 +49,28 @@ export default function ProduitDetail() {
     }, 3000);
     return () => clearInterval(interval);
   }, [images.length]);
+
+  // Cherche, parmi les groupes de variantes, la premiere option choisie qui a
+  // un prix defini : ce prix remplace alors le prix de base/paliers du produit.
+  const getVariantOverridePrice = () => {
+    if (!product?.variantGroups) return null;
+    for (const group of product.variantGroups) {
+      const chosenLabel = selectedVariants[group.name];
+      const option = group.options.find((o) => o.label === chosenLabel);
+      if (option && option.price !== null && option.price !== undefined) {
+        return option.price;
+      }
+    }
+    return null;
+  };
+
+  const getVariantSummary = () => {
+    if (!product?.variantGroups || product.variantGroups.length === 0) return "";
+    return product.variantGroups
+      .map((g) => selectedVariants[g.name])
+      .filter(Boolean)
+      .join(", ");
+  };
 
   const handleNegotiate = () => {
     if (!user) {
@@ -72,8 +105,10 @@ export default function ProduitDetail() {
   }
 
   const numericQty = Math.max(1, Number(qty) || 1);
-  const unitPrice = priceForQty(product, numericQty);
+  const variantOverride = getVariantOverridePrice();
+  const unitPrice = variantOverride !== null ? variantOverride : priceForQty(product, numericQty);
   const total = unitPrice * numericQty;
+  const variantSummary = getVariantSummary();
 
   const pageTitle = `${product.name} - ${product.price?.toLocaleString("fr-FR")} FCFA | Shopyz`;
   const pageDescription = product.description
@@ -143,6 +178,42 @@ export default function ProduitDetail() {
           <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 10 }}>
             Total pour {numericQty} {product.unit} : <strong style={{ color: "var(--ink)" }}>{total.toLocaleString("fr-FR")} FCFA</strong>
           </p>
+        )}
+
+        {product.variantGroups && product.variantGroups.length > 0 && (
+          <div style={{ marginBottom: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+            {product.variantGroups.map((group) => (
+              <div key={group.name}>
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{group.name}</div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {group.options.map((opt) => {
+                    const active = selectedVariants[group.name] === opt.label;
+                    return (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        onClick={() => setSelectedVariants({ ...selectedVariants, [group.name]: opt.label })}
+                        style={{
+                          padding: "8px 14px",
+                          borderRadius: 20,
+                          border: `2px solid ${active ? "var(--terracotta)" : "var(--line)"}`,
+                          background: active ? "var(--terracotta)" : "var(--white)",
+                          color: active ? "var(--white)" : "var(--ink)",
+                          fontSize: 13,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {opt.label}
+                        {opt.price !== null && opt.price !== undefined && (
+                          <span style={{ opacity: 0.8, fontWeight: 400 }}> — {opt.price.toLocaleString("fr-FR")} FCFA</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
 
         {product.priceTiers && product.priceTiers.length > 0 && (
@@ -226,7 +297,8 @@ export default function ProduitDetail() {
             style={{ flex: 2, padding: 14, fontSize: 15 }}
             disabled={product.stock === 0}
             onClick={() => {
-              addToCart({ ...product, price: unitPrice }, numericQty);
+              const displayName = variantSummary ? `${product.name} (${variantSummary})` : product.name;
+              addToCart({ ...product, name: displayName, price: unitPrice }, numericQty);
               setAdded(true);
               setTimeout(() => setAdded(false), 2000);
             }}

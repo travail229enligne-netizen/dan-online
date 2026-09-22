@@ -12,6 +12,22 @@ function sanitizeTiers(tiers) {
     .sort((a, b) => a.minQty - b.minQty);
 }
 
+function sanitizeVariantGroups(groups) {
+  if (!Array.isArray(groups)) return [];
+  return groups
+    .filter((g) => g && g.name && g.name.trim())
+    .map((g) => ({
+      name: g.name.trim(),
+      options: (Array.isArray(g.options) ? g.options : [])
+        .filter((o) => o && o.label && o.label.trim())
+        .map((o) => ({
+          label: o.label.trim(),
+          price: o.price !== "" && o.price !== undefined && o.price !== null ? Number(o.price) : null,
+        })),
+    }))
+    .filter((g) => g.options.length > 0);
+}
+
 const getProducts = asyncHandler(async (req, res) => {
   const { category, shop, search, minPrice, maxPrice, wholesale, location, page = 1, limit = 20 } = req.query;
   const filter = { isActive: true };
@@ -22,9 +38,6 @@ const getProducts = asyncHandler(async (req, res) => {
     const term = search.trim();
     const regex = { $regex: term, $options: "i" };
 
-    // Cherche aussi parmi les boutiques dont le nom correspond au terme,
-    // pour remonter leurs produits meme si le nom/description du produit
-    // ne contient pas le mot tape (ex: chercher "Bodystore" trouve ses produits)
     const matchingShops = await Shop.find({ status: "active", name: regex }).select("_id");
     const matchingShopIds = matchingShops.map((s) => s._id);
 
@@ -77,7 +90,7 @@ const createProduct = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Votre boutique n'est pas encore validée par l'administrateur." });
   }
 
-  const { name, description, price, unit, stock, category, images, priceTiers, prepTimeMinutes, isDailySpecial } = req.body;
+  const { name, description, price, unit, stock, category, images, priceTiers, variantGroups, prepTimeMinutes, isDailySpecial } = req.body;
   const product = await Product.create({
     shop: shop._id,
     category,
@@ -88,6 +101,7 @@ const createProduct = asyncHandler(async (req, res) => {
     stock,
     images,
     priceTiers: sanitizeTiers(priceTiers),
+    variantGroups: sanitizeVariantGroups(variantGroups),
     prepTimeMinutes: prepTimeMinutes ? Number(prepTimeMinutes) : null,
     isDailySpecial: !!isDailySpecial,
   });
@@ -119,6 +133,9 @@ const updateProduct = asyncHandler(async (req, res) => {
   });
   if (req.body.priceTiers !== undefined) {
     product.priceTiers = sanitizeTiers(req.body.priceTiers);
+  }
+  if (req.body.variantGroups !== undefined) {
+    product.variantGroups = sanitizeVariantGroups(req.body.variantGroups);
   }
 
   await product.save();

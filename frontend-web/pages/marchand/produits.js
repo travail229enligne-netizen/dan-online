@@ -11,6 +11,7 @@ const emptyForm = {
   unit: "unité",
   images: [],
   priceTiers: [],
+  variantGroups: [],
   category: "",
   prepTimeMinutes: "",
   isDailySpecial: false,
@@ -129,6 +130,10 @@ export default function MerchantProduits() {
       unit: p.unit,
       images: p.images || [],
       priceTiers: p.priceTiers || [],
+      variantGroups: (p.variantGroups || []).map((g) => ({
+        name: g.name,
+        options: g.options.map((o) => ({ label: o.label, price: o.price ?? "" })),
+      })),
       category: p.category?._id || p.category || "",
       prepTimeMinutes: p.prepTimeMinutes || "",
       isDailySpecial: p.isDailySpecial || false,
@@ -155,6 +160,40 @@ export default function MerchantProduits() {
     setForm({ ...form, priceTiers: form.priceTiers.filter((_, i) => i !== index) });
   };
 
+  const addVariantGroup = () => {
+    setForm({ ...form, variantGroups: [...form.variantGroups, { name: "", options: [{ label: "", price: "" }] }] });
+  };
+
+  const updateVariantGroupName = (gi, value) => {
+    const groups = [...form.variantGroups];
+    groups[gi] = { ...groups[gi], name: value };
+    setForm({ ...form, variantGroups: groups });
+  };
+
+  const removeVariantGroup = (gi) => {
+    setForm({ ...form, variantGroups: form.variantGroups.filter((_, i) => i !== gi) });
+  };
+
+  const addVariantOption = (gi) => {
+    const groups = [...form.variantGroups];
+    groups[gi] = { ...groups[gi], options: [...groups[gi].options, { label: "", price: "" }] };
+    setForm({ ...form, variantGroups: groups });
+  };
+
+  const updateVariantOption = (gi, oi, field, value) => {
+    const groups = [...form.variantGroups];
+    const options = [...groups[gi].options];
+    options[oi] = { ...options[oi], [field]: value };
+    groups[gi] = { ...groups[gi], options };
+    setForm({ ...form, variantGroups: groups });
+  };
+
+  const removeVariantOption = (gi, oi) => {
+    const groups = [...form.variantGroups];
+    groups[gi] = { ...groups[gi], options: groups[gi].options.filter((_, i) => i !== oi) };
+    setForm({ ...form, variantGroups: groups });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -163,11 +202,22 @@ export default function MerchantProduits() {
         .filter((t) => t.minQty && t.price)
         .map((t) => ({ minQty: Number(t.minQty), price: Number(t.price) }));
 
+      const cleanVariantGroups = form.variantGroups
+        .filter((g) => g.name.trim())
+        .map((g) => ({
+          name: g.name.trim(),
+          options: g.options
+            .filter((o) => o.label.trim())
+            .map((o) => ({ label: o.label.trim(), price: o.price !== "" ? Number(o.price) : null })),
+        }))
+        .filter((g) => g.options.length > 0);
+
       const payload = {
         ...form,
         price: Number(form.price),
         stock: Number(form.stock),
         priceTiers: cleanTiers,
+        variantGroups: cleanVariantGroups,
         prepTimeMinutes: form.prepTimeMinutes ? Number(form.prepTimeMinutes) : null,
       };
 
@@ -367,6 +417,11 @@ export default function MerchantProduits() {
                         {form.priceTiers.filter((t) => t.minQty && t.price).length} palier{form.priceTiers.length > 1 ? "s" : ""} de gros
                       </span>
                     )}
+                    {form.variantGroups.filter((g) => g.name.trim()).length > 0 && (
+                      <span style={{ fontSize: 10, fontWeight: 700, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "3px 8px" }}>
+                        {form.variantGroups.filter((g) => g.name.trim()).length} variante{form.variantGroups.length > 1 ? "s" : ""}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -455,6 +510,87 @@ export default function MerchantProduits() {
                     ))}
                   </select>
                 </label>
+              </Section>
+
+              <Section>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Eyebrow>Variantes (ex: Type, Couleur)</Eyebrow>
+                  <button
+                    type="button"
+                    onClick={addVariantGroup}
+                    style={{ fontSize: 12, color: "var(--ink)", fontWeight: 700, textDecoration: "underline", marginTop: -12 }}
+                  >
+                    + Ajouter un groupe
+                  </button>
+                </div>
+                {form.variantGroups.length === 0 && (
+                  <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: -4 }}>
+                    Aucune variante. Ex : un groupe "Type" avec "Avec fil" à 500 FCFA et "Sans fil" à 1000 FCFA.
+                  </p>
+                )}
+                {form.variantGroups.map((group, gi) => (
+                  <div
+                    key={gi}
+                    style={{
+                      background: "var(--cream)",
+                      borderRadius: 12,
+                      padding: 12,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 8,
+                    }}
+                  >
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <input
+                        placeholder="Nom du groupe (ex: Type, Couleur)"
+                        value={group.name}
+                        onChange={(e) => updateVariantGroupName(gi, e.target.value)}
+                        style={{ flex: 1, minWidth: 0, padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 13, background: "var(--white)", fontWeight: 600 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeVariantGroup(gi)}
+                        aria-label="Retirer ce groupe"
+                        style={{ fontSize: 18, color: "var(--terracotta-dark)", padding: "0 6px", fontWeight: 700 }}
+                      >
+                        ×
+                      </button>
+                    </div>
+
+                    {group.options.map((opt, oi) => (
+                      <div key={oi} style={{ display: "flex", gap: 6, alignItems: "center", paddingLeft: 12 }}>
+                        <input
+                          placeholder="Ex: Avec fil"
+                          value={opt.label}
+                          onChange={(e) => updateVariantOption(gi, oi, "label", e.target.value)}
+                          style={{ flex: 2, minWidth: 0, padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 12, background: "var(--white)" }}
+                        />
+                        <input
+                          type="number"
+                          placeholder="Prix (optionnel)"
+                          value={opt.price}
+                          onChange={(e) => updateVariantOption(gi, oi, "price", e.target.value)}
+                          style={{ flex: 1, minWidth: 0, padding: 8, border: "1px solid var(--line)", borderRadius: 8, fontSize: 12, background: "var(--white)" }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeVariantOption(gi, oi)}
+                          aria-label="Retirer cette option"
+                          style={{ fontSize: 15, color: "var(--terracotta-dark)", padding: "0 4px", fontWeight: 700 }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => addVariantOption(gi)}
+                      style={{ fontSize: 12, color: "var(--ink)", fontWeight: 600, textDecoration: "underline", alignSelf: "flex-start", marginLeft: 12 }}
+                    >
+                      + Ajouter une option
+                    </button>
+                  </div>
+                ))}
               </Section>
 
               {isRestaurant && (
@@ -620,6 +756,11 @@ export default function MerchantProduits() {
                           {p.priceTiers?.length > 0 && (
                             <span style={{ fontWeight: 400, fontSize: 11, color: "var(--ink-soft)" }}>
                               {" "}+ {p.priceTiers.length} palier{p.priceTiers.length > 1 ? "s" : ""}
+                            </span>
+                          )}
+                          {p.variantGroups?.length > 0 && (
+                            <span style={{ fontWeight: 400, fontSize: 11, color: "var(--ink-soft)" }}>
+                              {" "}· {p.variantGroups.length} variante{p.variantGroups.length > 1 ? "s" : ""}
                             </span>
                           )}
                         </div>
