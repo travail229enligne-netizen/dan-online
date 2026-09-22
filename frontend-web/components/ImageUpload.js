@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { resizeImageIfNeeded } from '../lib/imageResize';
 
 const CLOUD_NAME = 'op1wrztj';
 const UPLOAD_PRESET = 'dan-online';
@@ -16,8 +17,10 @@ export default function ImageUpload({ value, onChange, label = 'Photo' }) {
     setUploading(true);
 
     try {
+      const optimized = await resizeImageIfNeeded(file);
+
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', optimized);
       formData.append('upload_preset', UPLOAD_PRESET);
 
       const res = await fetch(

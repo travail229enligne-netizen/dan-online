@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { resizeImageIfNeeded } from '../lib/imageResize';
 
 const CLOUD_NAME = 'op1wrztj';
 const UPLOAD_PRESET = 'dan-online';
@@ -23,8 +24,10 @@ export default function ImageUploadMulti({ values = [], onChange, label = 'Photo
 
     try {
       const uploads = files.slice(0, remaining).map(async (file) => {
+        const optimized = await resizeImageIfNeeded(file);
+
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('file', optimized);
         formData.append('upload_preset', UPLOAD_PRESET);
         const res = await fetch(
           `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
