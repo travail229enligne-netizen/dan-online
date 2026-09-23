@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 
 const LETTERS = ["S", "H", "O", "P", "Y", "Z"];
+const PANDA_URL =
+  "https://res.cloudinary.com/op1wrztj/image/upload/e_trim,c_pad,b_transparent/v1790159662/f8qmd314iffu0jlhpojl.jpg";
 
 export default function SplashScreen({ onFinish }) {
   useEffect(() => {
@@ -11,16 +13,12 @@ export default function SplashScreen({ onFinish }) {
   return (
     <div className="splash">
       <div className="stage">
-        <div className="path" />
-
-        <div className="rig">
-          <div className="shadow" />
-          <div className="bounce">
-            <img
-              src="https://res.cloudinary.com/op1wrztj/image/upload/v1790159662/f8qmd314iffu0jlhpojl.jpg"
-              alt="Panda Shopyz"
-              className="panda-img"
-            />
+        <div className="rig-container">
+          <div className="rig">
+            <div className="shadow" />
+            <div className="bounce">
+              <img src={PANDA_URL} alt="Panda Shopyz" className="panda-img" />
+            </div>
           </div>
         </div>
 
@@ -50,29 +48,23 @@ export default function SplashScreen({ onFinish }) {
           animation: fadeOut 0.6s ease 3.6s forwards;
         }
         .stage {
-          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
           width: 100%;
           max-width: 480px;
-          height: 380px;
+          gap: 28px;
         }
-        .path {
-          position: absolute;
-          left: 6%;
-          right: 6%;
-          top: 230px;
-          height: 1px;
-          background: linear-gradient(
-            to right,
-            transparent,
-            rgba(17, 17, 17, 0.12) 15%,
-            rgba(17, 17, 17, 0.12) 85%,
-            transparent
-          );
+        .rig-container {
+          position: relative;
+          width: 100%;
+          height: 200px;
         }
         .rig {
           position: absolute;
           left: -220px;
-          top: 60px;
+          top: 0;
           width: 220px;
           animation: rigMove 3.2s cubic-bezier(0.45, 0, 0.4, 1) 0.15s forwards;
         }
@@ -100,12 +92,8 @@ export default function SplashScreen({ onFinish }) {
           filter: blur(2px);
         }
         .letters {
-          position: absolute;
-          left: 50%;
-          top: 260px;
           display: flex;
           gap: 4px;
-          transform: translateX(-50%);
         }
         .letter {
           font-family: var(--font-display);
