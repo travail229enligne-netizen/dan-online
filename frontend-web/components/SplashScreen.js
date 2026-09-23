@@ -17,7 +17,12 @@ export default function SplashScreen({ onFinish }) {
           <div className="rig">
             <div className="shadow" />
             <div className="bounce">
-              <img src={PANDA_URL} alt="Panda Shopyz" className="panda-img" />
+              <img
+                src={PANDA_URL}
+                alt="Panda Shopyz"
+                className="panda-img"
+                loading="eager"
+              />
             </div>
           </div>
         </div>
@@ -60,14 +65,14 @@ export default function SplashScreen({ onFinish }) {
         .rig-container {
           position: relative;
           width: 100%;
-          height: 200px;
+          height: 210px;
           overflow: hidden;
         }
         .rig {
           position: absolute;
-          left: -220px;
+          left: 0;
           top: 0;
-          width: 220px;
+          transform: translateX(-160px);
           animation: rigMove 3.2s cubic-bezier(0.45, 0, 0.4, 1) 0.15s forwards;
         }
         .bounce {
@@ -75,8 +80,8 @@ export default function SplashScreen({ onFinish }) {
         }
         .panda-img {
           display: block;
-          width: 220px;
-          height: auto;
+          height: 200px;
+          width: auto;
           object-fit: contain;
           transform: scaleX(-1);
           filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.1));
@@ -84,9 +89,9 @@ export default function SplashScreen({ onFinish }) {
         .shadow {
           position: absolute;
           left: 50%;
-          bottom: 4px;
-          width: 130px;
-          height: 16px;
+          bottom: 6px;
+          width: 100px;
+          height: 14px;
           background: rgba(17, 17, 17, 0.14);
           border-radius: 50%;
           transform: translateX(-50%);
@@ -111,10 +116,10 @@ export default function SplashScreen({ onFinish }) {
 
         @keyframes rigMove {
           0% {
-            left: -220px;
+            transform: translateX(-160px);
           }
           100% {
-            left: calc(100% + 20px);
+            transform: translateX(calc(100vw));
           }
         }
         @keyframes walkBounce {
