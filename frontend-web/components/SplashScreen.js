@@ -49,6 +49,8 @@ export default function SplashScreen({ onFinish }) {
           object-fit: contain;
           transform: scaleX(-1);
           filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.1));
+          -webkit-mask-image: radial-gradient(120% 120% at 50% 50%, black 88%, transparent 100%);
+          mask-image: radial-gradient(120% 120% at 50% 50%, black 88%, transparent 100%);
         }
         .shadow {
           position: absolute;
