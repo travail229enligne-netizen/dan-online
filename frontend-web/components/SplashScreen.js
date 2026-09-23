@@ -4,25 +4,12 @@ const LETTERS = ["S", "H", "O", "P", "Y", "Z"];
 
 function Panda() {
   return (
-    <svg width="90" height="150" viewBox="0 0 60 100" className="panda-svg">
-      {/* jambes (animees) */}
-      <rect className="leg leg-left" x="18" y="72" width="9" height="24" rx="4" fill="#111" />
-      <rect className="leg leg-right" x="33" y="72" width="9" height="24" rx="4" fill="#111" />
-      {/* corps */}
-      <ellipse cx="30" cy="58" rx="17" ry="22" fill="#fff" stroke="#111" strokeWidth="2" />
-      {/* bras tendu vers le chariot */}
-      <rect x="40" y="48" width="26" height="9" rx="4.5" fill="#111" />
-      {/* tete */}
-      <circle cx="30" cy="20" r="16" fill="#fff" stroke="#111" strokeWidth="2" />
-      {/* oreilles */}
-      <circle cx="17" cy="8" r="7" fill="#111" />
-      <circle cx="43" cy="8" r="7" fill="#111" />
-      {/* taches des yeux */}
-      <ellipse cx="21" cy="20" rx="5.5" ry="7.5" fill="#111" transform="rotate(-12 21 20)" />
-      <ellipse cx="39" cy="20" rx="5.5" ry="7.5" fill="#111" transform="rotate(12 39 20)" />
-      {/* museau */}
-      <circle cx="30" cy="27" r="2.4" fill="#111" />
-    </svg>
+    <img
+      src="https://res.cloudinary.com/op1wrztj/image/upload/v1790159662/f8qmd314iffu0jlhpojl.jpg"
+      alt="Panda Shopyz"
+      className="panda-svg"
+      style={{ width: "90px", height: "150px", objectFit: "contain", display: "block", transform: "scaleX(-1)" }}
+    />
   );
 }
 
@@ -134,14 +121,6 @@ export default function SplashScreen({ onFinish }) {
           opacity: 0;
           animation: letterAppear 0.01s linear forwards;
         }
-        .leg {
-          transform-box: fill-box;
-          transform-origin: top center;
-          animation: legSwing 0.4s ease-in-out infinite alternate;
-        }
-        .leg-right {
-          animation-delay: 0.2s;
-        }
 
         @keyframes rigMove {
           0%,
@@ -168,14 +147,6 @@ export default function SplashScreen({ onFinish }) {
           100% {
             top: -6px;
             transform: rotate(320deg);
-          }
-        }
-        @keyframes legSwing {
-          0% {
-            transform: rotate(-18deg);
-          }
-          100% {
-            transform: rotate(18deg);
           }
         }
         @keyframes letterAppear {
