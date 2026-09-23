@@ -128,7 +128,7 @@ export default function SplashScreen({ onFinish }) {
         }
         .letter {
           font-family: var(--font-display);
-          font-size: 34px;
+          font-size: 48px;
           font-weight: 700;
           color: var(--ink);
           opacity: 0;
