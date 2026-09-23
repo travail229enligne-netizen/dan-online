@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 const LETTERS = ["S", "H", "O", "P", "Y", "Z"];
 const PANDA_URL =
-  "https://res.cloudinary.com/op1wrztj/image/upload/e_trim,c_pad,b_transparent/v1790159662/f8qmd314iffu0jlhpojl.jpg";
+  "https://res.cloudinary.com/op1wrztj/image/upload/e_background_removal/e_trim/v1790159662/f8qmd314iffu0jlhpojl.png";
 
 export default function SplashScreen({ onFinish }) {
   useEffect(() => {
@@ -12,7 +12,7 @@ export default function SplashScreen({ onFinish }) {
 
   return (
     <div className="splash">
-      <div className="stage">
+      <div className="content">
         <div className="rig-container">
           <div className="rig">
             <div className="shadow" />
@@ -40,14 +40,15 @@ export default function SplashScreen({ onFinish }) {
           position: fixed;
           inset: 0;
           background: var(--cream);
-          display: flex;
-          align-items: center;
-          justify-content: center;
           z-index: 9999;
           overflow: hidden;
           animation: fadeOut 0.6s ease 3.6s forwards;
         }
-        .stage {
+        .content {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -60,6 +61,7 @@ export default function SplashScreen({ onFinish }) {
           position: relative;
           width: 100%;
           height: 200px;
+          overflow: hidden;
         }
         .rig {
           position: absolute;
@@ -77,12 +79,12 @@ export default function SplashScreen({ onFinish }) {
           height: auto;
           object-fit: contain;
           transform: scaleX(-1);
-          filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.08));
+          filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.1));
         }
         .shadow {
           position: absolute;
           left: 50%;
-          bottom: -6px;
+          bottom: 4px;
           width: 130px;
           height: 16px;
           background: rgba(17, 17, 17, 0.14);
@@ -93,6 +95,7 @@ export default function SplashScreen({ onFinish }) {
         }
         .letters {
           display: flex;
+          justify-content: center;
           gap: 4px;
         }
         .letter {
