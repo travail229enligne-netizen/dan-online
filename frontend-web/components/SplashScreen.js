@@ -2,6 +2,51 @@ import { useEffect } from "react";
 
 const LETTERS = ["S", "H", "O", "P", "Y", "Z"];
 
+function Panda() {
+  return (
+    <svg width="60" height="100" viewBox="0 0 60 100" className="panda-svg">
+      {/* jambes (animees) */}
+      <rect className="leg leg-left" x="18" y="72" width="9" height="24" rx="4" fill="#111" />
+      <rect className="leg leg-right" x="33" y="72" width="9" height="24" rx="4" fill="#111" />
+      {/* corps */}
+      <ellipse cx="30" cy="58" rx="17" ry="22" fill="#fff" stroke="#111" strokeWidth="2" />
+      {/* bras tendu vers le chariot */}
+      <rect x="40" y="48" width="26" height="9" rx="4.5" fill="#111" />
+      {/* tete */}
+      <circle cx="30" cy="20" r="16" fill="#fff" stroke="#111" strokeWidth="2" />
+      {/* oreilles */}
+      <circle cx="17" cy="8" r="7" fill="#111" />
+      <circle cx="43" cy="8" r="7" fill="#111" />
+      {/* taches des yeux */}
+      <ellipse cx="21" cy="20" rx="5.5" ry="7.5" fill="#111" transform="rotate(-12 21 20)" />
+      <ellipse cx="39" cy="20" rx="5.5" ry="7.5" fill="#111" transform="rotate(12 39 20)" />
+      {/* museau */}
+      <circle cx="30" cy="27" r="2.4" fill="#111" />
+    </svg>
+  );
+}
+
+function Cart() {
+  return (
+    <svg width="64" height="56" viewBox="0 0 70 60" className="cart-svg">
+      <polyline
+        points="4,8 14,8 14,20"
+        fill="none"
+        stroke="#111"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M14,20 L66,20 L58,46 L21,46 Z" fill="#111" />
+      <line x1="31" y1="20" x2="29" y2="46" stroke="var(--cream)" strokeWidth="2.5" />
+      <line x1="49" y1="20" x2="42" y2="46" stroke="var(--cream)" strokeWidth="2.5" />
+      <line x1="18" y1="33" x2="61" y2="33" stroke="var(--cream)" strokeWidth="2.5" />
+      <circle cx="29" cy="53" r="6" fill="#111" />
+      <circle cx="51" cy="53" r="6" fill="#111" />
+    </svg>
+  );
+}
+
 export default function SplashScreen({ onFinish }) {
   useEffect(() => {
     const timer = setTimeout(onFinish, 3800);
@@ -12,9 +57,13 @@ export default function SplashScreen({ onFinish }) {
     <div className="splash">
       <div className="stage">
         <div className="rig">
-          <span className="panda">🐼</span>
-          <span className="cart">🛒</span>
-          <span className="shoe">👟</span>
+          <div className="panda-wrap">
+            <Panda />
+          </div>
+          <div className="cart-wrap">
+            <Cart />
+            <span className="shoe">👟</span>
+          </div>
         </div>
         <div className="letters">
           {LETTERS.map((letter, i) => (
@@ -44,37 +93,35 @@ export default function SplashScreen({ onFinish }) {
         .stage {
           position: relative;
           width: 100%;
-          height: 160px;
+          height: 220px;
         }
         .rig {
           position: absolute;
           left: 50%;
-          top: 30px;
+          top: 14px;
           display: flex;
           align-items: flex-end;
           transform: translateX(-50%);
           animation: rigMove 3s ease-in-out forwards;
         }
-        .panda {
-          font-size: 44px;
-          margin-right: -6px;
-          transform: scaleX(-1);
+        .panda-wrap {
+          margin-right: -10px;
+          z-index: 2;
         }
-        .cart {
-          font-size: 58px;
+        .cart-wrap {
           position: relative;
         }
         .shoe {
           position: absolute;
-          left: 68px;
-          top: -60px;
-          font-size: 34px;
+          left: 22px;
+          top: -50px;
+          font-size: 30px;
           animation: fall 1s cubic-bezier(0.5, 0, 0.75, 0.9) forwards;
         }
         .letters {
           position: absolute;
           left: 50%;
-          top: 96px;
+          top: 176px;
           display: flex;
           gap: 3px;
           transform: translateX(-50%);
@@ -86,6 +133,14 @@ export default function SplashScreen({ onFinish }) {
           color: var(--ink);
           opacity: 0;
           animation: letterAppear 0.01s linear forwards;
+        }
+        .leg {
+          transform-box: fill-box;
+          transform-origin: top center;
+          animation: legSwing 0.4s ease-in-out infinite alternate;
+        }
+        .leg-right {
+          animation-delay: 0.2s;
         }
 
         @keyframes rigMove {
@@ -99,7 +154,7 @@ export default function SplashScreen({ onFinish }) {
         }
         @keyframes fall {
           0% {
-            top: -60px;
+            top: -50px;
             transform: rotate(0deg);
             opacity: 0;
           }
@@ -107,12 +162,20 @@ export default function SplashScreen({ onFinish }) {
             opacity: 1;
           }
           80% {
-            top: -6px;
+            top: -2px;
             transform: rotate(300deg);
           }
           100% {
-            top: -10px;
+            top: -6px;
             transform: rotate(320deg);
+          }
+        }
+        @keyframes legSwing {
+          0% {
+            transform: rotate(-18deg);
+          }
+          100% {
+            transform: rotate(18deg);
           }
         }
         @keyframes letterAppear {
