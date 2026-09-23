@@ -8,29 +8,8 @@ function Panda() {
       src="https://res.cloudinary.com/op1wrztj/image/upload/v1790159662/f8qmd314iffu0jlhpojl.jpg"
       alt="Panda Shopyz"
       className="panda-svg"
-      style={{ width: "90px", height: "150px", objectFit: "contain", display: "block", transform: "scaleX(-1)" }}
+      style={{ width: "160px", height: "auto", objectFit: "contain", display: "block", transform: "scaleX(-1)" }}
     />
-  );
-}
-
-function Cart() {
-  return (
-    <svg width="96" height="84" viewBox="0 0 70 60" className="cart-svg">
-      <polyline
-        points="4,8 14,8 14,20"
-        fill="none"
-        stroke="#111"
-        strokeWidth="6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M14,20 L66,20 L58,46 L21,46 Z" fill="#111" />
-      <line x1="31" y1="20" x2="29" y2="46" stroke="var(--cream)" strokeWidth="2.5" />
-      <line x1="49" y1="20" x2="42" y2="46" stroke="var(--cream)" strokeWidth="2.5" />
-      <line x1="18" y1="33" x2="61" y2="33" stroke="var(--cream)" strokeWidth="2.5" />
-      <circle cx="29" cy="53" r="6" fill="#111" />
-      <circle cx="51" cy="53" r="6" fill="#111" />
-    </svg>
   );
 }
 
@@ -44,13 +23,7 @@ export default function SplashScreen({ onFinish }) {
     <div className="splash">
       <div className="stage">
         <div className="rig">
-          <div className="panda-wrap">
-            <Panda />
-          </div>
-          <div className="cart-wrap">
-            <Cart />
-            <span className="shoe">👟</span>
-          </div>
+          <Panda />
         </div>
         <div className="letters">
           {LETTERS.map((letter, i) => (
@@ -86,24 +59,8 @@ export default function SplashScreen({ onFinish }) {
           position: absolute;
           left: 50%;
           top: 20px;
-          display: flex;
-          align-items: flex-end;
           transform: translateX(-50%);
           animation: rigMove 3s ease-in-out forwards;
-        }
-        .panda-wrap {
-          margin-right: -10px;
-          z-index: 2;
-        }
-        .cart-wrap {
-          position: relative;
-        }
-        .shoe {
-          position: absolute;
-          left: 32px;
-          top: -70px;
-          font-size: 44px;
-          animation: fall 1s cubic-bezier(0.5, 0, 0.75, 0.9) forwards;
         }
         .letters {
           position: absolute;
@@ -129,24 +86,6 @@ export default function SplashScreen({ onFinish }) {
           }
           100% {
             transform: translateX(calc(-50% + 120vw));
-          }
-        }
-        @keyframes fall {
-          0% {
-            top: -70px;
-            transform: rotate(0deg);
-            opacity: 0;
-          }
-          15% {
-            opacity: 1;
-          }
-          80% {
-            top: -2px;
-            transform: rotate(300deg);
-          }
-          100% {
-            top: -6px;
-            transform: rotate(320deg);
           }
         }
         @keyframes letterAppear {
