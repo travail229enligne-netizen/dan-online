@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 const LETTERS = ["S", "H", "O", "P", "Y", "Z"];
 const PANDA_URL =
-  "https://res.cloudinary.com/op1wrztj/image/upload/e_background_removal/e_trim/v1790159662/f8qmd314iffu0jlhpojl.png";
+  "https://res.cloudinary.com/op1wrztj/image/upload/e_trim/v1790159662/f8qmd314iffu0jlhpojl.png";
 
 export default function SplashScreen({ onFinish }) {
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function SplashScreen({ onFinish }) {
         .splash {
           position: fixed;
           inset: 0;
-          background: var(--cream);
+          background: #ffffff;
           z-index: 9999;
           overflow: hidden;
           animation: fadeOut 0.6s ease 3.6s forwards;
