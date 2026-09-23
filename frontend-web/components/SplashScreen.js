@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 const LETTERS = ["S", "H", "O", "P", "Y", "Z"];
 const PANDA_URL =
-  "https://res.cloudinary.com/op1wrztj/image/upload/e_trim/v1790159662/f8qmd314iffu0jlhpojl.png";
+  "https://res.cloudinary.com/op1wrztj/image/upload/e_trim,e_replace_color:white:25:edede9/v1790159662/f8qmd314iffu0jlhpojl.png";
 
 export default function SplashScreen({ onFinish }) {
   useEffect(() => {
