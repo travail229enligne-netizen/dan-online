@@ -1,18 +1,33 @@
 import { useEffect } from "react";
 
+const LETTERS = ["S", "H", "O", "P", "Y", "Z"];
+
 export default function SplashScreen({ onFinish }) {
   useEffect(() => {
-    const timer = setTimeout(onFinish, 2300);
+    const timer = setTimeout(onFinish, 3800);
     return () => clearTimeout(timer);
   }, [onFinish]);
 
   return (
     <div className="splash">
-      <div className="scene">
-        <span className="shoe">👟</span>
-        <span className="cart">🛒</span>
+      <div className="stage">
+        <div className="rig">
+          <span className="panda">🐼</span>
+          <span className="cart">🛒</span>
+          <span className="shoe">👟</span>
+        </div>
+        <div className="letters">
+          {LETTERS.map((letter, i) => (
+            <span
+              key={i}
+              className="letter"
+              style={{ animationDelay: `${1.2 + i * 0.28}s` }}
+            >
+              {letter}
+            </span>
+          ))}
+        </div>
       </div>
-      <div className="brand">Shopyz</div>
 
       <style jsx>{`
         .splash {
@@ -20,77 +35,87 @@ export default function SplashScreen({ onFinish }) {
           inset: 0;
           background: var(--cream);
           display: flex;
-          flex-direction: column;
           align-items: center;
           justify-content: center;
           z-index: 9999;
-          animation: fadeOut 0.5s ease 2s forwards;
+          overflow: hidden;
+          animation: fadeOut 0.5s ease 3.3s forwards;
         }
-        .scene {
+        .stage {
           position: relative;
-          width: 120px;
-          height: 140px;
+          width: 100%;
+          height: 160px;
+        }
+        .rig {
+          position: absolute;
+          left: 50%;
+          top: 30px;
+          display: flex;
+          align-items: flex-end;
+          transform: translateX(-50%);
+          animation: rigMove 3s ease-in-out forwards;
+        }
+        .panda {
+          font-size: 44px;
+          margin-right: -6px;
+          transform: scaleX(-1);
+        }
+        .cart {
+          font-size: 58px;
+          position: relative;
         }
         .shoe {
           position: absolute;
-          left: 50%;
-          top: 0;
-          font-size: 42px;
-          transform: translateX(-50%);
-          animation: fall 1.2s cubic-bezier(0.5, 0, 0.75, 0.9) forwards;
+          left: 68px;
+          top: -60px;
+          font-size: 34px;
+          animation: fall 1s cubic-bezier(0.5, 0, 0.75, 0.9) forwards;
         }
-        .cart {
+        .letters {
           position: absolute;
           left: 50%;
-          bottom: 4px;
-          font-size: 64px;
+          top: 96px;
+          display: flex;
+          gap: 3px;
           transform: translateX(-50%);
-          animation: bounce 0.35s ease 1.2s;
         }
-        .brand {
-          margin-top: 22px;
+        .letter {
           font-family: var(--font-display);
-          font-size: 20px;
+          font-size: 26px;
           font-weight: 700;
           color: var(--ink);
           opacity: 0;
-          animation: appear 0.4s ease 1.4s forwards;
+          animation: letterAppear 0.01s linear forwards;
         }
 
+        @keyframes rigMove {
+          0%,
+          40% {
+            transform: translateX(-50%);
+          }
+          100% {
+            transform: translateX(calc(-50% + 120vw));
+          }
+        }
         @keyframes fall {
           0% {
-            top: 0;
-            transform: translateX(-50%) rotate(0deg);
+            top: -60px;
+            transform: rotate(0deg);
             opacity: 0;
           }
-          12% {
+          15% {
             opacity: 1;
           }
-          70% {
-            top: 68px;
-            transform: translateX(-50%) rotate(300deg);
-          }
-          85% {
-            top: 52px;
+          80% {
+            top: -6px;
+            transform: rotate(300deg);
           }
           100% {
-            top: 68px;
-            transform: translateX(-50%) rotate(340deg);
-            opacity: 0;
+            top: -10px;
+            transform: rotate(320deg);
           }
         }
-        @keyframes bounce {
-          0% {
-            transform: translateX(-50%) scale(1);
-          }
-          40% {
-            transform: translateX(-50%) scale(1.15);
-          }
-          100% {
-            transform: translateX(-50%) scale(1);
-          }
-        }
-        @keyframes appear {
+        @keyframes letterAppear {
           to {
             opacity: 1;
           }
