@@ -4,7 +4,7 @@ const LETTERS = ["S", "H", "O", "P", "Y", "Z"];
 
 function Panda() {
   return (
-    <svg width="60" height="100" viewBox="0 0 60 100" className="panda-svg">
+    <svg width="90" height="150" viewBox="0 0 60 100" className="panda-svg">
       {/* jambes (animees) */}
       <rect className="leg leg-left" x="18" y="72" width="9" height="24" rx="4" fill="#111" />
       <rect className="leg leg-right" x="33" y="72" width="9" height="24" rx="4" fill="#111" />
@@ -28,7 +28,7 @@ function Panda() {
 
 function Cart() {
   return (
-    <svg width="64" height="56" viewBox="0 0 70 60" className="cart-svg">
+    <svg width="96" height="84" viewBox="0 0 70 60" className="cart-svg">
       <polyline
         points="4,8 14,8 14,20"
         fill="none"
@@ -93,12 +93,12 @@ export default function SplashScreen({ onFinish }) {
         .stage {
           position: relative;
           width: 100%;
-          height: 220px;
+          height: 320px;
         }
         .rig {
           position: absolute;
           left: 50%;
-          top: 14px;
+          top: 20px;
           display: flex;
           align-items: flex-end;
           transform: translateX(-50%);
@@ -113,22 +113,22 @@ export default function SplashScreen({ onFinish }) {
         }
         .shoe {
           position: absolute;
-          left: 22px;
-          top: -50px;
-          font-size: 30px;
+          left: 32px;
+          top: -70px;
+          font-size: 44px;
           animation: fall 1s cubic-bezier(0.5, 0, 0.75, 0.9) forwards;
         }
         .letters {
           position: absolute;
           left: 50%;
-          top: 176px;
+          top: 250px;
           display: flex;
           gap: 3px;
           transform: translateX(-50%);
         }
         .letter {
           font-family: var(--font-display);
-          font-size: 26px;
+          font-size: 34px;
           font-weight: 700;
           color: var(--ink);
           opacity: 0;
@@ -154,7 +154,7 @@ export default function SplashScreen({ onFinish }) {
         }
         @keyframes fall {
           0% {
-            top: -50px;
+            top: -70px;
             transform: rotate(0deg);
             opacity: 0;
           }
