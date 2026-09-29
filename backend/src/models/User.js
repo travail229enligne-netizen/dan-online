@@ -19,6 +19,10 @@ const userSchema = new mongoose.Schema(
       showPhone: { type: Boolean, default: false },
       showLocation: { type: Boolean, default: false },
     },
+    // Reinitialisation de mot de passe par email : on stocke un hash du
+    // jeton (jamais le jeton en clair), avec une date d'expiration courte.
+    resetPasswordTokenHash: { type: String, default: null },
+    resetPasswordExpires: { type: Date, default: null },
   },
   { timestamps: true }
 );
@@ -38,6 +42,8 @@ userSchema.methods.matchPassword = async function (candidate) {
 userSchema.methods.toSafeObject = function () {
   const obj = this.toObject();
   delete obj.password;
+  delete obj.resetPasswordTokenHash;
+  delete obj.resetPasswordExpires;
   obj.hasPassword = !!this.password;
   return obj;
 };
