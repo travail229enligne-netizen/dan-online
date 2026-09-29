@@ -108,7 +108,7 @@ export default function MerchantProduits() {
     api.get("/categories").then((r) => setCategories(r.data)).catch(() => {});
     api.get("/shops/me").then((r) => {
       setShop(r.data);
-      api.get(`/products?shop=${r.data._id}`).then((res) => setProducts(res.data.products));
+      api.get(`/products?shop=${r.data._id}&limit=1000`).then((res) => setProducts(res.data.products));
       const shopCat = r.data?.category?._id || r.data?.category || "";
       if (shopCat) {
         setForm((f) => (f.category ? f : { ...f, category: shopCat }));
