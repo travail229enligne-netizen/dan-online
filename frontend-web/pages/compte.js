@@ -101,12 +101,22 @@ export default function Compte() {
               <div style={{ color: "var(--ink-soft)", fontSize: 13 }}>{user.email}</div>
               <div style={{ color: "var(--ink-soft)", fontSize: 13 }}>{user.phone}</div>
               {user.bio && <p style={{ fontSize: 13, marginTop: 8 }}>{user.bio}</p>}
-              <button
-                onClick={startEdit}
-                style={{ marginTop: 12, fontSize: 12, fontWeight: 600, color: "var(--ink)", textDecoration: "underline" }}
-              >
-                Modifier mon profil
-              </button>
+              <div style={{ display: "flex", gap: 16, marginTop: 12 }}>
+                <button
+                  onClick={startEdit}
+                  style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)", textDecoration: "underline" }}
+                >
+                  Modifier mon profil
+                </button>
+                {user.hasPassword && (
+                  <a
+                    href="/changer-mot-de-passe"
+                    style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)", textDecoration: "underline" }}
+                  >
+                    Changer mon mot de passe
+                  </a>
+                )}
+              </div>
             </>
           ) : (
             <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
