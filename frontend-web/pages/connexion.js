@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { GoogleLogin } from "@react-oauth/google";
 import { useRouter } from "next/router";
 import Header from "../components/Header";
 import { useAuth } from "../lib/auth";
 
 export default function Connexion() {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const router = useRouter();
   const [form, setForm] = useState({ identifier: "", password: "" });
   const [error, setError] = useState("");
@@ -19,6 +20,19 @@ export default function Connexion() {
       router.push(user.role === "marchand" ? "/marchand/dashboard" : "/");
     } catch (err) {
       setError(err.response?.data?.message || "Connexion impossible.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError("");
+    setLoading(true);
+    try {
+      const user = await loginWithGoogle(credentialResponse.credential);
+      router.push(user.role === "marchand" ? "/marchand/dashboard" : "/");
+    } catch (err) {
+      setError(err.response?.data?.message || "Connexion Google impossible.");
     } finally {
       setLoading(false);
     }
@@ -67,6 +81,20 @@ export default function Connexion() {
           <button className="btn-primary" type="submit" disabled={loading}>
             {loading ? "Connexion..." : "Se connecter"}
           </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "4px 0" }}>
+            <div style={{ flex: 1, height: 1, background: "var(--line)" }} />
+            <span style={{ fontSize: 12, color: "var(--ink-soft)" }}>ou</span>
+            <div style={{ flex: 1, height: 1, background: "var(--line)" }} />
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError("Connexion Google impossible.")}
+              text="signin_with"
+              locale="fr"
+              width="280"
+            />
+          </div>
           <p style={{ fontSize: 13, textAlign: "center", color: "var(--ink-soft)" }}>
             Pas encore de compte ? <a href="/inscription" style={{ color: "var(--terracotta-dark)", fontWeight: 600 }}>Inscris-toi</a>
           </p>

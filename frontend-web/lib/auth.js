@@ -31,6 +31,13 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
+  const loginWithGoogle = async (credential) => {
+    const { data } = await api.post("/auth/google", { credential });
+    window.localStorage.setItem("dan_online_token", data.token);
+    setUser(data.user);
+    return data.user;
+  };
+
   const register = async (payload) => {
     const { data } = await api.post("/auth/register", payload);
     window.localStorage.setItem("dan_online_token", data.token);
@@ -58,7 +65,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, setUser, setSession, setPassword }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, logout, setUser, setSession, setPassword }}>
       {children}
     </AuthContext.Provider>
   );
