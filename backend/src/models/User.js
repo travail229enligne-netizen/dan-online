@@ -5,7 +5,8 @@ const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
-    phone: { type: String, required: true, unique: true, trim: true },
+    phone: { type: String, required: function () { return !this.googleId; }, unique: true, sparse: true, trim: true },
+    googleId: { type: String, unique: true, sparse: true },
     password: { type: String },
     role: { type: String, enum: ["client", "marchand", "admin"], default: "client" },
     isActive: { type: Boolean, default: true },

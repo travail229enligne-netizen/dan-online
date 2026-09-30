@@ -3,6 +3,9 @@ const crypto = require("crypto");
 const asyncHandler = require("express-async-handler");
 const User = require("../models/User");
 const { sendEmail } = require("../utils/email");
+const { OAuth2Client } = require("google-auth-library");
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -217,8 +220,59 @@ const getPublicProfile = asyncHandler(async (req, res) => {
   res.json(publicProfile);
 });
 
+
+// @route   POST /api/auth/google
+// @access  Public - connexion/inscription via un compte Google
+const googleAuth = asyncHandler(async (req, res) => {
+  const { credential } = req.body;
+
+  if (!credential) {
+    return res.status(400).json({ message: "Jeton Google manquant." });
+  }
+
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    payload = ticket.getPayload();
+  } catch (err) {
+    return res.status(401).json({ message: "Jeton Google invalide." });
+  }
+
+  const { sub: googleId, email, name, picture } = payload;
+
+  let user = await User.findOne({ googleId });
+
+  if (!user && email) {
+    user = await User.findOne({ email: email.toLowerCase() });
+    if (user) {
+      user.googleId = googleId;
+      if (!user.avatarUrl && picture) user.avatarUrl = picture;
+      await user.save();
+    }
+  }
+
+  if (!user) {
+    user = await User.create({
+      name: name || "Utilisateur Shopyz",
+      email: email ? email.toLowerCase() : undefined,
+      googleId,
+      avatarUrl: picture || "",
+      role: "client",
+    });
+  }
+
+  res.json({
+    user: user.toSafeObject(),
+    token: generateToken(user._id),
+  });
+});
+
 module.exports = {
   register,
+  googleAuth,
   login,
   getMe,
   updateProfile,

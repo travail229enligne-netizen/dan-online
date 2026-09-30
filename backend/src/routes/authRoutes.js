@@ -8,6 +8,7 @@ const {
   forgotPassword,
   resetPassword,
   getPublicProfile,
+  googleAuth,
 } = require("../controllers/authController");
 const { protect } = require("../middleware/auth");
 
@@ -21,5 +22,6 @@ router.put("/set-password", protect, setPassword);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.get("/user/:id", getPublicProfile);
+router.post("/google", googleAuth);
 
 module.exports = router;
