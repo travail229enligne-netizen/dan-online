@@ -9,6 +9,7 @@ const {
   resetPassword,
   getPublicProfile,
   googleAuth,
+  changePassword,
 } = require("../controllers/authController");
 const { protect } = require("../middleware/auth");
 
@@ -19,6 +20,7 @@ router.post("/login", login);
 router.get("/me", protect, getMe);
 router.put("/me", protect, updateProfile);
 router.put("/set-password", protect, setPassword);
+router.put("/change-password", protect, changePassword);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.get("/user/:id", getPublicProfile);

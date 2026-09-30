@@ -270,8 +270,40 @@ const googleAuth = asyncHandler(async (req, res) => {
   });
 });
 
+
+// @route   PUT /api/auth/change-password
+// @access  Private - change le mot de passe en verifiant l'ancien
+const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ message: "Ancien et nouveau mot de passe requis." });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ message: "Le nouveau mot de passe doit contenir au moins 6 caractères." });
+  }
+
+  const user = await User.findById(req.user._id);
+  if (!user) return res.status(404).json({ message: "Utilisateur introuvable." });
+
+  if (!user.password) {
+    return res.status(400).json({ message: "Ce compte n'a pas encore de mot de passe. Utilise plutot la definition initiale." });
+  }
+
+  const isMatch = await user.matchPassword(currentPassword);
+  if (!isMatch) {
+    return res.status(401).json({ message: "Ancien mot de passe incorrect." });
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  res.json({ message: "Mot de passe modifie avec succes." });
+});
+
 module.exports = {
   register,
+  changePassword,
   googleAuth,
   login,
   getMe,
