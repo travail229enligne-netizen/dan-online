@@ -25,6 +25,25 @@
   box-sizing: border-box;
 }
 
+[data-theme="dark"] {
+  --cream: #15140f;
+  --white: #201e18;
+  --ink: #f3efe3;
+  --ink-soft: #a89f8a;
+  --line: #3c3729;
+
+  --terracotta: #f3efe3;
+  --terracotta-dark: #ffffff;
+  --gold: #c9c2ab;
+  --green-dark: #f3efe3;
+  --green-deep: #f3efe3;
+}
+
+* {
+  transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease;
+}
+
+
 html,
 body {
   margin: 0;

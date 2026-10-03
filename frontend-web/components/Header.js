@@ -6,6 +6,7 @@ import SearchBar from "./SearchBar";
 import AnimatedLogo from "./AnimatedLogo";
 import GoogleTranslate from "./GoogleTranslate";
 import { subscribeToPush } from "./PushManager";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Header({ hideSearchBar = false }) {
   const { user, logout } = useAuth();
@@ -439,6 +440,7 @@ export default function Header({ hideSearchBar = false }) {
                       Espace administrateur
                     </a>
                   )}
+                  <ThemeToggle />
                   <button
                     onClick={handleEnablePush}
                     disabled={pushStatus === "enabled" || pushStatus === "loading"}
