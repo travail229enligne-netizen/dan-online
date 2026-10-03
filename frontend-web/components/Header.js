@@ -5,6 +5,7 @@ import api from "../lib/api";
 import SearchBar from "./SearchBar";
 import AnimatedLogo from "./AnimatedLogo";
 import GoogleTranslate from "./GoogleTranslate";
+import { subscribeToPush } from "./PushManager";
 
 export default function Header({ hideSearchBar = false }) {
   const { user, logout } = useAuth();
@@ -16,6 +17,24 @@ export default function Header({ hideSearchBar = false }) {
   const [categories, setCategories] = useState([]);
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [unreadOrders, setUnreadOrders] = useState(0);
+  const [pushStatus, setPushStatus] = useState("idle");
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+      setPushStatus("enabled");
+    }
+  }, []);
+
+  const handleEnablePush = async () => {
+    setPushStatus("loading");
+    try {
+      await subscribeToPush();
+      setPushStatus("enabled");
+    } catch (e) {
+      setPushStatus("idle");
+      alert(e.message || "Impossible d'activer les notifications.");
+    }
+  };
 
   useEffect(() => {
     if (open && categories.length === 0) {
@@ -420,6 +439,21 @@ export default function Header({ hideSearchBar = false }) {
                       Espace administrateur
                     </a>
                   )}
+                  <button
+                    onClick={handleEnablePush}
+                    disabled={pushStatus === "enabled" || pushStatus === "loading"}
+                    style={{
+                      background: "var(--cream)",
+                      borderRadius: 10,
+                      padding: 12,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      textAlign: "left",
+                      color: pushStatus === "enabled" ? "var(--ink-soft)" : "var(--ink)",
+                    }}
+                  >
+                    🔔 {pushStatus === "enabled" ? "Notifications activées" : pushStatus === "loading" ? "Activation..." : "Activer les notifications"}
+                  </button>
                   <a href="/signaler" style={{ background: "var(--cream)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600 }}>
                     🚩 Signaler un problème
                   </a>
