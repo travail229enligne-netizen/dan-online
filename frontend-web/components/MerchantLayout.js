@@ -41,7 +41,8 @@ export default function MerchantLayout({ children, title }) {
     try {
       await subscribeToPush();
       setPushStatus("enabled");
-      alert("Abonnement reussi et envoye au serveur.");
+      const { data } = await api.post("/push/test");
+      alert(JSON.stringify(data, null, 2));
     } catch (e) {
       setPushStatus("idle");
       alert("ERREUR: " + (e.message || "Impossible d'activer les notifications."));
