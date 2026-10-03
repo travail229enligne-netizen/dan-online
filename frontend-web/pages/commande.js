@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Header from "../components/Header";
+import OrderSuccessAnimation from "../components/OrderSuccessAnimation";
 import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
 import api from "../lib/api";
@@ -181,7 +182,9 @@ export default function Commande() {
       <>
         <Header hideSearchBar />
         <main className="container" style={{ paddingTop: 40, paddingBottom: 60, textAlign: "center" }}>
-          <div style={{ fontSize: 48 }}>✅</div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <OrderSuccessAnimation />
+          </div>
           <h1 style={{ fontSize: 22, marginTop: 12 }}>Commande confirmée !</h1>
           <p style={{ color: "var(--ink-soft)", marginTop: 8 }}>
             Total : <strong>{success.grandTotal.toLocaleString("fr-FR")} FCFA</strong>
