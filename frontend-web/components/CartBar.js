@@ -8,39 +8,30 @@ const EDGE_PADDING = 8;
 const FLY_DURATION = 650;
 
 function Flyer({ flyer, target, onDone }) {
-  const [phase, setPhase] = useState("start");
+  const elRef = useRef(null);
 
   useEffect(() => {
-    const raf = requestAnimationFrame(() => setPhase("mid"));
-    const t1 = setTimeout(() => setPhase("end"), 230);
-    const t2 = setTimeout(onDone, FLY_DURATION);
-    return () => {
-      cancelAnimationFrame(raf);
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
+    const dx = target.x - flyer.x;
+    const dy = target.y - flyer.y;
+    const el = elRef.current;
+
+    const anim = el.animate(
+      [
+        { transform: "translate(0px, 0px) scale(1)", opacity: 1, offset: 0 },
+        { transform: `translate(${dx * 0.35}px, ${dy * 0.45 - 70}px) scale(0.85)`, opacity: 1, offset: 0.35 },
+        { transform: `translate(${dx}px, ${dy}px) scale(0.15)`, opacity: 0.3, offset: 1 },
+      ],
+      { duration: FLY_DURATION, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" }
+    );
+
+    anim.onfinish = onDone;
+    return () => anim.cancel();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const dx = target.x - flyer.x;
-  const dy = target.y - flyer.y;
-
-  let transform = "translate(0px, 0px) scale(1)";
-  let opacity = 1;
-  let duration = "0.23s";
-  let easing = "cubic-bezier(0.3, 0.6, 0.4, 1)";
-
-  if (phase === "mid") {
-    transform = `translate(${dx * 0.35}px, ${dy * 0.45 - 70}px) scale(0.85)`;
-  } else if (phase === "end") {
-    transform = `translate(${dx}px, ${dy}px) scale(0.15)`;
-    opacity = 0.3;
-    duration = "0.42s";
-    easing = "cubic-bezier(0.5, 0, 0.75, 0.9)";
-  }
-
   return (
     <div
+      ref={elRef}
       style={{
         position: "fixed",
         left: flyer.x - 18,
@@ -53,9 +44,6 @@ function Flyer({ flyer, target, onDone }) {
         boxShadow: "0 4px 14px rgba(0,0,0,0.3)",
         zIndex: 999,
         pointerEvents: "none",
-        transform,
-        opacity,
-        transition: `transform ${duration} ${easing}, opacity 0.3s ease`,
       }}
     />
   );
