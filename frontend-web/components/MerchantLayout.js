@@ -41,9 +41,10 @@ export default function MerchantLayout({ children, title }) {
     try {
       await subscribeToPush();
       setPushStatus("enabled");
+      alert("Abonnement reussi et envoye au serveur.");
     } catch (e) {
       setPushStatus("idle");
-      alert(e.message || "Impossible d'activer les notifications.");
+      alert("ERREUR: " + (e.message || "Impossible d'activer les notifications."));
     }
   };
 
@@ -132,23 +133,21 @@ export default function MerchantLayout({ children, title }) {
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          {pushStatus !== "enabled" && (
-            <button
-              onClick={handleEnablePush}
-              disabled={pushStatus === "loading"}
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                padding: "6px 10px",
-                borderRadius: 20,
-                background: "var(--gold)",
-                color: "var(--green-dark)",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {pushStatus === "loading" ? "..." : "🔔 Activer"}
-            </button>
-          )}
+          <button
+            onClick={handleEnablePush}
+            disabled={pushStatus === "loading"}
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              padding: "6px 10px",
+              borderRadius: 20,
+              background: "var(--gold)",
+              color: "var(--green-dark)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {pushStatus === "loading" ? "..." : pushStatus === "enabled" ? "🔔 Tester" : "🔔 Activer"}
+          </button>
           <a href="/notifications" aria-label="Notifications" style={{ color: "var(--white)", position: "relative" }}>
             <span style={{ fontSize: 20 }}>🔔</span>
             {unreadNotif > 0 && (
