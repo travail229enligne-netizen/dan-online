@@ -56,7 +56,7 @@ const createOrder = asyncHandler(async (req, res) => {
     freshToken = generateToken(currentUser._id);
   }
 
-  const method = paymentMethod === "kkiapay" ? "kkiapay" : "cod";
+  const method = "kkiapay"; // Paiement en especes desactive : Mobile Money uniquement
 
   let itemsTotal = 0;
   let commissionAmount = 0;
