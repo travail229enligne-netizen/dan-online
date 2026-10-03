@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../lib/auth";
 import api from "../lib/api";
 
@@ -9,6 +9,7 @@ export default function ProductCard({ product, onAddToCart, isFavorite: initialF
   const [isFav, setIsFav] = useState(initialFav);
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const imageRef = useRef(null);
 
   const isFeatured = product.featuredUntil && new Date(product.featuredUntil) > new Date();
   const productHref = `/produit/${product.slug || product._id}`;
@@ -61,6 +62,7 @@ export default function ProductCard({ product, onAddToCart, isFavorite: initialF
     >
       <a href={productHref}>
         <div
+          ref={imageRef}
           style={{
             height: 200,
             background: images[active] ? `#eee url(${images[active]}) center/cover no-repeat` : "#eee",
@@ -154,7 +156,25 @@ export default function ProductCard({ product, onAddToCart, isFavorite: initialF
             {product.shop?.name}
           </div>
         </a>
-        <button className="btn-primary" style={{ width: "100%" }} onClick={() => onAddToCart?.(product)}>
+        <button
+          className="btn-primary"
+          style={{ width: "100%" }}
+          onClick={() => {
+            onAddToCart?.(product);
+            if (imageRef.current) {
+              const rect = imageRef.current.getBoundingClientRect();
+              window.dispatchEvent(
+                new CustomEvent("shopyz:flyToCart", {
+                  detail: {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2,
+                    image: images[active],
+                  },
+                })
+              );
+            }
+          }}
+        >
           Ajouter au panier
         </button>
       </div>
