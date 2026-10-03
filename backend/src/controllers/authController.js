@@ -71,7 +71,7 @@ const login = asyncHandler(async (req, res) => {
 // @route   GET /api/auth/me
 // @access  Private
 const getMe = asyncHandler(async (req, res) => {
-  res.json({ user: req.user });
+  res.json({ user: req.user.toSafeObject() });
 });
 
 // @route   PUT /api/auth/me
