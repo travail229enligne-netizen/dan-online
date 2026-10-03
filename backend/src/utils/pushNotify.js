@@ -17,7 +17,8 @@ const sendPushToUser = async (userId, payload) => {
       try {
         await webpush.sendNotification(
           { endpoint: sub.endpoint, keys: sub.keys },
-          JSON.stringify(payload)
+          JSON.stringify(payload),
+          { urgency: "high", TTL: 86400 }
         );
       } catch (err) {
         // Abonnement expire ou invalide -> on le supprime silencieusement
