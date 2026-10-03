@@ -306,7 +306,7 @@ export default function ProduitDetail() {
 
               if (imageRef.current) {
                 const rect = imageRef.current.getBoundingClientRect();
-                window.dispatchEvent(
+                alert("Evenement envoye depuis la page produit"); window.dispatchEvent(
                   new CustomEvent("shopyz:flyToCart", {
                     detail: {
                       x: rect.left + rect.width / 2,
