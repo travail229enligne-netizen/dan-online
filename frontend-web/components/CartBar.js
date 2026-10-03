@@ -5,12 +5,74 @@ const BUTTON_SIZE = 56;
 const MARGIN = 16;
 const PANEL_GAP = 10;
 const EDGE_PADDING = 8;
+const FLY_DURATION = 650;
+
+function Flyer({ flyer, target, onDone }) {
+  const [phase, setPhase] = useState("start");
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setPhase("mid"));
+    const t1 = setTimeout(() => setPhase("end"), 230);
+    const t2 = setTimeout(onDone, FLY_DURATION);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const dx = target.x - flyer.x;
+  const dy = target.y - flyer.y;
+
+  let transform = "translate(0px, 0px) scale(1)";
+  let opacity = 1;
+  let duration = "0.23s";
+  let easing = "cubic-bezier(0.3, 0.6, 0.4, 1)";
+
+  if (phase === "mid") {
+    transform = `translate(${dx * 0.35}px, ${dy * 0.45 - 70}px) scale(0.85)`;
+  } else if (phase === "end") {
+    transform = `translate(${dx}px, ${dy}px) scale(0.15)`;
+    opacity = 0.3;
+    duration = "0.42s";
+    easing = "cubic-bezier(0.5, 0, 0.75, 0.9)";
+  }
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        left: flyer.x - 18,
+        top: flyer.y - 18,
+        width: 36,
+        height: 36,
+        borderRadius: "50%",
+        background: flyer.image ? `#eee url(${flyer.image}) center/cover no-repeat` : "var(--terracotta)",
+        border: "2px solid var(--white)",
+        boxShadow: "0 4px 14px rgba(0,0,0,0.3)",
+        zIndex: 999,
+        pointerEvents: "none",
+        transform,
+        opacity,
+        transition: `transform ${duration} ${easing}, opacity 0.3s ease`,
+      }}
+    />
+  );
+}
 
 export default function CartBar() {
   const { items, count, total, updateQuantity, removeFromCart } = useCart();
   const [expanded, setExpanded] = useState(false);
   const [pos, setPos] = useState(null);
+  const [flyers, setFlyers] = useState([]);
+  const [bumpKey, setBumpKey] = useState(0);
   const dragInfo = useRef({ dragging: false, moved: false, startX: 0, startY: 0, originX: 0, originY: 0 });
+  const posRef = useRef(null);
+
+  useEffect(() => {
+    posRef.current = pos;
+  }, [pos]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && pos === null) {
@@ -20,6 +82,22 @@ export default function CartBar() {
       });
     }
   }, [pos]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      const { x, y, image } = e.detail || {};
+      if (typeof x !== "number" || typeof y !== "number") return;
+      const id = Date.now() + Math.random();
+      setFlyers((prev) => [...prev, { id, x, y, image }]);
+    };
+    window.addEventListener("shopyz:flyToCart", handler);
+    return () => window.removeEventListener("shopyz:flyToCart", handler);
+  }, []);
+
+  const removeFlyer = (id) => {
+    setFlyers((prev) => prev.filter((f) => f.id !== id));
+    setBumpKey((k) => k + 1);
+  };
 
   const clampButton = (x, y) => {
     const maxX = window.innerWidth - BUTTON_SIZE - 4;
@@ -76,8 +154,14 @@ export default function CartBar() {
     ? { bottom: window.innerHeight - pos.y + PANEL_GAP }
     : { top: pos.y + BUTTON_SIZE + PANEL_GAP };
 
+  const target = { x: pos.x + BUTTON_SIZE / 2, y: pos.y + BUTTON_SIZE / 2 };
+
   return (
     <>
+      {flyers.map((f) => (
+        <Flyer key={f.id} flyer={f} target={target} onDone={() => removeFlyer(f.id)} />
+      ))}
+
       {expanded && (
         <div
           style={{
@@ -157,9 +241,11 @@ export default function CartBar() {
       )}
 
       <button
+        key={`btn-${bumpKey}`}
         onPointerDown={handlePointerDown}
         onClick={handleClick}
         aria-label="Voir le panier"
+        className="cart-bump"
         style={{
           position: "fixed",
           left: pos.x,
@@ -178,6 +264,8 @@ export default function CartBar() {
       >
         🛒
         <span
+          key={`badge-${bumpKey}`}
+          className="badge-pop"
           style={{
             position: "absolute",
             top: -4,
@@ -197,6 +285,25 @@ export default function CartBar() {
           {count > 9 ? "9+" : count}
         </span>
       </button>
+
+      <style jsx>{`
+        .cart-bump {
+          animation: bump 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .badge-pop {
+          animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes bump {
+          0% { transform: scale(1); }
+          40% { transform: scale(1.18); }
+          100% { transform: scale(1); }
+        }
+        @keyframes pop {
+          0% { transform: scale(0.5); }
+          60% { transform: scale(1.3); }
+          100% { transform: scale(1); }
+        }
+      `}</style>
     </>
   );
 }

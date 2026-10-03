@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Header from "../../components/Header";
@@ -24,6 +24,7 @@ export default function ProduitDetail() {
   const [qty, setQty] = useState("1");
   const [added, setAdded] = useState(false);
   const [selectedVariants, setSelectedVariants] = useState({});
+  const imageRef = useRef(null);
 
   useEffect(() => {
     if (!id) return;
@@ -131,6 +132,7 @@ export default function ProduitDetail() {
       <Header hideSearchBar />
       <main className="container" style={{ paddingTop: 20, paddingBottom: 60 }}>
         <div
+          ref={imageRef}
           style={{
             height: 280,
             borderRadius: "var(--radius-md)",
@@ -301,6 +303,19 @@ export default function ProduitDetail() {
               addToCart({ ...product, name: displayName, price: unitPrice }, numericQty);
               setAdded(true);
               setTimeout(() => setAdded(false), 2000);
+
+              if (imageRef.current) {
+                const rect = imageRef.current.getBoundingClientRect();
+                window.dispatchEvent(
+                  new CustomEvent("shopyz:flyToCart", {
+                    detail: {
+                      x: rect.left + rect.width / 2,
+                      y: rect.top + rect.height / 2,
+                      image: images[activeImage],
+                    },
+                  })
+                );
+              }
             }}
           >
             {product.stock === 0 ? "Indisponible" : added ? "Ajouté !" : "Ajouter au panier"}
