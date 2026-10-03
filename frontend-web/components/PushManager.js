@@ -1,6 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../lib/auth";
 import api from "../lib/api";
+import PushPrompt from "./PushPrompt";
+
+const PROMPT_SHOWN_KEY = "shopyz_push_prompt_shown";
 
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -11,6 +14,7 @@ function urlBase64ToUint8Array(base64String) {
 
 export default function PushManager() {
   const { user } = useAuth();
+  const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -28,8 +32,12 @@ export default function PushManager() {
         }
 
         if (Notification.permission === "denied") return;
-        // On ne demande pas automatiquement la permission ici : c'est fait
-        // explicitement via le bouton "Activer les notifications".
+        if (Notification.permission === "granted") return;
+
+        const alreadyShown = window.localStorage.getItem(PROMPT_SHOWN_KEY);
+        if (!alreadyShown) {
+          setShowPrompt(true);
+        }
       } catch (e) {
         console.error("Push setup error:", e.message);
       }
@@ -38,7 +46,18 @@ export default function PushManager() {
     setup();
   }, [user]);
 
-  return null;
+  const handleConfirm = async () => {
+    window.localStorage.setItem(PROMPT_SHOWN_KEY, "1");
+    setShowPrompt(false);
+    try {
+      await subscribeToPush();
+    } catch (e) {
+      console.error("Push subscribe error:", e.message);
+    }
+  };
+
+  if (!showPrompt) return null;
+  return <PushPrompt onConfirm={handleConfirm} />;
 }
 
 export async function subscribeToPush() {
