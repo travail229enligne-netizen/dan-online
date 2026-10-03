@@ -5,7 +5,7 @@ const BUTTON_SIZE = 56;
 const MARGIN = 16;
 const PANEL_GAP = 10;
 const EDGE_PADDING = 8;
-const FLY_DURATION = 650;
+const FLY_DURATION = 2500;
 
 function Flyer({ flyer, target, onDone }) {
   const elRef = useRef(null);
@@ -36,11 +36,11 @@ function Flyer({ flyer, target, onDone }) {
         position: "fixed",
         left: flyer.x - 18,
         top: flyer.y - 18,
-        width: 36,
-        height: 36,
+        width: 90,
+        height: 90,
         borderRadius: "50%",
         background: flyer.image ? `#eee url(${flyer.image}) center/cover no-repeat` : "var(--terracotta)",
-        border: "2px solid var(--white)",
+        border: "4px solid red",
         boxShadow: "0 4px 14px rgba(0,0,0,0.3)",
         zIndex: 999,
         pointerEvents: "none",
@@ -73,7 +73,7 @@ export default function CartBar() {
 
   useEffect(() => {
     const handler = (e) => {
-      alert("CartBar a recu l'evenement"); const { x, y, image } = e.detail || {};
+      const { x, y, image } = e.detail || {};
       if (typeof x !== "number" || typeof y !== "number") return;
       const id = Date.now() + Math.random();
       setFlyers((prev) => [...prev, { id, x, y, image }]);
