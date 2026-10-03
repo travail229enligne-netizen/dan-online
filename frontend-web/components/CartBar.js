@@ -73,7 +73,7 @@ export default function CartBar() {
 
   useEffect(() => {
     const handler = (e) => {
-      const { x, y, image } = e.detail || {};
+      alert("CartBar a recu l'evenement"); const { x, y, image } = e.detail || {};
       if (typeof x !== "number" || typeof y !== "number") return;
       const id = Date.now() + Math.random();
       setFlyers((prev) => [...prev, { id, x, y, image }]);
