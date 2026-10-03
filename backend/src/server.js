@@ -60,6 +60,7 @@ app.use("/api/platform-couriers", require("./routes/platformCourierRoutes"));
 app.use("/api/promotions", require("./routes/promotionRoutes"));
 app.use("/api/fairs", require("./routes/fairRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
+app.use("/api/push", require("./routes/pushRoutes"));
 
 // 404
 app.use((req, res) => {
