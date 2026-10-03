@@ -4,6 +4,7 @@ import { AuthProvider } from "../lib/auth";
 import { CartProvider } from "../lib/cart";
 import CartBar from "../components/CartBar";
 import PaymentWatcher from "../components/PaymentWatcher";
+import PushManager from "../components/PushManager";
 
 const GOOGLE_CLIENT_ID = "653014387931-hq0i9h3v354vsjvaqel9lcs0rqr399r3.apps.googleusercontent.com";
 
@@ -13,6 +14,7 @@ export default function App({ Component, pageProps }) {
       <AuthProvider>
         <CartProvider>
           <PaymentWatcher />
+          <PushManager />
           <Component {...pageProps} />
           <CartBar />
         </CartProvider>

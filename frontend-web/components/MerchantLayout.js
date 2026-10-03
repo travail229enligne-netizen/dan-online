@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "../lib/auth";
 import api from "../lib/api";
+import { subscribeToPush } from "./PushManager";
 
 const navItems = [
   { href: "/", label: "Accueil", icon: "🏠" },
@@ -27,6 +28,24 @@ export default function MerchantLayout({ children, title }) {
   const router = useRouter();
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [unreadOrders, setUnreadOrders] = useState(0);
+  const [pushStatus, setPushStatus] = useState("idle");
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+      setPushStatus("enabled");
+    }
+  }, []);
+
+  const handleEnablePush = async () => {
+    setPushStatus("loading");
+    try {
+      await subscribeToPush();
+      setPushStatus("enabled");
+    } catch (e) {
+      setPushStatus("idle");
+      alert(e.message || "Impossible d'activer les notifications.");
+    }
+  };
 
   useEffect(() => {
     if (!user || user.role !== "marchand") return;
@@ -113,6 +132,23 @@ export default function MerchantLayout({ children, title }) {
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          {pushStatus !== "enabled" && (
+            <button
+              onClick={handleEnablePush}
+              disabled={pushStatus === "loading"}
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                padding: "6px 10px",
+                borderRadius: 20,
+                background: "var(--gold)",
+                color: "var(--green-dark)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {pushStatus === "loading" ? "..." : "🔔 Activer"}
+            </button>
+          )}
           <a href="/notifications" aria-label="Notifications" style={{ color: "var(--white)", position: "relative" }}>
             <span style={{ fontSize: 20 }}>🔔</span>
             {unreadNotif > 0 && (
