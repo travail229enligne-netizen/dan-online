@@ -8,17 +8,17 @@ export const POPUP_FONTS = {
 };
 
 export const POPUP_SIZES = {
-  petite: { label: "Petite", title: 15, msg: 12, img: 44 },
-  moyenne: { label: "Moyenne", title: 18, msg: 14, img: 56 },
-  grande: { label: "Grande", title: 22, msg: 16, img: 72 },
+  petite: { label: "Petite", box: 150, title: 14, msg: 11 },
+  moyenne: { label: "Moyenne", box: 200, title: 17, msg: 13 },
+  grande: { label: "Grande", box: 250, title: 20, msg: 15 },
 };
 
 const CSS = `
-@keyframes pb-in{0%{transform:translateY(130%);opacity:0}60%{transform:translateY(-8%);opacity:1}80%{transform:translateY(3%)}100%{transform:translateY(0)}}
+@keyframes pb-in{0%{transform:translateX(130%);opacity:0}60%{transform:translateX(-8%);opacity:1}80%{transform:translateX(3%)}100%{transform:translateX(0)}}
 @keyframes pb-bar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
-@keyframes pb-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes pb-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 .pb-card{animation:pb-in .7s cubic-bezier(.2,.8,.2,1) both}
-.pb-img{animation:pb-pulse 1.6s ease-in-out infinite}
+.pb-img{animation:pb-pulse 1.8s ease-in-out infinite}
 .pb-bar{transform-origin:left;animation:pb-bar linear forwards}
 @media (prefers-reduced-motion: reduce){.pb-card,.pb-img,.pb-bar{animation:none}}
 `;
@@ -31,10 +31,13 @@ function textColorFor(bg) {
   return lum > 160 ? "#111" : "#fff";
 }
 
+const clamp = (n) => ({ display: "-webkit-box", WebkitLineClamp: n, WebkitBoxOrient: "vertical", overflow: "hidden" });
+
 export function BannerCard({ popup, themeColor, duration, animate = true, onClose, href }) {
   const font = POPUP_FONTS[popup.font] || POPUP_FONTS.moderne;
   const size = POPUP_SIZES[popup.size] || POPUP_SIZES.moyenne;
-  const bg = /^#[0-9a-f]{6}$/i.test(themeColor || "") ? themeColor : "#111111";
+  const pick = /^#[0-9a-f]{6}$/i.test(popup.bgColor || "") ? popup.bgColor : themeColor;
+  const bg = /^#[0-9a-f]{6}$/i.test(pick || "") ? pick : "#111111";
   const fg = textColorFor(bg);
   const Tag = href ? "a" : "div";
   const linkProps = href ? { href } : {};
@@ -46,17 +49,16 @@ export function BannerCard({ popup, themeColor, duration, animate = true, onClos
       style={{
         position: "relative",
         display: "flex",
-        alignItems: "center",
-        gap: 12,
-        width: "100%",
-        maxWidth: 460,
+        flexDirection: "column",
+        width: size.box,
+        maxWidth: "62vw",
+        aspectRatio: "1 / 1",
         boxSizing: "border-box",
-        padding: 12,
-        paddingRight: 36,
-        borderRadius: 16,
+        padding: 10,
+        borderRadius: 20,
         background: bg,
         color: fg,
-        boxShadow: "0 8px 28px rgba(0,0,0,0.35)",
+        boxShadow: "0 10px 32px rgba(0,0,0,0.4)",
         overflow: "hidden",
         textDecoration: "none",
         pointerEvents: "auto",
@@ -64,22 +66,24 @@ export function BannerCard({ popup, themeColor, duration, animate = true, onClos
       }}
     >
       <style>{CSS}</style>
-      {popup.image ? (
-        <img
-          className={animate ? "pb-img" : ""}
-          src={popup.image}
-          alt=""
-          style={{ width: size.img, height: size.img, objectFit: "cover", borderRadius: 12, flexShrink: 0 }}
-        />
-      ) : (
-        <div className={animate ? "pb-img" : ""} style={{ fontSize: size.img * 0.7, flexShrink: 0 }}>🎉</div>
-      )}
-      <div style={{ minWidth: 0 }}>
+      <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {popup.image ? (
+          <img
+            className={animate ? "pb-img" : ""}
+            src={popup.image}
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 14 }}
+          />
+        ) : (
+          <div className={animate ? "pb-img" : ""} style={{ fontSize: size.box * 0.35 }}>🎉</div>
+        )}
+      </div>
+      <div style={{ paddingTop: 8, paddingBottom: 4, textAlign: "center", fontFamily: font.family }}>
         {popup.title && (
           <div
             style={{
+              ...clamp(2),
               fontSize: size.title,
-              fontFamily: font.family,
               fontWeight: font.weight,
               textTransform: font.upper ? "uppercase" : "none",
               lineHeight: 1.15,
@@ -89,7 +93,7 @@ export function BannerCard({ popup, themeColor, duration, animate = true, onClos
           </div>
         )}
         {popup.message && (
-          <div style={{ fontSize: size.msg, fontFamily: font.family, opacity: 0.92, marginTop: 2, lineHeight: 1.3 }}>
+          <div style={{ ...clamp(3), fontSize: size.msg, opacity: 0.92, marginTop: 3, lineHeight: 1.25 }}>
             {popup.message}
           </div>
         )}
@@ -103,7 +107,20 @@ export function BannerCard({ popup, themeColor, duration, animate = true, onClos
             e.stopPropagation();
             onClose();
           }}
-          style={{ position: "absolute", top: 4, right: 8, fontSize: 22, color: fg, background: "transparent", border: "none", opacity: 0.8 }}
+          style={{
+            position: "absolute",
+            top: 6,
+            right: 6,
+            width: 26,
+            height: 26,
+            borderRadius: "50%",
+            fontSize: 18,
+            lineHeight: "24px",
+            color: "#fff",
+            background: "rgba(0,0,0,0.45)",
+            border: "none",
+            padding: 0,
+          }}
         >
           ×
         </button>
@@ -171,10 +188,11 @@ export default function PromoBanner({ popup, shopId, themeColor, href }) {
         right: 0,
         bottom: "calc(12px + env(safe-area-inset-bottom, 0px))",
         display: "flex",
-        justifyContent: "center",
+        justifyContent: "flex-end",
         padding: "0 12px",
         pointerEvents: "none",
         zIndex: 90,
+        overflow: "hidden",
       }}
     >
       <BannerCard

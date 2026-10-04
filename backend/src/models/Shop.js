@@ -64,6 +64,7 @@ const shopSchema = new mongoose.Schema(
       font: { type: String, default: "moderne" },
       size: { type: String, default: "moyenne" },
       image: { type: String, default: "" },
+      bgColor: { type: String, default: "" },
     },
   },
   { timestamps: true }

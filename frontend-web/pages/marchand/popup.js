@@ -3,7 +3,7 @@ import MerchantLayout from "../../components/MerchantLayout";
 import api from "../../lib/api";
 import { BannerCard, POPUP_FONTS, POPUP_SIZES } from "../../components/PromoBanner";
 
-const DEFAULT = { enabled: false, title: "", message: "", font: "moderne", size: "moyenne", image: "" };
+const DEFAULT = { enabled: false, title: "", message: "", font: "moderne", size: "moyenne", image: "", bgColor: "" };
 const box = { background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 16, marginBottom: 16 };
 const input = { width: "100%", padding: 10, border: "1px solid var(--line)", borderRadius: 8, fontSize: 14, marginTop: 4, boxSizing: "border-box" };
 const chip = (on) => ({
@@ -122,6 +122,30 @@ export default function MerchantPopup() {
                 </button>
               ))}
             </div>
+            <p style={{ fontSize: 13, fontWeight: 600, margin: "14px 0 8px" }}>Couleur de fond</p>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+              {["#111111", "#C2410C", "#15803D", "#1D4ED8", "#BE185D", "#FACC15"].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  aria-label={c}
+                  onClick={() => set({ bgColor: c })}
+                  style={{ width: 34, height: 34, borderRadius: "50%", background: c, border: (popup.bgColor || themeColor) === c ? "3px solid var(--terracotta)" : "1px solid var(--line)" }}
+                />
+              ))}
+              <input
+                type="color"
+                value={/^#[0-9a-f]{6}$/i.test(popup.bgColor || themeColor) ? (popup.bgColor || themeColor) : "#111111"}
+                onChange={(e) => set({ bgColor: e.target.value })}
+                aria-label="Couleur personnalisée"
+                style={{ width: 40, height: 34, padding: 0, border: "none", background: "transparent" }}
+              />
+              {popup.bgColor && (
+                <button type="button" onClick={() => set({ bgColor: "" })} style={chip(false)}>
+                  Couleur de ma boutique
+                </button>
+              )}
+            </div>
             <p style={{ fontSize: 13, fontWeight: 600, margin: "14px 0 8px" }}>Image (un produit ou un logo)</p>
             <input type="file" accept="image/*" onChange={onImage} />
             {popup.image && (
@@ -133,7 +157,9 @@ export default function MerchantPopup() {
 
           <div style={box}>
             <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Aperçu</p>
-            <BannerCard popup={popup} themeColor={themeColor} animate={false} />
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <BannerCard popup={popup} themeColor={themeColor} animate={false} />
+            </div>
           </div>
         </>
       )}
