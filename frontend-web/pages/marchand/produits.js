@@ -15,6 +15,7 @@ const emptyForm = {
   category: "",
   prepTimeMinutes: "",
   isDailySpecial: false,
+  upsellProducts: [],
 };
 
 function Eyebrow({ children }) {
@@ -134,6 +135,7 @@ export default function MerchantProduits() {
         name: g.name,
         options: g.options.map((o) => ({ label: o.label, price: o.price ?? "" })),
       })),
+      upsellProducts: (p.upsellProducts || []).map((u) => (typeof u === "string" ? u : u._id)),
       category: p.category?._id || p.category || "",
       prepTimeMinutes: p.prepTimeMinutes || "",
       isDailySpecial: p.isDailySpecial || false,
@@ -215,6 +217,7 @@ export default function MerchantProduits() {
       const payload = {
         ...form,
         price: Number(form.price),
+        upsellProducts: form.upsellProducts,
         stock: Number(form.stock),
         priceTiers: cleanTiers,
         variantGroups: cleanVariantGroups,
