@@ -202,7 +202,8 @@ export default function Commande() {
             Total : <strong>{success.grandTotal.toLocaleString("fr-FR")} FCFA</strong>
           </p>
           <p style={{ color: "#e11d1d", fontSize: 20, fontWeight: 800, lineHeight: 1.35, margin: "14px auto 0", maxWidth: 360 }}>
-            ⚠️ Attention : le paiement se fait uniquement en ligne, après la livraison, pour raison de sécurité et de monnaie.
+            ⚠️ Attention : le paiement se fait uniquement en ligne à la livraison, pour raison de sécurité et de gestion de monnaie.{" "}
+            <span style={{ color: "#1d4ed8" }}>Assurez-vous d'avoir de l'argent sur votre compte.</span>
           </p>
 
           {!passwordSaved && success.user && !success.user.hasPassword && (
