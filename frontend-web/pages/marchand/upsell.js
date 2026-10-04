@@ -9,6 +9,7 @@ export default function MerchantUpsell() {
   const [products, setProducts] = useState([]);
   const [currentId, setCurrentId] = useState("");
   const [selected, setSelected] = useState([]);
+  const [hook, setHook] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -25,6 +26,7 @@ export default function MerchantUpsell() {
     setMsg("");
     const p = products.find((x) => x._id === id);
     setSelected(p ? ids(p) : []);
+    setHook(p?.upsellMessage || "");
   };
 
   const toggle = (id) => {
@@ -36,8 +38,8 @@ export default function MerchantUpsell() {
     setSaving(true);
     setMsg("");
     try {
-      await api.put(`/products/${currentId}`, { upsellProducts: selected });
-      setProducts(products.map((p) => (p._id === currentId ? { ...p, upsellProducts: selected } : p)));
+      await api.put(`/products/${currentId}`, { upsellProducts: selected, upsellMessage: hook });
+      setProducts(products.map((p) => (p._id === currentId ? { ...p, upsellProducts: selected, upsellMessage: hook } : p)));
       setMsg("Enregistré ✅");
     } catch (e) {
       setMsg(e.response?.data?.message || "Erreur lors de l'enregistrement.");
@@ -93,6 +95,17 @@ export default function MerchantUpsell() {
               <p style={{ fontSize: 12, color: "var(--ink-soft)" }}>Ajoute d'autres produits pour pouvoir les suggérer.</p>
             )}
           </div>
+          <label style={{ display: "block", fontSize: 13, marginTop: 16 }}>
+            Message d'accroche (affiché au client après sa commande)
+            <input
+              maxLength={80}
+              placeholder="Ex: Complète ton repas avec nos boissons fraîches !"
+              value={hook}
+              onChange={(e) => setHook(e.target.value)}
+              style={{ width: "100%", padding: 10, border: "1px solid var(--line)", borderRadius: 8, fontSize: 14, marginTop: 4, boxSizing: "border-box" }}
+            />
+            <span style={{ fontSize: 12, color: "var(--ink-soft)" }}>Laisse vide pour garder le message par défaut.</span>
+          </label>
           <button className="btn-primary" onClick={save} disabled={saving} style={{ marginTop: 16 }}>
             {saving ? "Enregistrement..." : "Enregistrer"}
           </button>

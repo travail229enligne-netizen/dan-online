@@ -168,7 +168,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Ce produit ne vous appartient pas." });
   }
 
-  const fields = ["name", "description", "price", "unit", "stock", "category", "images", "isActive", "prepTimeMinutes", "isDailySpecial", "upsellProducts"];
+  const fields = ["name", "description", "price", "unit", "stock", "category", "images", "isActive", "prepTimeMinutes", "isDailySpecial", "upsellProducts", "upsellMessage"];
   fields.forEach((f) => {
     if (req.body[f] !== undefined) product[f] = req.body[f];
   });

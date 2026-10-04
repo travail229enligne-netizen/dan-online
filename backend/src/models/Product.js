@@ -43,6 +43,7 @@ const productSchema = new mongoose.Schema(
     viewCount: { type: Number, default: 0 },
     prepTimeMinutes: { type: Number, default: null },
     isDailySpecial: { type: Boolean, default: false },
+    upsellMessage: { type: String, default: "", trim: true, set: (v) => String(v || "").slice(0, 80) },
     upsellProducts: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
   },
   { timestamps: true }

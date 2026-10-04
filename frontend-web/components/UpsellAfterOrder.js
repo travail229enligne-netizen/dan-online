@@ -7,6 +7,7 @@ const imgOf = (p) => (typeof p.images?.[0] === "string" ? p.images[0] : p.images
 
 export default function UpsellAfterOrder({ productIds }) {
   const [items, setItems] = useState([]);
+  const [hook, setHook] = useState("");
   const key = (productIds || []).filter(Boolean).join(",");
 
   useEffect(() => {
@@ -17,8 +18,11 @@ export default function UpsellAfterOrder({ productIds }) {
       try {
         const bases = await Promise.allSettled(ordered.map((id) => api.get(`/products/${id}`)));
         const ids = [];
+        let found = "";
         bases.forEach((r) => {
           if (r.status !== "fulfilled") return;
+          const base = unwrap(r);
+          if (!found && base.upsellMessage && (base.upsellProducts || []).length) found = base.upsellMessage;
           (unwrap(r).upsellProducts || []).forEach((u) => {
             const id = idOf(u);
             if (id && !ordered.includes(id) && !ids.includes(id)) ids.push(id);
@@ -30,7 +34,10 @@ export default function UpsellAfterOrder({ productIds }) {
           .map((r) => unwrap(r))
           .filter((p) => p && p._id && p.isActive !== false && !(typeof p.stock === "number" && p.stock <= 0))
           .slice(0, 4);
-        if (alive) setItems(list);
+        if (alive) {
+          setItems(list);
+          setHook(found);
+        }
       } catch {}
     })();
     return () => {
@@ -51,7 +58,7 @@ export default function UpsellAfterOrder({ productIds }) {
       }}
     >
       <h2 style={{ fontSize: 18, fontWeight: 800, textAlign: "center", color: "var(--terracotta-dark)" }}>
-        🔥 Ne t'arrête pas là !
+        {hook || "🔥 Ne t'arrête pas là !"}
       </h2>
       <p style={{ fontSize: 13, textAlign: "center", color: "var(--ink-soft)", margin: "6px 0 14px" }}>
         Ces produits vont parfaitement avec ta commande. Ajoute-les maintenant, avant de repartir.
