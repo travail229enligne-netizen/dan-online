@@ -58,10 +58,16 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
+  // Important : on quitte d'abord la page actuelle, et on ne vide
+  // l'utilisateur qu'une fois arrivé sur l'accueil. Si on vide l'utilisateur
+  // avant de changer de page, la page qu'on quitte se recalcule avec un
+  // utilisateur "null" et peut planter si elle utilisait ses infos sans
+  // vérification (ecran blanc "Application error").
   const logout = () => {
     window.localStorage.removeItem("dan_online_token");
-    setUser(null);
-    router.push("/");
+    router.push("/").then(() => {
+      setUser(null);
+    });
   };
 
   return (
