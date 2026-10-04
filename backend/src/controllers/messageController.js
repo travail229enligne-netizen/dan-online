@@ -4,6 +4,7 @@ const Message = require("../models/Message");
 const Shop = require("../models/Shop");
 const Order = require("../models/Order");
 const { notify } = require("../utils/notify");
+const User = require("../models/User");
 
 // @route   GET /api/messages/conversations
 // @access  Private (client, marchand ou livreur) - liste ses conversations
@@ -100,6 +101,28 @@ const startCourierConversation = asyncHandler(async (req, res) => {
     await conversation.save();
 
     await notify(courierId, "message", "Nouvelle commande à livrer", "Une boutique t'a envoyé une commande à livrer.", `/messages/c/${conversation._id}`);
+
+    // Prepare aussi un texte pret a etre envoye sur WhatsApp au livreur,
+    // en plus du message dans la messagerie interne (le marchand n'a
+    // qu'a appuyer sur "Envoyer" dans WhatsApp, rien n'est envoye seul).
+    const courierUser = await User.findById(courierId).select("phone name");
+    const clientUser = await Order.populate(order, { path: "client", select: "name phone" });
+
+    const itemsLines = order.items.map((it) => `• ${it.quantity}x ${it.name}`).join("\n");
+    const orderRef = order._id.toString().slice(-6).toUpperCase();
+
+    const whatsappText =
+      `📦 Nouvelle commande a livrer - Shopyz\n\n` +
+      `Commande #${orderRef}\n${itemsLines}\n\n` +
+      `Total : ${order.grandTotal.toLocaleString("fr-FR")} FCFA\n` +
+      `Client : ${clientUser.client?.name || ""} - ${order.deliveryPhone}\n` +
+      `Adresse : ${order.deliveryAddress}${order.deliveryCity ? ", " + order.deliveryCity : ""}`;
+
+    return res.json({
+      ...conversation.toObject(),
+      courierPhone: courierUser?.phone || "",
+      whatsappText,
+    });
   }
 
   res.json(conversation);
