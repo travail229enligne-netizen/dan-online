@@ -9,12 +9,12 @@ const { notify } = require("../utils/notify");
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const MODEL = "gemini-2.5-flash";
 
-const SYSTEM_INSTRUCTION = `Tu es l'assistant d'achat de Shopyz, une marketplace multi-vendeurs au Bénin.
-Ton rôle : aider les utilisateurs à trouver rapidement des produits qui correspondent à ce qu'ils cherchent (type d'article, budget, ville de livraison).
-Utilise toujours l'outil "search_products" pour chercher dans le vrai catalogue avant de répondre — ne invente jamais de produits ou de prix.
-Réponds en français, de façon chaleureuse et concise (2-4 phrases). Si des résultats sont trouvés, résume-les brièvement (l'utilisateur verra les fiches produits juste en dessous de ton message, donc ne reliste pas tous les détails).
-Si aucun résultat ne correspond, dis-le simplement et propose d'élargir la recherche (prix ou ville).
-Si l'utilisateur veut négocier un prix sur un produit précis, utilise l'outil "negotiate_price".`;
+const SYSTEM_INSTRUCTION = `Tu es l'assistant d'achat de Shopyz, une marketplace multi-vendeurs au Benin.
+Ton role : aider les utilisateurs a trouver rapidement des produits qui correspondent a ce qu'ils cherchent (type d'article, budget, ville de livraison).
+Utilise toujours l'outil "search_products" pour chercher dans le vrai catalogue avant de repondre - ne invente jamais de produits ou de prix.
+Reponds en francais, de facon chaleureuse et concise (2-4 phrases). Si des resultats sont trouves, resume-les brievement (l'utilisateur verra les fiches produits juste en dessous de ton message, donc ne reliste pas tous les details).
+Si aucun resultat ne correspond, dis-le simplement et propose d'elargir la recherche (prix ou ville).
+Si l'utilisateur veut negocier un prix sur un produit precis, utilise l'outil "negotiate_price".`;
 
 const searchProductsDeclaration = {
   name: "search_products",
@@ -22,11 +22,25 @@ const searchProductsDeclaration = {
   parameters: {
     type: Type.OBJECT,
     properties: {
-      query: { type: Type.STRING, description: "Mots-clés du produit recherché, ex: 'jean', 'crampons'" },
-      maxPrice: { type: Type.NUMBER, description: "Budget maximum en FCFA, si précisé par l'utilisateur" },
-      city: { type: Type.STRING, description: "Ville de livraison souhaitée, ex: 'Abomey-Calavi'" },
+      query: { type: Type.STRING, description: "Mots-cles du produit recherche, ex: 'jean', 'crampons'" },
+      maxPrice: { type: Type.NUMBER, description: "Budget maximum en FCFA, si precise par l'utilisateur" },
+      city: { type: Type.STRING, description: "Ville de livraison souhaitee, ex: 'Abomey-Calavi'" },
     },
     required: ["query"],
+  },
+};
+
+const negotiatePriceDeclaration = {
+  name: "negotiate_price",
+  description: "Envoie une proposition de prix au vendeur d'un produit precis, via la messagerie Shopyz.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      productId: { type: Type.STRING, description: "L'id du produit concerne (recupere via search_products)" },
+      offeredPrice: { type: Type.NUMBER, description: "Le prix propose par l'utilisateur, en FCFA" },
+      note: { type: Type.STRING, description: "Precision optionnelle a ajouter au message, ex: quantite souhaitee" },
+    },
+    required: ["productId", "offeredPrice"],
   },
 };
 
@@ -63,41 +77,34 @@ async function searchProducts({ query, maxPrice, city }) {
     name: p.name,
     price: p.price,
     unit: p.unit,
-    image: p.images?.[0] || "",
+    image: p.images && p.images[0] ? p.images[0] : "",
     shopName: p.shop.name,
     shopSlug: p.shop.slug,
     shopVerified: p.shop.isVerified,
   }));
 }
 
-const negotiatePriceDeclaration = {
-  name: "negotiate_price",
-  description: "Envoie une proposition de prix au vendeur d'un produit precis, via la messagerie Shopyz.",
-  parameters: {
-    type: Type.OBJECT,
-    properties: {
-      productId: { type: Type.STRING, description: "L'id du produit concerne (recupere via search_products)" },
-      offeredPrice: { type: Type.NUMBER, description: "Le prix propose par l'utilisateur, en FCFA" },
-      note: { type: Type.STRING, description: "Precision optionnelle a ajouter au message, ex: quantite souhaitee" },
-    },
-    required: ["productId", "offeredPrice"],
-  },
-};
-
 async function negotiatePrice({ productId, offeredPrice, note }, user) {
+  if (!user) {
     return { error: "login_required", message: "L'utilisateur doit se connecter pour envoyer une proposition de prix." };
   }
 
   const product = await Product.findById(productId).populate("shop");
+  if (!product || !product.shop) {
     return { error: "not_found", message: "Produit introuvable." };
   }
   const shop = product.shop;
 
   let conversation = await Conversation.findOne({ type: "client_shop", client: user._id, shop: shop._id });
+  if (!conversation) {
     conversation = await Conversation.create({ type: "client_shop", client: user._id, shop: shop._id });
   }
 
-  const text = `Bonjour, je suis interesse(e) par "${product.name}" (prix actuel : ${product.price.toLocaleString("fr-FR")} FCFA). Seriez-vous d'accord pour ${Number(offeredPrice).toLocaleString("fr-FR")} FCFA ?${note ? " " + note : ""}`;
+  const priceLabel = product.price.toLocaleString("fr-FR");
+  const offerLabel = Number(offeredPrice).toLocaleString("fr-FR");
+  let text = "Bonjour, je suis interesse(e) par \"" + product.name + "\" (prix actuel : " + priceLabel + " FCFA). ";
+  text += "Seriez-vous d'accord pour " + offerLabel + " FCFA ?";
+  if (note) text += " " + note;
 
   await Message.create({
     conversation: conversation._id,
@@ -112,18 +119,16 @@ async function negotiatePrice({ productId, offeredPrice, note }, user) {
   conversation.unreadForMerchant += 1;
   await conversation.save();
 
-  await notify(shop.owner, "message", "Nouvelle proposition de prix", text.slice(0, 80), `/messages/c/${conversation._id}`);
+  await notify(shop.owner, "message", "Nouvelle proposition de prix", text.slice(0, 80), "/messages/c/" + conversation._id);
 
   return { success: true, conversationId: conversation._id.toString() };
 }
 
 const tools = [{ functionDeclarations: [searchProductsDeclaration, negotiatePriceDeclaration] }];
 
-// @route   POST /api/assistant/chat
-// @access  Public
 const handleChat = asyncHandler(async (req, res) => {
   if (!process.env.GEMINI_API_KEY) {
-    return res.status(503).json({ message: "Assistant non configuré." });
+    return res.status(503).json({ message: "Assistant non configure." });
   }
 
   const { message, history } = req.body;
@@ -151,9 +156,10 @@ const handleChat = asyncHandler(async (req, res) => {
       },
     });
 
-    const candidate = response.candidates?.[0];
-    const parts = candidate?.content?.parts || [];
-    const functionCall = parts.find((p) => p.functionCall)?.functionCall;
+    const candidate = response.candidates && response.candidates[0];
+    const parts = (candidate && candidate.content && candidate.content.parts) || [];
+    const functionCallPart = parts.find((p) => p.functionCall);
+    const functionCall = functionCallPart ? functionCallPart.functionCall : null;
 
     if (functionCall && functionCall.name === "search_products") {
       const results = await searchProducts(functionCall.args || {});
