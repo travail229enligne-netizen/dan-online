@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Header from "../components/Header";
 import OrderSuccessAnimation from "../components/OrderSuccessAnimation";
+import { trackPurchase } from "../lib/adPixels";
 import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
 import api from "../lib/api";
@@ -142,6 +143,14 @@ export default function Commande() {
       setOrderedIds(items.map((it) => it.productId));
       setSuccess(data);
       clearCart();
+
+      if (Array.isArray(data.shopBreakdown)) {
+        data.shopBreakdown.forEach((sb) => {
+          if (sb.pixels) {
+            trackPurchase(sb.pixels, { value: sb.value, orderId: data._id });
+          }
+        });
+      }
     } catch (err) {
       const code = err.response?.data?.code;
       const productId = err.response?.data?.productId;
