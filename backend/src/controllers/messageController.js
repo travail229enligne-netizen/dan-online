@@ -86,29 +86,37 @@ const startCourierConversation = asyncHandler(async (req, res) => {
     order.courierStatus = "pending";
     await order.save();
 
-    conversation.order = orderId;
+    const message = await Message.create({
+      conversation: conversation._id,
+      sender: req.user._id,
+      senderRole: "marchand",
+      kind: "order_summary",
+      order: order._id,
+      text: "",
+    });
+
+    conversation.lastMessage = "📦 Nouvelle commande à livrer";
+    conversation.lastMessageAt = new Date();
+    conversation.unreadForClient += 1;
     await conversation.save();
 
-    // Pas de carte dans la messagerie interne pour cette commande : tout
-    // passe par WhatsApp. On prepare ici le numero du livreur et un texte
-    // pret a l'emploi, avec un lien vers sa page de suivi (Disponible /
-    // Pas disponible, preuve de livraison, preuve de paiement). Le
-    // marchand n'a plus qu'a appuyer sur "Envoyer" dans WhatsApp.
+    await notify(courierId, "message", "Nouvelle commande à livrer", "Une boutique t'a envoyé une commande à livrer.", `/messages/c/${conversation._id}`);
+
+    // Prepare aussi un texte pret a etre envoye sur WhatsApp au livreur,
+    // en plus du message dans la messagerie interne (le marchand n'a
+    // qu'a appuyer sur "Envoyer" dans WhatsApp, rien n'est envoye seul).
     const courierUser = await User.findById(courierId).select("phone name");
     const clientUser = await Order.populate(order, { path: "client", select: "name phone" });
 
     const itemsLines = order.items.map((it) => `• ${it.quantity}x ${it.name}`).join("\n");
     const orderRef = order._id.toString().slice(-6).toUpperCase();
-    const frontendUrl = process.env.FRONTEND_URL || "https://dan-online.vercel.app";
-    const courierLink = `${frontendUrl}/livreur/commande/${order._id}`;
 
     const whatsappText =
       `📦 Nouvelle commande a livrer - Shopyz\n\n` +
       `Commande #${orderRef}\n${itemsLines}\n\n` +
       `Total : ${order.grandTotal.toLocaleString("fr-FR")} FCFA\n` +
       `Client : ${clientUser.client?.name || ""} - ${order.deliveryPhone}\n` +
-      `Adresse : ${order.deliveryAddress}${order.deliveryCity ? ", " + order.deliveryCity : ""}\n\n` +
-      `👉 Suivre cette commande : ${courierLink}`;
+      `Adresse : ${order.deliveryAddress}${order.deliveryCity ? ", " + order.deliveryCity : ""}`;
 
     return res.json({
       ...conversation.toObject(),
