@@ -7,7 +7,7 @@ const Message = require("../models/Message");
 const { notify } = require("../utils/notify");
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const MODEL = "gemini-2.5-flash";
+const MODEL = "gemini-3.8-flash";
 
 const SYSTEM_INSTRUCTION = `Tu es l'assistant d'achat de Shopyz, une marketplace multi-vendeurs au Benin.
 Ton role : aider les utilisateurs a trouver rapidement des produits qui correspondent a ce qu'ils cherchent (type d'article, budget, ville de livraison).
