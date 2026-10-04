@@ -251,6 +251,18 @@ const createOrder = asyncHandler(async (req, res) => {
     response.user = currentUser.toSafeObject();
   }
 
+  response.shopBreakdown = shopIds.map((shopId) => {
+    const s = shopCache[shopId];
+    const shopItemsTotal = orderItems
+      .filter((it) => it.shop.toString() === shopId)
+      .reduce((sum, it) => sum + it.price * it.quantity, 0);
+    return {
+      shopId,
+      pixels: s ? s.pixels : null,
+      value: shopItemsTotal,
+    };
+  });
+
   res.status(201).json(response);
 });
 

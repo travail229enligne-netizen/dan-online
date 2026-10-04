@@ -6,6 +6,7 @@ import api from "../../lib/api";
 import { useCart } from "../../lib/cart";
 import { useAuth } from "../../lib/auth";
 import ShopPromoBanner from "../../components/ShopPromoBanner";
+import { trackViewContent, trackAddToCart } from "../../lib/adPixels";
 
 function priceForQty(product, qty) {
   if (!product.priceTiers || product.priceTiers.length === 0) return product.price;
@@ -31,6 +32,9 @@ export default function ProduitDetail() {
     if (!id) return;
     api.get(`/products/${id}`).then((r) => {
       setProduct(r.data);
+      if (r.data.shop?.pixels) {
+        trackViewContent(r.data.shop.pixels, { id: r.data._id, name: r.data.name, price: r.data.price });
+      }
       // Pre-selectionne la premiere option de chaque groupe de variantes
       if (r.data.variantGroups && r.data.variantGroups.length > 0) {
         const defaults = {};
@@ -303,6 +307,9 @@ export default function ProduitDetail() {
             onClick={() => {
               const displayName = variantSummary ? `${product.name} (${variantSummary})` : product.name;
               addToCart({ ...product, name: displayName, price: unitPrice }, numericQty);
+              if (product.shop?.pixels) {
+                trackAddToCart(product.shop.pixels, { id: product._id, name: product.name, price: unitPrice, quantity: numericQty });
+              }
               setAdded(true);
               setTimeout(() => setAdded(false), 2000);
 

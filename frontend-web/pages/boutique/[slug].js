@@ -7,6 +7,7 @@ import api from "../../lib/api";
 import { useCart } from "../../lib/cart";
 import { useAuth } from "../../lib/auth";
 import PromoBanner from "../../components/PromoBanner";
+import { loadShopPixels } from "../../lib/adPixels";
 
 function shade(hex, percent) {
   try {
@@ -48,6 +49,7 @@ export default function BoutiquePublique() {
       .get(`/shops/${slug}`)
       .then((r) => {
         setShop(r.data);
+        loadShopPixels(r.data.pixels);
         if (r.data.popup?.enabled) {
           const seenKey = "shopyz_popup_seen_" + r.data._id;
           if (!sessionStorage.getItem(seenKey)) {
