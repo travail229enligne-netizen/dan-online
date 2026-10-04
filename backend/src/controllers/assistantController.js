@@ -194,7 +194,7 @@ const handleChat = asyncHandler(async (req, res) => {
       const results = await searchProducts(functionCall.args || {});
       collectedProducts = results;
 
-      contents.push({ role: "model", parts: [{ functionCall }] });
+      contents.push({ role: "model", parts: [functionCallPart] });
       contents.push({
         role: "user",
         parts: [{ functionResponse: { name: "search_products", response: { results } } }],
@@ -206,7 +206,7 @@ const handleChat = asyncHandler(async (req, res) => {
       const result = await negotiatePrice(functionCall.args || {}, req.user);
       if (result.success) negotiationConversationId = result.conversationId;
 
-      contents.push({ role: "model", parts: [{ functionCall }] });
+      contents.push({ role: "model", parts: [functionCallPart] });
       contents.push({
         role: "user",
         parts: [{ functionResponse: { name: "negotiate_price", response: result } }],
