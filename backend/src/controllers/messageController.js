@@ -5,6 +5,7 @@ const Shop = require("../models/Shop");
 const Order = require("../models/Order");
 const { notify } = require("../utils/notify");
 const User = require("../models/User");
+const axios = require("axios");
 
 // @route   GET /api/messages/conversations
 // @access  Private (client, marchand ou livreur) - liste ses conversations
@@ -100,7 +101,19 @@ const startCourierConversation = asyncHandler(async (req, res) => {
     const itemsLines = order.items.map((it) => `• ${it.quantity}x ${it.name}`).join("\n");
     const orderRef = order._id.toString().slice(-6).toUpperCase();
     const frontendUrl = process.env.FRONTEND_URL || "https://dan-online.vercel.app";
-    const courierLink = `${frontendUrl}/livreur/commande/${order._id}`;
+    const longCourierLink = `${frontendUrl}/livreur/commande/${order._id}`;
+    let courierLink = longCourierLink;
+    try {
+      const shortRes = await axios.get("https://tinyurl.com/api-create.php", {
+        params: { url: longCourierLink },
+        timeout: 4000,
+      });
+      if (typeof shortRes.data === "string" && shortRes.data.startsWith("http")) {
+        courierLink = shortRes.data;
+      }
+    } catch (e) {
+      // Si le raccourcisseur est indisponible, on garde le lien complet.
+    }
 
     const whatsappText =
       `📦 Nouvelle commande a livrer - Shopyz\n\n` +
