@@ -55,15 +55,45 @@ const startClientConversationFromOrder = asyncHandler(async (req, res) => {
   res.json(conversation);
 });
 
+// Retrouve un compte par numero, quel que soit le format saisi (espaces, +229, 01...)
+const findUserByPhone = async (raw) => {
+  let d = String(raw || "").replace(/\D/g, "");
+  if (d.startsWith("00")) d = d.slice(2);
+  if (d.startsWith("229") && d.length > 10) d = d.slice(3);
+  if (d.length < 8) return null;
+  const variants = new Set([d]);
+  if (d.length === 10 && d.startsWith("01")) variants.add(d.slice(2));
+  if (d.length === 8) variants.add("01" + d);
+  const sep = "[\\s.\\-]*";
+  const alts = [...variants].map((v) => v.split("").join(sep)).join("|");
+  const re = new RegExp("^\\s*(?:\\+?\\s*(?:00)?229" + sep + ")?(?:" + alts + ")\\s*$");
+  return User.findOne({ phone: re });
+};
+
+
 // @route   POST /api/messages/start-courier
 // @access  Private (marchand) - demarre/recupere une conversation avec un livreur
 // body: { courierId, orderId? } - orderId est optionnel: s'il est fourni, assigne la commande et envoie le bilan
 const startCourierConversation = asyncHandler(async (req, res) => {
-  const { courierId, orderId } = req.body;
-  if (!courierId) return res.status(400).json({ message: "Livreur requis." });
+  let { courierId, orderId } = req.body;
+  const typedPhone = req.body.courierPhone;
+  if (!courierId && !typedPhone) return res.status(400).json({ message: "Livreur requis." });
 
   const shop = await Shop.findOne({ owner: req.user._id });
   if (!shop) return res.status(404).json({ message: "Aucune boutique associee a ce compte." });
+
+  // Numero saisi par le marchand : on retrouve le compte du livreur
+  if (!courierId && typedPhone) {
+    const courierUser = await findUserByPhone(typedPhone);
+    if (!courierUser) {
+      return res.status(404).json({ message: "Aucun compte Shopyz n'est associé à ce numéro." });
+    }
+    courierId = courierUser._id.toString();
+    if (!shop.couriers.some((c) => c.user.toString() === courierId)) {
+      shop.couriers.push({ user: courierUser._id, name: courierUser.name, phone: courierUser.phone });
+      await shop.save();
+    }
+  }
 
   const isKnownCourier = shop.couriers.some((c) => c.user.toString() === courierId);
   if (!isKnownCourier) {

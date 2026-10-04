@@ -11,6 +11,7 @@ export default function CommandeLivraison() {
   const [platformCouriers, setPlatformCouriers] = useState([]);
   const [useShopyz, setUseShopyz] = useState(false);
   const [selectedCourier, setSelectedCourier] = useState("");
+  const [courierPhone, setCourierPhone] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
@@ -25,19 +26,19 @@ export default function CommandeLivraison() {
   const couriers = useShopyz ? platformCouriers : myCouriers;
 
   const handleSend = async () => {
-    if (!selectedCourier) {
-      setError("Choisis un livreur avant d'envoyer.");
+    if (useShopyz ? !selectedCourier : !courierPhone.trim()) {
+      setError(useShopyz ? "Choisis un livreur avant d'envoyer." : "Saisis le numéro du livreur.");
       return;
     }
     setSending(true);
     setError("");
     try {
       const { data } = await api.post("/messages/start-courier", {
-        courierId: selectedCourier,
+        ...(useShopyz ? { courierId: selectedCourier } : { courierPhone: courierPhone.trim() }),
         orderId: order._id,
       });
       if (data.courierPhone) {
-        const waNumber = `229${data.courierPhone.replace(/^0/, "")}`;
+        const waNumber = `229${data.courierPhone.replace(/\D/g, "").replace(/^(00)?229(?=\d{8})/, "").replace(/^0/, "")}`;
         const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(data.whatsappText || "")}`;
         window.open(waUrl, "_blank");
       }
@@ -73,7 +74,7 @@ export default function CommandeLivraison() {
         Bilan de la commande
       </h1>
       <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 20 }}>
-        Choisis un livreur pour lui transmettre cette commande.
+        Indique le livreur qui va livrer cette commande.
       </p>
 
       <div
@@ -132,36 +133,39 @@ export default function CommandeLivraison() {
           boxSizing: "border-box",
         }}
       >
-        {couriers.length === 0 ? (
-          useShopyz ? (
+        {useShopyz ? (
+          couriers.length === 0 ? (
             <p style={{ fontSize: 14, color: "var(--ink-soft)", margin: 0 }}>
               Aucun livreur Shopyz n'est disponible pour le moment.
             </p>
           ) : (
-            <div style={{ textAlign: "center" }}>
-              <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 14 }}>
-                Tu n'as pas encore de livreur enregistré.
-              </p>
-              <a href="/marchand/livreurs" className="btn-primary" style={{ display: "inline-block" }}>
-                Ajouter un livreur
-              </a>
-            </div>
+            <label style={{ fontSize: 13, fontWeight: 600 }}>
+              Choisir un livreur Shopyz
+              <select
+                value={selectedCourier}
+                onChange={(e) => setSelectedCourier(e.target.value)}
+                style={{ width: "100%", padding: 12, marginTop: 6, border: "1px solid var(--line)", borderRadius: 14, fontSize: 15, boxSizing: "border-box" }}
+              >
+                <option value="">Choisir...</option>
+                {couriers.map((c) => (
+                  <option key={c.user} value={c.user}>
+                    {c.name} — {c.phone}
+                  </option>
+                ))}
+              </select>
+            </label>
           )
         ) : (
           <label style={{ fontSize: 13, fontWeight: 600 }}>
-            Choisir un livreur {useShopyz ? "Shopyz" : ""}
-            <select
-              value={selectedCourier}
-              onChange={(e) => setSelectedCourier(e.target.value)}
+            Numéro du livreur
+            <input
+              type="tel"
+              inputMode="tel"
+              value={courierPhone}
+              onChange={(e) => setCourierPhone(e.target.value)}
+              placeholder="ex : 61 00 00 00"
               style={{ width: "100%", padding: 12, marginTop: 6, border: "1px solid var(--line)", borderRadius: 14, fontSize: 15, boxSizing: "border-box" }}
-            >
-              <option value="">Choisir...</option>
-              {couriers.map((c) => (
-                <option key={c.user} value={c.user}>
-                  {c.name} — {c.phone}
-                </option>
-              ))}
-            </select>
+            />
           </label>
         )}
 
@@ -188,7 +192,7 @@ export default function CommandeLivraison() {
         <button
           className="btn-primary"
           onClick={handleSend}
-          disabled={sending || sent || couriers.length === 0}
+          disabled={sending || sent || (useShopyz && couriers.length === 0)}
           style={{ fontSize: 15, padding: 14 }}
         >
           {sending ? "Envoi..." : "Contacter le livreur"}
