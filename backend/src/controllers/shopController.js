@@ -89,6 +89,7 @@ const updateMyShop = asyncHandler(async (req, res) => {
       title: (req.body.popup.title || "").trim(),
       message: (req.body.popup.message || "").trim(),
       bgColor: /^#[0-9a-f]{6}$/i.test(req.body.popup.bgColor || "") ? req.body.popup.bgColor : "",
+      endsAt: req.body.popup.endsAt && !isNaN(new Date(req.body.popup.endsAt)) ? new Date(req.body.popup.endsAt) : null,
       font: ["moderne", "elegante", "impact", "manuscrite"].includes(req.body.popup.font) ? req.body.popup.font : "moderne",
       size: ["petite", "moyenne", "grande"].includes(req.body.popup.size) ? req.body.popup.size : "moyenne",
       image:

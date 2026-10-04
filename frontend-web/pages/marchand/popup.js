@@ -3,7 +3,7 @@ import MerchantLayout from "../../components/MerchantLayout";
 import api from "../../lib/api";
 import { BannerCard, POPUP_FONTS, POPUP_SIZES } from "../../components/PromoBanner";
 
-const DEFAULT = { enabled: false, title: "", message: "", font: "moderne", size: "moyenne", image: "", bgColor: "" };
+const DEFAULT = { enabled: false, title: "", message: "", font: "moderne", size: "moyenne", image: "", bgColor: "", endsAt: null };
 const box = { background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 16, marginBottom: 16 };
 const input = { width: "100%", padding: 10, border: "1px solid var(--line)", borderRadius: 8, fontSize: 14, marginTop: 4, boxSizing: "border-box" };
 const chip = (on) => ({
@@ -37,6 +37,13 @@ const toSmallDataUrl = (file) =>
     };
     reader.readAsDataURL(file);
   });
+
+const localDate = (iso) => {
+  const d = new Date(iso);
+  const p = (n) => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+};
+const isExpired = (iso) => !!iso && new Date(iso).getTime() < Date.now();
 
 export default function MerchantPopup() {
   const [popup, setPopup] = useState(DEFAULT);
@@ -122,6 +129,37 @@ export default function MerchantPopup() {
                 </button>
               ))}
             </div>
+            <p style={{ fontSize: 13, fontWeight: 600, margin: "14px 0 8px" }}>Durée de la campagne (à partir de maintenant)</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {[["24 h", 1], ["3 jours", 3], ["7 jours", 7], ["30 jours", 30]].map(([label, d]) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => set({ endsAt: new Date(Date.now() + d * 86400000).toISOString() })}
+                  style={chip(false)}
+                >
+                  {label}
+                </button>
+              ))}
+              <button type="button" onClick={() => set({ endsAt: null })} style={chip(!popup.endsAt)}>
+                Sans fin
+              </button>
+            </div>
+            <label style={{ display: "block", fontSize: 13, marginTop: 10 }}>
+              Ou jusqu'au
+              <input
+                type="date"
+                value={popup.endsAt ? localDate(popup.endsAt) : ""}
+                onChange={(e) => set({ endsAt: e.target.value ? new Date(e.target.value + "T23:59:00").toISOString() : null })}
+                style={input}
+              />
+            </label>
+            {popup.endsAt && (
+              <p style={{ fontSize: 12, marginTop: 6, color: isExpired(popup.endsAt) ? "var(--terracotta-dark)" : "var(--ink-soft)" }}>
+                {isExpired(popup.endsAt) ? "Campagne terminée le " : "Se termine le "}
+                {new Date(popup.endsAt).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" })}
+              </p>
+            )}
             <p style={{ fontSize: 13, fontWeight: 600, margin: "14px 0 8px" }}>Couleur de fond</p>
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
               {["#111111", "#C2410C", "#15803D", "#1D4ED8", "#BE185D", "#FACC15"].map((c) => (

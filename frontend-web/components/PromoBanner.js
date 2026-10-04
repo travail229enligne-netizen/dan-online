@@ -139,7 +139,8 @@ export default function PromoBanner({ popup, shopId, themeColor, href }) {
   const [visible, setVisible] = useState(false);
   const [dur, setDur] = useState(0);
   const [round, setRound] = useState(0);
-  const enabled = !!popup?.enabled && !!(popup.title || popup.message || popup.image);
+  const expired = !!popup?.endsAt && new Date(popup.endsAt).getTime() < Date.now();
+  const enabled = !!popup?.enabled && !expired && !!(popup.title || popup.message || popup.image);
   const closedKey = "shopyz_banner_closed_" + shopId;
   const lastKey = "shopyz_banner_last_" + shopId;
 
@@ -156,6 +157,7 @@ export default function PromoBanner({ popup, shopId, themeColor, href }) {
 
     const show = () => {
       if (stopped || isClosed()) return;
+      if (popup?.endsAt && new Date(popup.endsAt).getTime() < Date.now()) return;
       const d = first ? 8000 : 5000;
       first = false;
       try { sessionStorage.setItem(lastKey, String(Date.now())); } catch {}

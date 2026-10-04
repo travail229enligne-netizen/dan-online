@@ -65,6 +65,7 @@ const shopSchema = new mongoose.Schema(
       size: { type: String, default: "moyenne" },
       image: { type: String, default: "" },
       bgColor: { type: String, default: "" },
+      endsAt: { type: Date, default: null },
     },
   },
   { timestamps: true }
