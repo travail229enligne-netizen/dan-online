@@ -106,7 +106,7 @@ const getProductById = asyncHandler(async (req, res) => {
     { $inc: { viewCount: 1 } },
     { new: true }
   )
-    .populate("shop", "name slug isVerified businessType")
+    .populate("shop", "name slug isVerified businessType pixels")
     .populate("category", "name icon");
 
   if (!product) return res.status(404).json({ message: "Produit introuvable." });

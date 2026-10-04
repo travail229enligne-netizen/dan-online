@@ -46,8 +46,6 @@ const shopSchema = new mongoose.Schema(
       enum: ["pending", "active", "suspended", "closed"],
       default: "pending",
     },
-    // Indique si le marchand a deja ete redirige automatiquement vers
-    // l'ajout de produits apres la premiere validation de sa boutique
     productsOnboardingDone: { type: Boolean, default: false },
     rent: {
       amount: { type: Number, default: 0 },
@@ -61,11 +59,11 @@ const shopSchema = new mongoose.Schema(
       enabled: { type: Boolean, default: false },
       title: { type: String, default: "" },
       message: { type: String, default: "" },
-      font: { type: String, default: "moderne" },
-      size: { type: String, default: "moyenne" },
-      image: { type: String, default: "" },
-      bgColor: { type: String, default: "" },
-      endsAt: { type: Date, default: null },
+    },
+    pixels: {
+      metaPixelId: { type: String, default: "" },
+      tiktokPixelId: { type: String, default: "" },
+      googleAdsId: { type: String, default: "" },
     },
   },
   { timestamps: true }

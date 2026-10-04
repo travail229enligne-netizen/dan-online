@@ -31,7 +31,7 @@ const getMyShop = asyncHandler(async (req, res) => {
 });
 
 const getShopById = asyncHandler(async (req, res) => {
-  const shop = await Shop.findById(req.params.id).select("name slug deliveryZones businessType");
+  const shop = await Shop.findById(req.params.id).select("name slug deliveryZones businessType pixels");
   if (!shop) return res.status(404).json({ message: "Boutique introuvable." });
   res.json(shop);
 });
@@ -82,6 +82,14 @@ const updateMyShop = asyncHandler(async (req, res) => {
 
   const validBusinessTypes = ["boutique", "restaurant", "supermarche", "grossiste", "artisan"];
   const fields = ["name", "description", "logoUrl", "category", "themeColor", "city"];
+
+  if (req.body.pixels !== undefined) {
+    shop.pixels = {
+      metaPixelId: (req.body.pixels.metaPixelId || "").trim(),
+      tiktokPixelId: (req.body.pixels.tiktokPixelId || "").trim(),
+      googleAdsId: (req.body.pixels.googleAdsId || "").trim(),
+    };
+  }
 
   if (req.body.popup !== undefined) {
     shop.popup = {
