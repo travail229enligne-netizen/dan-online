@@ -18,6 +18,7 @@ const navItems = [
   { href: "/marchand/pixels", label: "Pixels publicitaires", icon: "🎯" },
   { href: "/marchand/popup", label: "Pop-up d'accueil", icon: "💬" },
   { href: "/marchand/upsell", label: "Ventes additionnelles", icon: "🛒" },
+  { href: "/marchand/liens-pub", label: "Liens publicitaires", icon: "🔗" },
   { href: "/marchand/foires", label: "Foires", icon: "🎪" },
   { href: "/marchand/guide", label: "Guide complet", icon: "📘" },
   { href: "/messages", label: "Messages", icon: "💬" },
