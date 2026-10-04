@@ -39,6 +39,7 @@ export default function BoutiquePublique() {
   const [reviews, setReviews] = useState({ reviews: [], average: 0, count: 0 });
   const [following, setFollowing] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -46,6 +47,13 @@ export default function BoutiquePublique() {
       .get(`/shops/${slug}`)
       .then((r) => {
         setShop(r.data);
+        if (r.data.popup?.enabled) {
+          const seenKey = "shopyz_popup_seen_" + r.data._id;
+          if (!sessionStorage.getItem(seenKey)) {
+            setShowPopup(true);
+            sessionStorage.setItem(seenKey, "1");
+          }
+        }
         api.get(`/reviews/shop/${r.data._id}`).then((rr) => setReviews(rr.data)).catch(() => {});
         api.get(`/collections/shop/${r.data._id}`).then((cr) => setCollections(cr.data)).catch(() => {});
         if (user?.role === "client") {
@@ -148,6 +156,53 @@ export default function BoutiquePublique() {
         {pageUrl && <link rel="canonical" href={pageUrl} />}
       </Head>
       <Header />
+
+      {showPopup && shop?.popup?.enabled && (
+        <div
+          onClick={() => setShowPopup(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            zIndex: 100,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "var(--white)",
+              borderRadius: 20,
+              padding: 28,
+              maxWidth: 340,
+              width: "100%",
+              textAlign: "center",
+              position: "relative",
+            }}
+          >
+            <button
+              onClick={() => setShowPopup(false)}
+              aria-label="Fermer"
+              style={{ position: "absolute", top: 12, right: 14, fontSize: 20, color: "var(--ink-soft)" }}
+            >
+              ×
+            </button>
+            <div style={{ fontSize: 36, marginBottom: 10 }}>🎉</div>
+            {shop.popup.title && <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>{shop.popup.title}</h2>}
+            {shop.popup.message && <p style={{ fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.5 }}>{shop.popup.message}</p>}
+            <button
+              className="btn-primary"
+              style={{ width: "100%", marginTop: 18 }}
+              onClick={() => setShowPopup(false)}
+            >
+              Voir la boutique
+            </button>
+          </div>
+        </div>
+      )}
 
       <div
         style={{

@@ -99,6 +99,7 @@ export default function Boutique() {
     themeColor: "#c1592b",
     logoUrl: "",
     deliveryZones: [],
+    popup: { enabled: false, title: "", message: "" },
   });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -124,6 +125,7 @@ export default function Boutique() {
             themeColor: r.data.themeColor || "#c1592b",
             logoUrl: r.data.logoUrl || "",
             deliveryZones: r.data.deliveryZones || [],
+            popup: r.data.popup || { enabled: false, title: "", message: "" },
           });
         }
       })
@@ -494,6 +496,41 @@ export default function Boutique() {
                 </button>
               </div>
             ))}
+          </Section>
+
+          <Section>
+            <Eyebrow>Pop-up promo a l'arrivee sur ta boutique</Eyebrow>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600 }}>
+              <input
+                type="checkbox"
+                checked={form.popup.enabled}
+                onChange={(e) => setForm({ ...form, popup: { ...form.popup, enabled: e.target.checked } })}
+              />
+              Activer le pop-up promo
+            </label>
+            {form.popup.enabled && (
+              <>
+                <label style={labelStyle}>
+                  Titre
+                  <input
+                    placeholder="Ex: Promo du jour !"
+                    value={form.popup.title}
+                    onChange={(e) => setForm({ ...form, popup: { ...form.popup, title: e.target.value } })}
+                    style={inputStyle}
+                  />
+                </label>
+                <label style={labelStyle}>
+                  Message
+                  <textarea
+                    rows={2}
+                    placeholder="Ex: -10% sur toute la boutique aujourd'hui"
+                    value={form.popup.message}
+                    onChange={(e) => setForm({ ...form, popup: { ...form.popup, message: e.target.value } })}
+                    style={{ ...inputStyle, fontFamily: "inherit", resize: "vertical" }}
+                  />
+                </label>
+              </>
+            )}
           </Section>
 
           <Section>
