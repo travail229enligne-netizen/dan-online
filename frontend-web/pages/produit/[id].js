@@ -5,6 +5,7 @@ import Header from "../../components/Header";
 import api from "../../lib/api";
 import { useCart } from "../../lib/cart";
 import { useAuth } from "../../lib/auth";
+import ShopPromoBanner from "../../components/ShopPromoBanner";
 
 function priceForQty(product, qty) {
   if (!product.priceTiers || product.priceTiers.length === 0) return product.price;
@@ -165,6 +166,7 @@ export default function ProduitDetail() {
         )}
 
         <h1 style={{ fontSize: 20, marginBottom: 6 }}>{product.name}</h1>
+        {product.shop?.slug && <ShopPromoBanner slug={product.shop.slug} />}
         {product.shop?.name && (
           <a href={`/boutique/${product.shop.slug}`} style={{ fontSize: 13, color: "var(--ink-soft)" }}>
             Vendu par {product.shop.name}

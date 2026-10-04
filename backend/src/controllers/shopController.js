@@ -88,6 +88,14 @@ const updateMyShop = asyncHandler(async (req, res) => {
       enabled: !!req.body.popup.enabled,
       title: (req.body.popup.title || "").trim(),
       message: (req.body.popup.message || "").trim(),
+      font: ["moderne", "elegante", "impact", "manuscrite"].includes(req.body.popup.font) ? req.body.popup.font : "moderne",
+      size: ["petite", "moyenne", "grande"].includes(req.body.popup.size) ? req.body.popup.size : "moyenne",
+      image:
+        typeof req.body.popup.image === "string" &&
+        req.body.popup.image.length < 80000 &&
+        /^(data:image\/(jpeg|png|webp);base64,|https:\/\/)/.test(req.body.popup.image)
+          ? req.body.popup.image
+          : "",
     };
   }
   fields.forEach((f) => {

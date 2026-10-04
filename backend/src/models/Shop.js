@@ -61,6 +61,9 @@ const shopSchema = new mongoose.Schema(
       enabled: { type: Boolean, default: false },
       title: { type: String, default: "" },
       message: { type: String, default: "" },
+      font: { type: String, default: "moderne" },
+      size: { type: String, default: "moyenne" },
+      image: { type: String, default: "" },
     },
   },
   { timestamps: true }

@@ -6,6 +6,7 @@ import ProductCard from "../../components/ProductCard";
 import api from "../../lib/api";
 import { useCart } from "../../lib/cart";
 import { useAuth } from "../../lib/auth";
+import PromoBanner from "../../components/PromoBanner";
 
 function shade(hex, percent) {
   try {
@@ -157,52 +158,7 @@ export default function BoutiquePublique() {
       </Head>
       <Header />
 
-      {showPopup && shop?.popup?.enabled && (
-        <div
-          onClick={() => setShowPopup(false)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.5)",
-            zIndex: 100,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 20,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: "var(--white)",
-              borderRadius: 20,
-              padding: 28,
-              maxWidth: 340,
-              width: "100%",
-              textAlign: "center",
-              position: "relative",
-            }}
-          >
-            <button
-              onClick={() => setShowPopup(false)}
-              aria-label="Fermer"
-              style={{ position: "absolute", top: 12, right: 14, fontSize: 20, color: "var(--ink-soft)" }}
-            >
-              ×
-            </button>
-            <div style={{ fontSize: 36, marginBottom: 10 }}>🎉</div>
-            {shop.popup.title && <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>{shop.popup.title}</h2>}
-            {shop.popup.message && <p style={{ fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.5 }}>{shop.popup.message}</p>}
-            <button
-              className="btn-primary"
-              style={{ width: "100%", marginTop: 18 }}
-              onClick={() => setShowPopup(false)}
-            >
-              Voir la boutique
-            </button>
-          </div>
-        </div>
-      )}
+      <PromoBanner popup={shop?.popup} shopId={shop?._id} themeColor={shop?.themeColor} />
 
       <div
         style={{
