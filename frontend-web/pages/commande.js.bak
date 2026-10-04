@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Header from "../components/Header";
 import OrderSuccessAnimation from "../components/OrderSuccessAnimation";
-import { trackPurchase, getTrackingContext } from "../lib/adPixels";
+import { trackPurchase } from "../lib/adPixels";
 import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
 import api from "../lib/api";
@@ -127,7 +127,6 @@ export default function Commande() {
     try {
       const { data } = await api.post("/orders", {
         items: items.map((it) => ({ productId: it.productId, quantity: it.quantity })),
-        tracking: getTrackingContext(),
         name: form.name,
         deliveryAddress: form.deliveryAddress,
         deliveryPhone: form.deliveryPhone,
@@ -148,7 +147,7 @@ export default function Commande() {
       if (Array.isArray(data.shopBreakdown)) {
         data.shopBreakdown.forEach((sb) => {
           if (sb.pixels) {
-            trackPurchase(sb.pixels, { value: sb.value, orderId: data._id, shopId: sb.shopId, contents: sb.contents });
+            trackPurchase(sb.pixels, { value: sb.value, orderId: data._id });
           }
         });
       }
@@ -202,9 +201,8 @@ export default function Commande() {
           <p style={{ color: "var(--ink-soft)", marginTop: 8 }}>
             Total : <strong>{success.grandTotal.toLocaleString("fr-FR")} FCFA</strong>
           </p>
-          <p style={{ color: "#e11d1d", fontSize: 20, fontWeight: 800, lineHeight: 1.35, margin: "14px auto 0", maxWidth: 360 }}>
-            ⚠️ Attention : le paiement se fait uniquement en ligne à la livraison, pour raison de sécurité et de gestion de monnaie.{" "}
-            <span style={{ color: "#1d4ed8" }}>Assurez-vous d'avoir de l'argent sur votre compte.</span>
+          <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>
+            Tu pourras régler en ligne dès que ton livreur sera en route.
           </p>
 
           {!passwordSaved && success.user && !success.user.hasPassword && (

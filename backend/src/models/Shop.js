@@ -65,6 +65,12 @@ const shopSchema = new mongoose.Schema(
       tiktokPixelId: { type: String, default: "" },
       googleAdsId: { type: String, default: "" },
     },
+    adApi: {
+      metaToken: { type: String, default: "", select: false },
+      metaTestCode: { type: String, default: "", select: false },
+      tiktokToken: { type: String, default: "", select: false },
+      tiktokTestCode: { type: String, default: "", select: false },
+    },
   },
   { timestamps: true }
 );

@@ -20,7 +20,10 @@ const { authorize } = require("../middleware/roles");
 
 const router = express.Router();
 
+const { getMyAdApi, updateMyAdApi } = require("../controllers/adApiController");
 router.get("/", getShops);
+router.get("/me/ad-api", protect, authorize("marchand"), getMyAdApi);
+router.put("/me/ad-api", protect, authorize("marchand"), updateMyAdApi);
 router.get("/me", protect, authorize("marchand"), getMyShop);
 router.get("/me/stats", protect, authorize("marchand"), getMyShopStats);
 router.get("/me/chart", protect, authorize("marchand"), getMyShopChart);

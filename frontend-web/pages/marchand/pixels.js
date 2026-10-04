@@ -45,6 +45,10 @@ export default function MarchandPixels() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [adApi, setAdApi] = useState({
+    metaToken: "", metaTokenSet: false, metaTestCode: "", removeMetaToken: false,
+    tiktokToken: "", tiktokTokenSet: false, tiktokTestCode: "", removeTiktokToken: false,
+  });
 
   useEffect(() => {
     api
@@ -55,12 +59,33 @@ export default function MarchandPixels() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    api.get("/shops/me/ad-api").then((r) => setAdApi((a) => ({ ...a, ...r.data }))).catch(() => {});
+  }, []);
+
   const handleSave = async (e) => {
     e.preventDefault();
     setError("");
     setSaving(true);
     try {
       await api.put("/shops/me", { pixels: form });
+      await api.put("/shops/me/ad-api", {
+        metaToken: adApi.metaToken,
+        metaTestCode: adApi.metaTestCode,
+        removeMetaToken: adApi.removeMetaToken,
+        tiktokToken: adApi.tiktokToken,
+        tiktokTestCode: adApi.tiktokTestCode,
+        removeTiktokToken: adApi.removeTiktokToken,
+      });
+      setAdApi((a) => ({
+        ...a,
+        metaTokenSet: a.metaToken.trim() ? true : a.removeMetaToken ? false : a.metaTokenSet,
+        tiktokTokenSet: a.tiktokToken.trim() ? true : a.removeTiktokToken ? false : a.tiktokTokenSet,
+        metaToken: "",
+        tiktokToken: "",
+        removeMetaToken: false,
+        removeTiktokToken: false,
+      }));
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
@@ -130,6 +155,59 @@ export default function MarchandPixels() {
           </label>
           <p style={{ fontSize: 12, color: "var(--ink-soft)" }}>
             Trouvable dans Google Ads → Outils → Conversions.
+          </p>
+        </Section>
+
+        <Section>
+          <p style={{ fontSize: 14, fontWeight: 700 }}>API de conversion (serveur)</p>
+          <p style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+            Envoie aussi tes achats directement depuis Shopyz, même quand le navigateur du client bloque le pixel. Les jetons restent sur le serveur et ne sont jamais affichés.
+          </p>
+          <label style={labelStyle}>
+            Jeton d'accès Meta
+            <input
+              type="password"
+              autoComplete="off"
+              placeholder={adApi.metaTokenSet ? "Jeton enregistré ✅ (laisse vide pour le garder)" : "Colle ton jeton ici"}
+              value={adApi.metaToken}
+              onChange={(e) => setAdApi({ ...adApi, metaToken: e.target.value })}
+              style={inputStyle}
+            />
+          </label>
+          {adApi.metaTokenSet && (
+            <button type="button" className="btn-secondary" onClick={() => setAdApi({ ...adApi, metaTokenSet: false, removeMetaToken: true, metaToken: "" })}>
+              Supprimer le jeton Meta
+            </button>
+          )}
+          <label style={labelStyle}>
+            Code d'événement de test Meta (optionnel)
+            <input placeholder="Ex: TEST12345" value={adApi.metaTestCode} onChange={(e) => setAdApi({ ...adApi, metaTestCode: e.target.value })} style={inputStyle} />
+          </label>
+          <p style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+            Meta Events Manager → ton pixel → Paramètres → API de conversion → Générer un jeton d'accès. Le code de test est dans l'onglet « Événements de test ». Vide-le une fois les tests terminés.
+          </p>
+          <label style={labelStyle}>
+            Jeton d'accès TikTok (Events API)
+            <input
+              type="password"
+              autoComplete="off"
+              placeholder={adApi.tiktokTokenSet ? "Jeton enregistré ✅ (laisse vide pour le garder)" : "Colle ton jeton ici"}
+              value={adApi.tiktokToken}
+              onChange={(e) => setAdApi({ ...adApi, tiktokToken: e.target.value })}
+              style={inputStyle}
+            />
+          </label>
+          {adApi.tiktokTokenSet && (
+            <button type="button" className="btn-secondary" onClick={() => setAdApi({ ...adApi, tiktokTokenSet: false, removeTiktokToken: true, tiktokToken: "" })}>
+              Supprimer le jeton TikTok
+            </button>
+          )}
+          <label style={labelStyle}>
+            Code d'événement de test TikTok (optionnel)
+            <input placeholder="Ex: TEST12345" value={adApi.tiktokTestCode} onChange={(e) => setAdApi({ ...adApi, tiktokTestCode: e.target.value })} style={inputStyle} />
+          </label>
+          <p style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+            TikTok Events Manager → ton pixel → Paramètres → Events API → Générer un jeton d'accès.
           </p>
         </Section>
 

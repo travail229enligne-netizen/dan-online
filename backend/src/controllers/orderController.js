@@ -9,6 +9,7 @@ const { resolveCommissionRate } = require("../utils/commission");
 const { notify } = require("../utils/notify");
 const { verifyTransaction } = require("../utils/kkiapay");
 const { sendEmail } = require("../utils/email");
+const { sendOrderConversions } = require("../services/adConversions");
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -260,8 +261,20 @@ const createOrder = asyncHandler(async (req, res) => {
       shopId,
       pixels: s ? s.pixels : null,
       value: shopItemsTotal,
+      contents: orderItems
+        .filter((it) => it.shop.toString() === shopId)
+        .map((it) => ({ id: it.product.toString(), quantity: it.quantity, item_price: it.price })),
     };
   });
+
+  sendOrderConversions({
+    order,
+    shopIds,
+    client,
+    tracking: req.body.tracking,
+    ip: ((req.headers["x-forwarded-for"] || "").split(",")[0] || "").trim() || req.ip,
+    userAgent: req.get("user-agent") || "",
+  }).catch(() => {});
 
   res.status(201).json(response);
 });
