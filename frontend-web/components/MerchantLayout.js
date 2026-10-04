@@ -15,6 +15,7 @@ const navItems = [
   { href: "/marchand/portefeuille", label: "Portefeuille", icon: "💰" },
   { href: "/marchand/collections", label: "Collections", icon: "🗂️" },
   { href: "/marchand/promotions", label: "Promotions", icon: "🏷️" },
+  { href: "/marchand/pixels", label: "Pixels publicitaires", icon: "🎯" },
   { href: "/marchand/popup", label: "Pop-up d'accueil", icon: "💬" },
   { href: "/marchand/upsell", label: "Ventes additionnelles", icon: "🛒" },
   { href: "/marchand/foires", label: "Foires", icon: "🎪" },
