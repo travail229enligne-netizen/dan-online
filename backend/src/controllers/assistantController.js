@@ -160,7 +160,7 @@ const handleChat = asyncHandler(async (req, res) => {
         });
       } catch (err) {
         lastError = err;
-        const isOverloaded = err.message \&\& (err.message.includes("UNAVAILABLE") || err.message.includes("503"));
+        const isOverloaded = err.message && (err.message.includes("UNAVAILABLE") || err.message.includes("503"));
         if (!isOverloaded || attempt === 2) throw err;
         await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
       }
