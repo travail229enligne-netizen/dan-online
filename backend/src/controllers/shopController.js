@@ -82,6 +82,14 @@ const updateMyShop = asyncHandler(async (req, res) => {
 
   const validBusinessTypes = ["boutique", "restaurant", "supermarche", "grossiste", "artisan"];
   const fields = ["name", "description", "logoUrl", "category", "themeColor", "city"];
+
+  if (req.body.popup !== undefined) {
+    shop.popup = {
+      enabled: !!req.body.popup.enabled,
+      title: (req.body.popup.title || "").trim(),
+      message: (req.body.popup.message || "").trim(),
+    };
+  }
   fields.forEach((f) => {
     if (req.body[f] !== undefined) shop[f] = req.body[f];
   });

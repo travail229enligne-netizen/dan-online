@@ -57,6 +57,11 @@ const shopSchema = new mongoose.Schema(
     },
     commissionRate: { type: Number, default: null },
     rating: { type: Number, default: 0 },
+    popup: {
+      enabled: { type: Boolean, default: false },
+      title: { type: String, default: "" },
+      message: { type: String, default: "" },
+    },
   },
   { timestamps: true }
 );
