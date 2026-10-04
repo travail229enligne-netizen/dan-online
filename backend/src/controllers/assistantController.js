@@ -131,7 +131,7 @@ const handleChat = asyncHandler(async (req, res) => {
     return res.status(503).json({ message: "Assistant non configure." });
   }
 
-  const { message, history } = req.body;
+  const { message, history, imageUrl } = req.body;
   if (!message || !message.trim()) {
     return res.status(400).json({ message: "Message requis." });
   }
@@ -140,7 +140,21 @@ const handleChat = asyncHandler(async (req, res) => {
     role: h.role === "assistant" ? "model" : "user",
     parts: [{ text: h.content }],
   }));
-  contents.push({ role: "user", parts: [{ text: message }] });
+  const lastUserParts = [{ text: message }];
+
+  if (imageUrl) {
+    try {
+      const imgResponse = await fetch(imageUrl);
+      const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
+      const buffer = await imgResponse.arrayBuffer();
+      const base64 = Buffer.from(buffer).toString("base64");
+      lastUserParts.push({ inlineData: { mimeType: contentType, data: base64 } });
+    } catch (e) {
+      console.error("Image fetch error:", e.message);
+    }
+  }
+
+  contents.push({ role: "user", parts: lastUserParts });
 
   let collectedProducts = [];
   let finalText = "";
