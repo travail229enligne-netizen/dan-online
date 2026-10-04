@@ -61,6 +61,7 @@ app.use("/api/promotions", require("./routes/promotionRoutes"));
 app.use("/api/fairs", require("./routes/fairRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/push", require("./routes/pushRoutes"));
+app.use("/api/assistant", require("./routes/assistantRoutes"));
 
 // 404
 app.use((req, res) => {
