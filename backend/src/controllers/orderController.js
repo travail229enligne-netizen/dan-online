@@ -16,6 +16,48 @@ const generateToken = (id) =>
     expiresIn: process.env.JWT_EXPIRES_IN || "30d",
   });
 
+async function notifyOrderCompletion(order) {
+  const shopOwnerIds = [...new Set(order.items.map((it) => it.shop.owner.toString()))];
+  for (const ownerId of shopOwnerIds) {
+    await notify(
+      ownerId,
+      "order_status",
+      "Paiement recu",
+      "Le paiement de la commande (" + order.grandTotal.toLocaleString("fr-FR") + " FCFA) a ete confirme.",
+      "/marchand/commandes"
+    );
+  }
+
+  if (order.assignedCourier) {
+    await notify(
+      order.assignedCourier,
+      "order_status",
+      "Course terminee",
+      "Livraison effectuee avec succes. Merci pour ton travail !",
+      "/livreur/portefeuille"
+    );
+  }
+
+  await notify(
+    order.client,
+    "order_status",
+    "Merci pour ta commande !",
+    "Ta commande est livree et payee. N'hesite pas a laisser un avis sur les produits achetes.",
+    "/commandes"
+  );
+
+  const admins = await User.find({ role: "admin" }).select("_id");
+  for (const admin of admins) {
+    await notify(
+      admin._id,
+      "order_status",
+      "Nouvelle vente",
+      "Une commande de " + order.grandTotal.toLocaleString("fr-FR") + " FCFA a ete finalisee. Commission : " + order.commissionAmount.toLocaleString("fr-FR") + " FCFA.",
+      "/admin/dashboard"
+    );
+  }
+}
+
 const createOrder = asyncHandler(async (req, res) => {
   const { items, name, deliveryAddress, deliveryPhone, deliveryCity, selfDelivery, paymentMethod, promoCodes } = req.body;
 
@@ -326,7 +368,7 @@ const payOrder = asyncHandler(async (req, res) => {
   const { transactionId } = req.body;
   if (!transactionId) return res.status(400).json({ message: "Transaction de paiement manquante." });
 
-  const order = await Order.findById(req.params.id);
+  const order = await Order.findById(req.params.id).populate("items.shop");
   if (!order) return res.status(404).json({ message: "Commande introuvable." });
 
   if (order.client.toString() !== req.user._id.toString()) {
@@ -361,6 +403,8 @@ const payOrder = asyncHandler(async (req, res) => {
   order.status = "delivered";
   order.kkiapayTransactionId = transactionId;
   await order.save();
+
+  await notifyOrderCompletion(order);
 
   res.json(order);
 });
@@ -470,24 +514,7 @@ const submitPaymentProof = asyncHandler(async (req, res) => {
   order.status = "delivered";
   await order.save();
 
-  const shopOwners = [...new Set(order.items.map((it) => it.shop.owner.toString()))];
-  for (const ownerId of shopOwners) {
-    await notify(
-      ownerId,
-      "order_status",
-      "Commande livrée et payée",
-      "La preuve de paiement en espèces a été reçue. La commande est marquée comme livrée.",
-      "/marchand/commandes"
-    );
-  }
-
-  await notify(
-    order.client,
-    "order_status",
-    "Votre commande a été livrée",
-    "Votre commande a bien été livrée et réglée en espèces.",
-    "/commandes"
-  );
+  await notifyOrderCompletion(order);
 
   res.json(order);
 });
