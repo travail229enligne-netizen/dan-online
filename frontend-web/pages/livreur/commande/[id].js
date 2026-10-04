@@ -43,6 +43,8 @@ export default function CommandeLivreur() {
     try {
       await api.put(`/orders/${id}/courier-response`, { available });
       load();
+    } catch (err) {
+      alert(err.response?.data?.message || "Impossible d'enregistrer ta reponse.");
     } finally {
       setResponding(false);
     }
