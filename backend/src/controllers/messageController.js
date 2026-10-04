@@ -106,17 +106,15 @@ const startCourierConversation = asyncHandler(async (req, res) => {
     // en plus du message dans la messagerie interne (le marchand n'a
     // qu'a appuyer sur "Envoyer" dans WhatsApp, rien n'est envoye seul).
     const courierUser = await User.findById(courierId).select("phone name");
-    const clientUser = await Order.populate(order, { path: "client", select: "name phone" });
-
-    const itemsLines = order.items.map((it) => `• ${it.quantity}x ${it.name}`).join("\n");
     const orderRef = order._id.toString().slice(-6).toUpperCase();
+    const frontendUrl = process.env.FRONTEND_URL || "https://dan-online.vercel.app";
+    const conversationLink = `${frontendUrl}/messages/c/${conversation._id}`;
 
     const whatsappText =
-      `📦 Nouvelle commande a livrer - Shopyz\n\n` +
-      `Commande #${orderRef}\n${itemsLines}\n\n` +
-      `Total : ${order.grandTotal.toLocaleString("fr-FR")} FCFA\n` +
-      `Client : ${clientUser.client?.name || ""} - ${order.deliveryPhone}\n` +
-      `Adresse : ${order.deliveryAddress}${order.deliveryCity ? ", " + order.deliveryCity : ""}`;
+      `📦 Nouvelle commande à livrer - Shopyz\n\n` +
+      `Commande #${orderRef}\n` +
+      `Connecte-toi à Shopyz pour suivre cette commande :\n` +
+      `👉 ${conversationLink}`;
 
     return res.json({
       ...conversation.toObject(),

@@ -239,6 +239,13 @@ export default function ConversationById() {
     }
   }, [loading, user, id]);
 
+  // Non connecté : renvoi vers la connexion, puis retour sur cette conversation
+  useEffect(() => {
+    if (!loading && !user && id) {
+      router.replace(`/connexion?next=${encodeURIComponent(`/messages/c/${id}`)}`);
+    }
+  }, [loading, user, id]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);

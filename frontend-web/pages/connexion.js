@@ -7,6 +7,11 @@ import { useAuth } from "../lib/auth";
 export default function Connexion() {
   const { login, loginWithGoogle } = useAuth();
   const router = useRouter();
+  // Redirection apres connexion (?next=/chemin), uniquement vers une page du site
+  const getNext = () => {
+    const n = router.query.next;
+    return typeof n === "string" && n.startsWith("/") && !n.startsWith("//") ? n : null;
+  };
   const [form, setForm] = useState({ identifier: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,7 +22,7 @@ export default function Connexion() {
     setLoading(true);
     try {
       const user = await login(form.identifier, form.password);
-      router.push(user.role === "marchand" ? "/marchand/dashboard" : "/");
+      router.push(getNext() || (user.role === "marchand" ? "/marchand/dashboard" : "/"));
     } catch (err) {
       setError(err.response?.data?.message || "Connexion impossible.");
     } finally {
@@ -30,7 +35,7 @@ export default function Connexion() {
     setLoading(true);
     try {
       const user = await loginWithGoogle(credentialResponse.credential);
-      router.push(user.role === "marchand" ? "/marchand/dashboard" : "/");
+      router.push(getNext() || (user.role === "marchand" ? "/marchand/dashboard" : "/"));
     } catch (err) {
       setError(err.response?.data?.message || "Connexion Google impossible.");
     } finally {
