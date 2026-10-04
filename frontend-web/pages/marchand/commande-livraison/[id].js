@@ -42,8 +42,14 @@ export default function CommandeLivraison() {
         window.open(waUrl, "_blank");
       }
 
+      if (data.courierPhone) {
+        const waNumber = `229${data.courierPhone.replace(/^0/, "")}`;
+        const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(data.whatsappText || "")}`;
+        window.open(waUrl, "_blank");
+      }
+
       setSent(true);
-      setTimeout(() => router.push(`/messages/c/${data._id}`), 1000);
+      setTimeout(() => router.push("/marchand/commandes"), 1200);
     } catch (err) {
       setError(err.response?.data?.message || "Impossible de contacter ce livreur.");
     } finally {
