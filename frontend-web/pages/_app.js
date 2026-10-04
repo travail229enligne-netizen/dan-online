@@ -5,7 +5,6 @@ import { CartProvider } from "../lib/cart";
 import CartBar from "../components/CartBar";
 import PaymentWatcher from "../components/PaymentWatcher";
 import PushManager from "../components/PushManager";
-import SplashScreen from "../components/SplashScreen";
 import { ThemeProvider } from "../lib/theme";
 
 const GOOGLE_CLIENT_ID = "653014387931-hq0i9h3v354vsjvaqel9lcs0rqr399r3.apps.googleusercontent.com";
@@ -16,7 +15,6 @@ export default function App({ Component, pageProps }) {
       <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
         <AuthProvider>
           <CartProvider>
-            <SplashScreen />
             <PaymentWatcher />
             <PushManager />
             <Component {...pageProps} />
