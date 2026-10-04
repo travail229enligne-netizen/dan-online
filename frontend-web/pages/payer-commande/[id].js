@@ -4,7 +4,6 @@ import Script from "next/script";
 import Header from "../../components/Header";
 import { useAuth } from "../../lib/auth";
 import api from "../../lib/api";
-import UpsellAfterOrder from "../../components/UpsellAfterOrder";
 
 export default function PayerCommande() {
   const router = useRouter();
@@ -140,7 +139,6 @@ export default function PayerCommande() {
               </div>
             </div>
           </div>
-          <UpsellAfterOrder productIds={(order.items || []).map((it) => it.product?._id || it.product)} />
         </main>
       </>
     );

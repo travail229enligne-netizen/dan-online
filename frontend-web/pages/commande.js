@@ -5,6 +5,7 @@ import OrderSuccessAnimation from "../components/OrderSuccessAnimation";
 import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
 import api from "../lib/api";
+import UpsellAfterOrder from "../components/UpsellAfterOrder";
 
 const cities = ["Cotonou", "Porto-Novo", "Abomey-Calavi", "Parakou", "Bohicon"];
 
@@ -25,6 +26,7 @@ export default function Commande() {
   const [requireLogin, setRequireLogin] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(null);
+  const [orderedIds, setOrderedIds] = useState([]);
 
   const [hasPromoCode, setHasPromoCode] = useState(false);
   const [promoInputs, setPromoInputs] = useState({});
@@ -137,6 +139,7 @@ export default function Commande() {
         setSession(data.token, data.user);
       }
 
+      setOrderedIds(items.map((it) => it.productId));
       setSuccess(data);
       clearCart();
     } catch (err) {
@@ -226,6 +229,9 @@ export default function Commande() {
           <a href="/commandes" className="btn-primary" style={{ display: "inline-block", marginTop: 16 }}>
             Voir mes commandes
           </a>
+          <div style={{ maxWidth: 420, margin: "24px auto 0", textAlign: "left" }}>
+            <UpsellAfterOrder productIds={orderedIds} />
+          </div>
         </main>
       </>
     );
