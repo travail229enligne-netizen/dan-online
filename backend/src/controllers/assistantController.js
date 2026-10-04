@@ -146,15 +146,30 @@ const handleChat = asyncHandler(async (req, res) => {
   let finalText = "";
   let negotiationConversationId = null;
 
+  async function callGemini() {
+    let lastError;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await ai.models.generateContent({
+          model: MODEL,
+          contents,
+          config: {
+            systemInstruction: SYSTEM_INSTRUCTION,
+            tools,
+          },
+        });
+      } catch (err) {
+        lastError = err;
+        const isOverloaded = err.message \&\& (err.message.includes("UNAVAILABLE") || err.message.includes("503"));
+        if (!isOverloaded || attempt === 2) throw err;
+        await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
+      }
+    }
+    throw lastError;
+  }
+
   for (let step = 0; step < 3; step++) {
-    const response = await ai.models.generateContent({
-      model: MODEL,
-      contents,
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        tools,
-      },
-    });
+    const response = await callGemini();
 
     const candidate = response.candidates && response.candidates[0];
     const parts = (candidate && candidate.content && candidate.content.parts) || [];
