@@ -2,6 +2,9 @@ const asyncHandler = require("express-async-handler");
 const { GoogleGenAI, Type } = require("@google/genai");
 const Product = require("../models/Product");
 const Shop = require("../models/Shop");
+const Conversation = require("../models/Conversation");
+const Message = require("../models/Message");
+const { notify } = require("../utils/notify");
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const MODEL = "gemini-2.5-flash";
@@ -67,7 +70,54 @@ async function searchProducts({ query, maxPrice, city }) {
   }));
 }
 
-const tools = [{ functionDeclarations: [searchProductsDeclaration] }];
+const negotiatePriceDeclaration = {
+  name: "negotiate_price",
+  description: "Envoie une proposition de prix au vendeur d'un produit precis, via la messagerie Shopyz.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      productId: { type: Type.STRING, description: "L'id du produit concerne (recupere via search_products)" },
+      offeredPrice: { type: Type.NUMBER, description: "Le prix propose par l'utilisateur, en FCFA" },
+      note: { type: Type.STRING, description: "Precision optionnelle a ajouter au message, ex: quantite souhaitee" },
+    },
+    required: ["productId", "offeredPrice"],
+  },
+};
+
+async function negotiatePrice({ productId, offeredPrice, note }, user) {
+    return { error: "login_required", message: "L'utilisateur doit se connecter pour envoyer une proposition de prix." };
+  }
+
+  const product = await Product.findById(productId).populate("shop");
+    return { error: "not_found", message: "Produit introuvable." };
+  }
+  const shop = product.shop;
+
+  let conversation = await Conversation.findOne({ type: "client_shop", client: user._id, shop: shop._id });
+    conversation = await Conversation.create({ type: "client_shop", client: user._id, shop: shop._id });
+  }
+
+  const text = `Bonjour, je suis interesse(e) par "${product.name}" (prix actuel : ${product.price.toLocaleString("fr-FR")} FCFA). Seriez-vous d'accord pour ${Number(offeredPrice).toLocaleString("fr-FR")} FCFA ?${note ? " " + note : ""}`;
+
+  await Message.create({
+    conversation: conversation._id,
+    sender: user._id,
+    senderRole: "client",
+    kind: "text",
+    text,
+  });
+
+  conversation.lastMessage = text.slice(0, 80);
+  conversation.lastMessageAt = new Date();
+  conversation.unreadForMerchant += 1;
+  await conversation.save();
+
+  await notify(shop.owner, "message", "Nouvelle proposition de prix", text.slice(0, 80), `/messages/c/${conversation._id}`);
+
+  return { success: true, conversationId: conversation._id.toString() };
+}
+
+const tools = [{ functionDeclarations: [searchProductsDeclaration, negotiatePriceDeclaration] }];
 
 // @route   POST /api/assistant/chat
 // @access  Public
@@ -89,6 +139,7 @@ const handleChat = asyncHandler(async (req, res) => {
 
   let collectedProducts = [];
   let finalText = "";
+  let negotiationConversationId = null;
 
   for (let step = 0; step < 3; step++) {
     const response = await ai.models.generateContent({
@@ -111,14 +162,19 @@ const handleChat = asyncHandler(async (req, res) => {
       contents.push({ role: "model", parts: [{ functionCall }] });
       contents.push({
         role: "user",
-        parts: [
-          {
-            functionResponse: {
-              name: "search_products",
-              response: { results },
-            },
-          },
-        ],
+        parts: [{ functionResponse: { name: "search_products", response: { results } } }],
+      });
+      continue;
+    }
+
+    if (functionCall && functionCall.name === "negotiate_price") {
+      const result = await negotiatePrice(functionCall.args || {}, req.user);
+      if (result.success) negotiationConversationId = result.conversationId;
+
+      contents.push({ role: "model", parts: [{ functionCall }] });
+      contents.push({
+        role: "user",
+        parts: [{ functionResponse: { name: "negotiate_price", response: result } }],
       });
       continue;
     }
@@ -127,7 +183,7 @@ const handleChat = asyncHandler(async (req, res) => {
     break;
   }
 
-  res.json({ reply: finalText, products: collectedProducts });
+  res.json({ reply: finalText, products: collectedProducts, conversationId: negotiationConversationId });
 });
 
 module.exports = { handleChat };

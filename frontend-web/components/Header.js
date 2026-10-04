@@ -192,6 +192,7 @@ export default function Header({ hideSearchBar = false }) {
 
             <div style={{ padding: "12px 8px", flex: 1 }}>
               {navLink("/", "Accueil")}
+              {navLink("/assistant", "🤖 Assistant")}
 
               <a
                 href="/boutiques"
