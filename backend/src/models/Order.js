@@ -29,6 +29,10 @@ const orderSchema = new mongoose.Schema(
     selfDelivery: { type: Boolean, default: false },
     shopDeliveryFees: [shopDeliveryFeeSchema],
     assignedCourier: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    // Livraison confiee a Shopyz (l'admin deploie ensuite ses livreurs)
+    shopyzDelivery: { type: String, enum: ["none", "awaiting_dispatch", "dispatched"], default: "none" },
+    shopyzDelegatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", default: null },
+    shopyzDelegatedAt: { type: Date, default: null },
     courierStatus: {
       type: String,
       enum: ["none", "pending", "available", "unavailable"],

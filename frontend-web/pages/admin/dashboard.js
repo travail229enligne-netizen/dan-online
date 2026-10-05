@@ -28,7 +28,7 @@ const sectionBlock = { marginBottom: 36 };
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const validSections = ["apercu", "attente", "boutiques", "livreurs", "retraits", "commissions", "categories", "hero"];
+  const validSections = ["apercu", "attente", "boutiques", "livreurs", "livraisons", "retraits", "commissions", "categories", "hero"];
   const section = validSections.includes(router.query.section) ? router.query.section : "apercu";
   const [overview, setOverview] = useState(null);
   const [chartData, setChartData] = useState(null);
@@ -49,6 +49,7 @@ export default function AdminDashboard() {
   const [heroBusy, setHeroBusy] = useState(false);
 
   const [platformCouriers, setPlatformCouriers] = useState([]);
+  const [dispatchOrders, setDispatchOrders] = useState([]);
   const [courierForm, setCourierForm] = useState({ phone: "", name: "" });
   const [courierError, setCourierError] = useState("");
   const [addingCourier, setAddingCourier] = useState(false);
@@ -64,6 +65,7 @@ export default function AdminDashboard() {
     api.get("/admin/commission-wallet").then((r) => setCommissionWallet(r.data)).catch(() => setCommissionWallet(null));
     api.get("/hero-images").then((r) => setHeroImages(r.data)).catch(() => {});
     api.get("/platform-couriers").then((r) => setPlatformCouriers(r.data)).catch(() => {});
+    api.get("/shopyz-delivery/pending").then((r) => setDispatchOrders(r.data)).catch(() => {});
   };
 
   useEffect(() => {
@@ -524,6 +526,40 @@ export default function AdminDashboard() {
           </p>
         </section>
 )}
+
+        {section === "livraisons" && (
+          <section style={sectionBlock}>
+            <h2 style={sectionTitle}>Livraisons à déployer ({dispatchOrders.length})</h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {dispatchOrders.map((o) => (
+                <div key={o._id} style={card}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>Commande #{o._id.slice(-6).toUpperCase()}</div>
+                    <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
+                      {o.shopyzDelegatedAt ? new Date(o.shopyzDelegatedAt).toLocaleString("fr-FR") : ""}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 2 }}>🏪 {o.shopyzDelegatedBy?.name || "Boutique"}</div>
+                  <div style={{ fontSize: 13, marginTop: 8 }}>
+                    {o.items.map((it, i) => (
+                      <div key={i}>{it.quantity}× {it.name}</div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginTop: 6 }}>Total : {o.grandTotal.toLocaleString("fr-FR")} FCFA</div>
+                  <div style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 6, lineHeight: 1.6 }}>
+                    <div>📍 {o.deliveryAddress}{o.deliveryCity ? `, ${o.deliveryCity}` : ""}</div>
+                    <div>📞 {o.deliveryPhone}</div>
+                  </div>
+                  <button className="btn-primary" disabled style={{ width: "100%", marginTop: 12, fontSize: 13, padding: 10, opacity: 0.6 }}>
+                    🚀 Déployer les livreurs
+                  </button>
+                  <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "6px 0 0" }}>Ce bouton sera activé à l'étape suivante.</p>
+                </div>
+              ))}
+              {dispatchOrders.length === 0 && <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune livraison à déployer.</p>}
+            </div>
+          </section>
+        )}
 
         {section === "attente" && (
 <section style={sectionBlock}>

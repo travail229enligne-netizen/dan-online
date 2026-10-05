@@ -25,6 +25,7 @@ export default function Header({ hideSearchBar = false }) {
   const adminNav = [
     { href: "/admin/dashboard", label: "📊 Aperçu", section: "apercu" },
     { href: "/admin/dashboard?section=attente", label: "🏪 Boutiques à valider", section: "attente" },
+    { href: "/admin/dashboard?section=livraisons", label: "🚚 Livraisons à déployer", section: "livraisons" },
     { href: "/admin/dashboard?section=boutiques", label: "🏬 Toutes les boutiques", section: "boutiques" },
     { href: "/admin/dashboard?section=livreurs", label: "🛵 Livreurs Shopyz", section: "livreurs" },
     { href: "/admin/dashboard?section=retraits", label: "💸 Retraits à traiter", section: "retraits" },

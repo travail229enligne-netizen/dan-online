@@ -26,6 +26,20 @@ export default function CommandeLivraison() {
   const couriers = useShopyz ? platformCouriers : myCouriers;
 
   const handleSend = async () => {
+    if (useShopyz) {
+      setSending(true);
+      setError("");
+      try {
+        await api.post(`/shopyz-delivery/${order._id}/delegate`);
+        setSent(true);
+        setTimeout(() => router.push("/marchand/commandes"), 1200);
+      } catch (err) {
+        setError(err.response?.data?.message || "Impossible de confier cette commande à Shopyz.");
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
     if (useShopyz ? !selectedCourier : !courierPhone.trim()) {
       setError(useShopyz ? "Choisis un livreur avant d'envoyer." : "Saisis le numéro du livreur.");
       return;
@@ -134,27 +148,9 @@ export default function CommandeLivraison() {
         }}
       >
         {useShopyz ? (
-          couriers.length === 0 ? (
-            <p style={{ fontSize: 14, color: "var(--ink-soft)", margin: 0 }}>
-              Aucun livreur Shopyz n'est disponible pour le moment.
-            </p>
-          ) : (
-            <label style={{ fontSize: 13, fontWeight: 600 }}>
-              Choisir un livreur Shopyz
-              <select
-                value={selectedCourier}
-                onChange={(e) => setSelectedCourier(e.target.value)}
-                style={{ width: "100%", padding: 12, marginTop: 6, border: "1px solid var(--line)", borderRadius: 14, fontSize: 15, boxSizing: "border-box" }}
-              >
-                <option value="">Choisir...</option>
-                {couriers.map((c) => (
-                  <option key={c.user} value={c.user}>
-                    {c.name} — {c.phone}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )
+          <p style={{ fontSize: 14, color: "var(--ink-soft)", margin: 0, lineHeight: 1.5 }}>
+            Ta commande sera transmise à l'administrateur Shopyz, qui déploiera ses livreurs.
+          </p>
         ) : (
           <label style={{ fontSize: 13, fontWeight: 600 }}>
             Numéro du livreur
@@ -187,15 +183,15 @@ export default function CommandeLivraison() {
         </div>
 
         {error && <p style={{ color: "var(--terracotta-dark)", fontSize: 14, margin: 0 }}>{error}</p>}
-        {sent && <p style={{ color: "var(--green-dark)", fontSize: 14, margin: 0 }}>Livreur contacté ! Redirection...</p>}
+        {sent && <p style={{ color: "var(--green-dark)", fontSize: 14, margin: 0 }}>{useShopyz ? "Commande confiée à Shopyz ! Redirection..." : "Livreur contacté ! Redirection..."}</p>}
 
         <button
           className="btn-primary"
           onClick={handleSend}
-          disabled={sending || sent || (useShopyz && couriers.length === 0)}
+          disabled={sending || sent}
           style={{ fontSize: 15, padding: 14 }}
         >
-          {sending ? "Envoi..." : "Contacter le livreur"}
+          {sending ? "Envoi..." : useShopyz ? "Confier à Shopyz" : "Contacter le livreur"}
         </button>
       </div>
     </MerchantLayout>
