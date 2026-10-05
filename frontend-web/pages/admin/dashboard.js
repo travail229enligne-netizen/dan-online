@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import Header from "../../components/Header";
 import ImageUpload from "../../components/ImageUpload";
@@ -26,6 +27,9 @@ const sectionBlock = { marginBottom: 36 };
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
+  const router = useRouter();
+  const validSections = ["apercu", "attente", "boutiques", "livreurs", "retraits", "commissions", "categories", "hero"];
+  const section = validSections.includes(router.query.section) ? router.query.section : "apercu";
   const [overview, setOverview] = useState(null);
   const [chartData, setChartData] = useState(null);
   const [pendingShops, setPendingShops] = useState([]);
@@ -201,7 +205,7 @@ export default function AdminDashboard() {
     }
   };
 
-  if (loading) return null;
+  if (loading || !router.isReady) return null;
 
   if (!user || user.role !== "admin") {
     return (
@@ -228,7 +232,7 @@ export default function AdminDashboard() {
           </a>
         </div>
 
-        {overview && (
+        {overview && section === "apercu" && (
           <section style={sectionBlock}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
               {[
@@ -248,7 +252,8 @@ export default function AdminDashboard() {
           </section>
         )}
 
-        <section style={sectionBlock}>
+        {section === "apercu" && (
+<section style={sectionBlock}>
           <h2 style={sectionTitle}>Évolution — 30 derniers jours</h2>
           <div style={card}>
             {chartData ? (
@@ -268,8 +273,10 @@ export default function AdminDashboard() {
             )}
           </div>
         </section>
+)}
 
-        <section style={sectionBlock}>
+        {section === "hero" && (
+<section style={sectionBlock}>
           <h2 style={sectionTitle}>Images du hero — accueil</h2>
           <div style={card}>
             <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 0, marginBottom: 14 }}>
@@ -336,8 +343,10 @@ export default function AdminDashboard() {
             })}
           </div>
         </section>
+)}
 
-        <section style={sectionBlock}>
+        {section === "livreurs" && (
+<section style={sectionBlock}>
           <h2 style={sectionTitle}>Livreurs Shopyz</h2>
           <div style={card}>
             <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 0, marginBottom: 14 }}>
@@ -390,8 +399,10 @@ export default function AdminDashboard() {
             )}
           </div>
         </section>
+)}
 
-        <section style={sectionBlock}>
+        {section === "commissions" && (
+<section style={sectionBlock}>
           <h2 style={sectionTitle}>Mes commissions</h2>
           {commissionWallet && (
             <div style={card}>
@@ -444,8 +455,10 @@ export default function AdminDashboard() {
             </div>
           )}
         </section>
+)}
 
-        <section style={sectionBlock}>
+        {section === "retraits" && (
+<section style={sectionBlock}>
           <h2 style={sectionTitle}>Retraits à traiter — marchands & livreurs ({withdrawals.length})</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {withdrawals.map((w) => (
@@ -472,8 +485,10 @@ export default function AdminDashboard() {
             {withdrawals.length === 0 && <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucun retrait en attente.</p>}
           </div>
         </section>
+)}
 
-        <section style={sectionBlock}>
+        {section === "categories" && (
+<section style={sectionBlock}>
           <h2 style={sectionTitle}>Commissions par catégorie</h2>
           <div style={{ ...card, padding: 0 }}>
             {categories.map((cat, i) => (
@@ -508,8 +523,10 @@ export default function AdminDashboard() {
             Laisse vide pour utiliser le taux par défaut de la plateforme. La commission d'une boutique spécifique est toujours prioritaire.
           </p>
         </section>
+)}
 
-        <section style={sectionBlock}>
+        {section === "attente" && (
+<section style={sectionBlock}>
           <h2 style={sectionTitle}>Boutiques en attente de validation ({pendingShops.length})</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {pendingShops.map((shop) => (
@@ -535,8 +552,10 @@ export default function AdminDashboard() {
             {pendingShops.length === 0 && <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune boutique en attente.</p>}
           </div>
         </section>
+)}
 
-        <section>
+        {section === "boutiques" && (
+<section>
           <h2 style={sectionTitle}>Toutes les boutiques ({allShops.length})</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {allShops.map((shop) => {
@@ -580,6 +599,7 @@ export default function AdminDashboard() {
             {allShops.length === 0 && <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune boutique.</p>}
           </div>
         </section>
+)}
       </main>
     </>
   );

@@ -20,6 +20,25 @@ export default function Header({ hideSearchBar = false }) {
   const [unreadOrders, setUnreadOrders] = useState(0);
   const [pushStatus, setPushStatus] = useState("idle");
 
+  // Menu dédié à l'espace administrateur
+  const isAdminArea = user?.role === "admin" && router.pathname.startsWith("/admin");
+  const adminNav = [
+    { href: "/admin/dashboard", label: "📊 Aperçu", section: "apercu" },
+    { href: "/admin/dashboard?section=attente", label: "🏪 Boutiques à valider", section: "attente" },
+    { href: "/admin/dashboard?section=boutiques", label: "🏬 Toutes les boutiques", section: "boutiques" },
+    { href: "/admin/dashboard?section=livreurs", label: "🛵 Livreurs Shopyz", section: "livreurs" },
+    { href: "/admin/dashboard?section=retraits", label: "💸 Retraits à traiter", section: "retraits" },
+    { href: "/admin/dashboard?section=commissions", label: "💰 Mes commissions", section: "commissions" },
+    { href: "/admin/dashboard?section=categories", label: "🏷️ Commissions par catégorie", section: "categories" },
+    { href: "/admin/dashboard?section=hero", label: "🖼️ Images du hero", section: "hero" },
+    { href: "/admin/signalements", label: "🚩 Signalements" },
+    { href: "/", label: "🏠 Retour au site" },
+  ];
+  const isAdminItemActive = (item) =>
+    item.section
+      ? router.pathname === "/admin/dashboard" && (router.query.section || "apercu") === item.section
+      : router.pathname === item.href;
+
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
       setPushStatus("enabled");
@@ -190,6 +209,36 @@ export default function Header({ hideSearchBar = false }) {
               </div>
             </div>
 
+            {isAdminArea ? (
+              <div style={{ padding: "12px 8px", flex: 1 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--ink-soft)", padding: "4px 14px 10px" }}>
+                  Espace administrateur
+                </div>
+                {adminNav.map((item) => {
+                  const active = isAdminItemActive(item);
+                  return (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: "12px 14px",
+                        borderRadius: 10,
+                        fontSize: 14,
+                        fontWeight: active ? 700 : 500,
+                        color: active ? "var(--white)" : "var(--ink)",
+                        background: active ? "var(--ink)" : "transparent",
+                        marginBottom: 4,
+                      }}
+                    >
+                      {item.label}
+                    </a>
+                  );
+                })}
+              </div>
+            ) : (
             <div style={{ padding: "12px 8px", flex: 1 }}>
               {navLink("/", "Accueil")}
               {navLink("/assistant", "🤖 Assistant")}
@@ -352,6 +401,7 @@ export default function Header({ hideSearchBar = false }) {
                 {user ? "Mon compte" : "Connexion"}
               </a>
             </div>
+            )}
 
             {user && (
               <div style={{ padding: "12px 20px", borderTop: "1px solid var(--line)" }}>
