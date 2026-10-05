@@ -33,6 +33,8 @@ const orderSchema = new mongoose.Schema(
     shopyzDelivery: { type: String, enum: ["none", "awaiting_dispatch", "dispatched"], default: "none" },
     shopyzDelegatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", default: null },
     shopyzDelegatedAt: { type: Date, default: null },
+    shopyzDispatchedAt: { type: Date, default: null },
+    shopyzDeclinedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     courierStatus: {
       type: String,
       enum: ["none", "pending", "available", "unavailable"],

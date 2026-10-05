@@ -82,6 +82,19 @@ export default function AdminDashboard() {
     }
   };
 
+  const dispatchOrder = async (orderId) => {
+    setBusy(orderId);
+    try {
+      const { data } = await api.post(`/shopyz-delivery/${orderId}/dispatch`);
+      alert(`Livraison envoyée à ${data.notified} livreur(s).`);
+      load();
+    } catch (err) {
+      alert(err.response?.data?.message || "Impossible de déployer les livreurs.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const removeShop = async (shopId, shopName) => {
     if (!window.confirm(`Supprimer definitivement "${shopName}" ? Cette action est irreversible.`)) return;
     setBusy(shopId);
@@ -550,10 +563,19 @@ export default function AdminDashboard() {
                     <div>📍 {o.deliveryAddress}{o.deliveryCity ? `, ${o.deliveryCity}` : ""}</div>
                     <div>📞 {o.deliveryPhone}</div>
                   </div>
-                  <button className="btn-primary" disabled style={{ width: "100%", marginTop: 12, fontSize: 13, padding: 10, opacity: 0.6 }}>
-                    🚀 Déployer les livreurs
+                  <div style={{ fontSize: 12, fontWeight: 600, marginTop: 10, color: o.shopyzDelivery === "dispatched" ? "var(--terracotta-dark)" : "var(--ink-soft)" }}>
+                    {o.shopyzDelivery === "dispatched"
+                      ? `⏳ Déployée : en attente d'un livreur (${(o.shopyzDeclinedBy || []).length} refus)`
+                      : "Pas encore déployée"}
+                  </div>
+                  <button
+                    className="btn-primary"
+                    disabled={busy === o._id}
+                    onClick={() => dispatchOrder(o._id)}
+                    style={{ width: "100%", marginTop: 10, fontSize: 13, padding: 10 }}
+                  >
+                    {busy === o._id ? "Envoi..." : o.shopyzDelivery === "dispatched" ? "🔁 Relancer les livreurs" : "🚀 Déployer les livreurs"}
                   </button>
-                  <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "6px 0 0" }}>Ce bouton sera activé à l'étape suivante.</p>
                 </div>
               ))}
               {dispatchOrders.length === 0 && <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>Aucune livraison à déployer.</p>}
