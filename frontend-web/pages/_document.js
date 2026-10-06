@@ -16,6 +16,7 @@ export default function Document() {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Shopyz" />
+        <meta name="facebook-domain-verification" content="a6vkd5o3e5npv8jejfbx6qdun38npq" />
       </Head>
       <body>
         <Main />
