@@ -137,10 +137,10 @@ async function sendOrderConversions({ order, shopIds, client, tracking, ip, user
             user: ttUser,
             sourceUrl,
             properties: {
-              currency: "XOF",
-              value,
+              currency: "USD",
+              value: xofToUsd(value),
               content_type: "product",
-              contents: contents.map((c) => ({ content_id: c.id, quantity: c.quantity, price: c.item_price })),
+              contents: contents.map((c) => ({ content_id: c.id, quantity: c.quantity, price: xofToUsd(c.item_price) })),
               order_id: String(order._id),
             },
           }).catch((e) => logError("tiktok", shopId, e))
