@@ -95,6 +95,17 @@ function metaTrack(pixelId, event, data, eventId) {
   else window.fbq("trackSingle", pixelId, event, data);
 }
 
+// TikTok ne reconnait pas le XOF (franc CFA) comme devise valide pour son
+// pixel : il faut convertir en USD avant l'envoi. Ca ne concerne QUE la
+// donnee envoyee a TikTok pour ses statistiques internes - le client ne
+// voit jamais ce montant, les prix affiches et payes restent en FCFA.
+const XOF_TO_USD_RATE = 600; // ~1 USD = 600 FCFA (taux approximatif, suffisant pour le reporting pub)
+
+function xofToUsd(amount) {
+  if (typeof amount !== "number" || isNaN(amount)) return 0;
+  return Math.round((amount / XOF_TO_USD_RATE) * 100) / 100;
+}
+
 function ttTrack(pixelId, event, data, eventId) {
   if (!pixelId || typeof window === "undefined" || !window.ttq) return;
   const t = window.ttq.instance ? window.ttq.instance(pixelId) : window.ttq;
@@ -128,7 +139,7 @@ export function trackViewContent(pixels, info) {
   loadShopPixels(pixels);
   if (typeof window === "undefined" || !pixels) return;
   metaTrack(pixels.metaPixelId, "ViewContent", { content_ids: [info.id], content_name: info.name, content_type: "product", value: info.price, currency: "XOF" });
-  ttTrack(pixels.tiktokPixelId, "ViewContent", { content_id: info.id, content_name: info.name, value: info.price, currency: "XOF" });
+  ttTrack(pixels.tiktokPixelId, "ViewContent", { content_id: info.id, content_name: info.name, value: xofToUsd(info.price), currency: "USD" });
 }
 
 export function trackAddToCart(pixels, info) {
@@ -136,7 +147,7 @@ export function trackAddToCart(pixels, info) {
   if (typeof window === "undefined" || !pixels) return;
   const value = info.price * (info.quantity || 1);
   metaTrack(pixels.metaPixelId, "AddToCart", { content_ids: [info.id], content_name: info.name, content_type: "product", value, currency: "XOF" });
-  ttTrack(pixels.tiktokPixelId, "AddToCart", { content_id: info.id, content_name: info.name, value, currency: "XOF" });
+  ttTrack(pixels.tiktokPixelId, "AddToCart", { content_id: info.id, content_name: info.name, value: xofToUsd(value), currency: "USD" });
 }
 
 export function trackPurchase(pixels, info) {
@@ -161,10 +172,10 @@ export function trackPurchase(pixels, info) {
     pixels.tiktokPixelId,
     "CompletePayment",
     {
-      value: info.value,
-      currency: "XOF",
+      value: xofToUsd(info.value),
+      currency: "USD",
       content_type: "product",
-      contents: contents.map((c) => ({ content_id: c.id, quantity: c.quantity, price: c.item_price })),
+      contents: contents.map((c) => ({ content_id: c.id, quantity: c.quantity, price: xofToUsd(c.item_price) })),
       order_id: info.orderId,
     },
     eventId
