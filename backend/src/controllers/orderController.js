@@ -16,6 +16,15 @@ const generateToken = (id) =>
     expiresIn: process.env.JWT_EXPIRES_IN || "30d",
   });
 
+// Compare les villes sans accents, tirets, majuscules ni espaces en trop
+const normCity = (v) =>
+  String(v || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
 async function notifyOrderCompletion(order) {
   const shopOwnerIds = [...new Set(order.items.map((it) => it.shop.owner.toString()))];
   for (const ownerId of shopOwnerIds) {
@@ -159,7 +168,7 @@ const createOrder = asyncHandler(async (req, res) => {
       let fee = 0;
       if (deliveryCity && Array.isArray(shop.deliveryZones)) {
         const zone = shop.deliveryZones.find(
-          (z) => z.city.toLowerCase() === deliveryCity.trim().toLowerCase()
+          (z) => normCity(z.city) === normCity(deliveryCity)
         );
         if (zone) fee = zone.price;
       }

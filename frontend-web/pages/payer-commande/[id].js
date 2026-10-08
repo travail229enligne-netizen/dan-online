@@ -138,6 +138,16 @@ export default function PayerCommande() {
               <span>{(it.price * it.quantity).toLocaleString("fr-FR")} FCFA</span>
             </div>
           ))}
+          {order.discountAmount > 0 && (
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 6 }}>
+              <span>Remise</span>
+              <span>- {order.discountAmount.toLocaleString("fr-FR")} FCFA</span>
+            </div>
+          )}
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 6 }}>
+            <span>Livraison</span>
+            <span>{order.deliveryFee > 0 ? `${order.deliveryFee.toLocaleString("fr-FR")} FCFA` : "Gratuite"}</span>
+          </div>
           <div style={{ borderTop: "1px solid var(--line)", marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 15 }}>
             <span>Total à payer</span>
             <span style={{ color: "var(--terracotta-dark)" }}>{order.grandTotal.toLocaleString("fr-FR")} FCFA</span>
