@@ -6,6 +6,7 @@ const {
   getShopOrders,
   getOrderById,
   payOrder,
+  initPayment,
   respondAsCourier,
   submitDeliveryProof,
   updateOrderStatus,
@@ -21,6 +22,7 @@ router.get("/pending-payment", protect, authorize("client"), getPendingPaymentOr
 router.get("/shop", protect, authorize("marchand"), getShopOrders);
 router.get("/:id", protect, getOrderById);
 router.put("/:id/pay", protect, authorize("client"), payOrder);
+router.post("/:id/pay-init", protect, authorize("client"), initPayment);
 router.put("/:id/courier-response", protect, respondAsCourier);
 router.put("/:id/delivery-proof", protect, submitDeliveryProof);
 router.put("/:id/status", protect, authorize("marchand", "admin"), updateOrderStatus);

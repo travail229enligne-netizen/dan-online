@@ -48,6 +48,7 @@ const orderSchema = new mongoose.Schema(
       default: "cod",
     },
     kkiapayTransactionId: { type: String, default: "" },
+    fedapayTransactionId: { type: String, default: "" },
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed"],

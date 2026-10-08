@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
-import Script from "next/script";
 import Header from "../../components/Header";
 import { useAuth } from "../../lib/auth";
 import api from "../../lib/api";
@@ -10,72 +9,51 @@ export default function PayerCommande() {
   const { id } = router.query;
   const { user, loading } = useAuth();
   const [order, setOrder] = useState(undefined);
-  const [widgetReady, setWidgetReady] = useState(false);
   const [error, setError] = useState("");
   const [paying, setPaying] = useState(false);
   const [paid, setPaid] = useState(false);
-  const autoOpenedRef = useRef(false);
+  const confirmedRef = useRef(false);
 
   useEffect(() => {
     if (!id) return;
     api.get(`/orders/${id}`).then((r) => setOrder(r.data)).catch(() => setOrder(null));
   }, [id]);
 
-  const handlePay = () => {
+  const confirmPayment = async () => {
+    setPaying(true);
     setError("");
-    if (!widgetReady || typeof window.openKkiapayWidget !== "function") {
-      setError("Le module de paiement n'est pas encore chargé, réessaie dans un instant.");
-      return;
+    try {
+      const { data } = await api.put(`/orders/${id}/pay`);
+      setOrder(data);
+      setPaid(true);
+    } catch (err) {
+      setError(err.response?.data?.message || "Paiement reçu mais impossible de le confirmer. Contacte le support.");
+    } finally {
+      setPaying(false);
     }
-    window.openKkiapayWidget({
-      amount: order.grandTotal,
-      key: process.env.NEXT_PUBLIC_KKIAPAY_PUBLIC_KEY,
-      sandbox: process.env.NEXT_PUBLIC_KKIAPAY_SANDBOX === "true",
-      phone: order.deliveryPhone,
-      data: JSON.stringify({ userId: user?._id, orderId: order._id }),
-    });
   };
 
-  useEffect(() => {
-    if (!widgetReady || typeof window.addKkiapayListener !== "function") return;
-
-    const handleSuccess = async (response) => {
-      const transactionId = response?.transactionId;
-      if (!transactionId) return;
-      setPaying(true);
-      setError("");
-      try {
-        const { data } = await api.put(`/orders/${id}/pay`, { transactionId });
-        setOrder(data);
-        setPaid(true);
-      } catch (err) {
-        setError(err.response?.data?.message || "Paiement reçu mais impossible de le confirmer. Contacte le support avec ta référence de transaction.");
-      } finally {
-        setPaying(false);
-      }
-    };
-
-    const handleFailed = () => {
-      setError("Le paiement a échoué ou a été annulé. Réessaie.");
+  const handlePay = async () => {
+    setError("");
+    setPaying(true);
+    try {
+      const { data } = await api.post(`/orders/${id}/pay-init`);
+      window.location.href = data.url;
+    } catch (err) {
+      setError(err.response?.data?.message || "Impossible d'ouvrir le paiement. Réessaie.");
       setPaying(false);
-    };
+    }
+  };
 
-    window.addKkiapayListener("success", handleSuccess);
-    window.addKkiapayListener("failed", handleFailed);
-    return () => {
-      if (typeof window.removeKkiapayListener === "function") {
-        window.removeKkiapayListener("success", handleSuccess);
-        window.removeKkiapayListener("failed", handleFailed);
-      }
-    };
-  }, [widgetReady, id]);
-
+  // Retour depuis la page de paiement FedaPay : le serveur verifie lui-meme la transaction
   useEffect(() => {
-    if (!widgetReady || !order || autoOpenedRef.current) return;
-    if (!order.deliveryProofUrl || order.paymentStatus === "paid") return;
-    autoOpenedRef.current = true;
-    handlePay();
-  }, [widgetReady, order]);
+    if (!order || !router.isReady || confirmedRef.current) return;
+    if (order.paymentStatus === "paid") return;
+    if (router.query.retour) {
+      confirmedRef.current = true;
+      confirmPayment();
+    }
+  }, [order, router.isReady]);
 
   if (!loading && !user) {
     if (typeof window !== "undefined") router.push(`/connexion?next=/payer-commande/${id}`);
@@ -146,12 +124,11 @@ export default function PayerCommande() {
 
   return (
     <>
-      <Script src="https://cdn.kkiapay.me/k.js" onLoad={() => setWidgetReady(true)} />
       <Header hideSearchBar />
       <main className="container" style={{ paddingTop: 30, paddingBottom: 60, maxWidth: 420 }}>
         <h1 style={{ fontSize: 20, marginBottom: 4 }}>Payer ta commande</h1>
         <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 20 }}>
-          Ta commande a été livrée. Le paiement s'ouvre automatiquement.
+          Ta commande a été livrée. Appuie sur le bouton pour payer par Mobile Money.
         </p>
 
         <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 18, marginBottom: 20, boxSizing: "border-box" }}>

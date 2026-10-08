@@ -7,7 +7,7 @@ const Promotion = require("../models/Promotion");
 const User = require("../models/User");
 const { resolveCommissionRate } = require("../utils/commission");
 const { notify } = require("../utils/notify");
-const { verifyTransaction } = require("../utils/kkiapay");
+const { createCheckout, verifyTransaction } = require("../utils/fedapay");
 const { sendEmail } = require("../utils/email");
 const { sendOrderConversions } = require("../services/adConversions");
 
@@ -364,11 +364,8 @@ const getOrderById = asyncHandler(async (req, res) => {
   res.json(order);
 });
 
-const payOrder = asyncHandler(async (req, res) => {
-  const { transactionId } = req.body;
-  if (!transactionId) return res.status(400).json({ message: "Transaction de paiement manquante." });
-
-  const order = await Order.findById(req.params.id).populate("items.shop");
+const initPayment = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id);
   if (!order) return res.status(404).json({ message: "Commande introuvable." });
 
   if (order.client.toString() !== req.user._id.toString()) {
@@ -384,24 +381,62 @@ const payOrder = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "La preuve de livraison n'a pas encore été reçue." });
   }
 
+  const frontendUrl = process.env.FRONTEND_URL || "https://dan-online.vercel.app";
+  let checkout;
+  try {
+    checkout = await createCheckout({
+      amount: order.grandTotal,
+      description: `Commande #${order._id.toString().slice(-6).toUpperCase()}`,
+      callbackUrl: `${frontendUrl}/payer-commande/${order._id}?retour=1`,
+    });
+  } catch (err) {
+    console.error("FedaPay init error:", err.message);
+    return res.status(502).json({ message: "Impossible d'ouvrir le paiement. Réessayez dans un instant." });
+  }
+
+  await Order.updateOne({ _id: order._id }, { $set: { fedapayTransactionId: checkout.transactionId } });
+  res.json({ url: checkout.url });
+});
+
+const payOrder = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id).populate("items.shop");
+  if (!order) return res.status(404).json({ message: "Commande introuvable." });
+
+  if (order.client.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ message: "Cette commande ne vous appartient pas." });
+  }
+  if (order.paymentMethod !== "kkiapay") {
+    return res.status(400).json({ message: "Cette commande n'utilise pas le paiement en ligne." });
+  }
+  if (order.paymentStatus === "paid") {
+    return res.json(order);
+  }
+  if (!order.deliveryProofUrl) {
+    return res.status(400).json({ message: "La preuve de livraison n'a pas encore été reçue." });
+  }
+  if (!order.fedapayTransactionId) {
+    return res.status(400).json({ message: "Aucun paiement en cours pour cette commande." });
+  }
+
   let payment;
   try {
-    payment = await verifyTransaction(transactionId);
-    console.log("Kkiapay verify response:", JSON.stringify(payment));
+    payment = await verifyTransaction(order.fedapayTransactionId);
+    console.log("FedaPay verify response:", JSON.stringify(payment));
   } catch (err) {
-    console.error("Kkiapay verify error:", err.message, err.response?.data);
+    console.error("FedaPay verify error:", err.message);
     return res.status(400).json({ message: "Impossible de vérifier le paiement. Réessayez." });
   }
 
-  const status = (payment?.status || payment?.transactionStatus || "").toString().toUpperCase();
-  if (status !== "SUCCESS") {
-    return res.status(400).json({ message: `Le paiement n'a pas été confirmé (statut: ${status || "inconnu"}).` });
+  if (payment.status !== "SUCCESS") {
+    return res.status(400).json({ message: `Le paiement n'a pas été confirmé (statut: ${payment.status || "inconnu"}).` });
+  }
+  if (Number(payment.amount) < Number(order.grandTotal)) {
+    return res.status(400).json({ message: "Le montant payé ne correspond pas à la commande." });
   }
 
   order.paymentStatus = "paid";
   order.paidAt = new Date();
   order.status = "delivered";
-  order.kkiapayTransactionId = transactionId;
   await order.save();
 
   await notifyOrderCompletion(order);
@@ -562,3 +597,5 @@ module.exports = {
   submitPaymentProof,
   updateOrderStatus,
 };
+
+module.exports.initPayment = initPayment;
