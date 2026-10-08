@@ -99,7 +99,7 @@ const createOrder = asyncHandler(async (req, res) => {
     freshToken = generateToken(currentUser._id);
   }
 
-  const method = "kkiapay"; // Paiement en especes desactive : Mobile Money uniquement
+  const method = "fedapay"; // Paiement en especes desactive : Mobile Money uniquement
 
   let itemsTotal = 0;
   let commissionAmount = 0;
@@ -246,7 +246,7 @@ const createOrder = asyncHandler(async (req, res) => {
         s.owner,
         "new_order",
         "Nouvelle commande à préparer",
-        method === "kkiapay"
+        method === "fedapay"
           ? "Une nouvelle commande vient d'être passée. Le client réglera en ligne une fois la livraison effectuée."
           : "Une nouvelle commande vient d'être passée sur votre boutique. Le règlement se fera en espèces à la livraison.",
         "/marchand/commandes"
@@ -258,7 +258,7 @@ const createOrder = asyncHandler(async (req, res) => {
     currentUser._id,
     "order_status",
     "Merci pour votre commande",
-    method === "kkiapay"
+    method === "fedapay"
       ? `Votre commande de ${grandTotal.toLocaleString("fr-FR")} FCFA a bien été enregistrée. Vous pourrez régler en ligne une fois la livraison effectuée.`
       : `Votre commande de ${grandTotal.toLocaleString("fr-FR")} FCFA a bien été enregistrée. Merci de prévoir le montant en espèces pour le livreur. Livraison estimée sous 48h.`,
     "/commandes"
@@ -267,7 +267,7 @@ const createOrder = asyncHandler(async (req, res) => {
   const client = await User.findById(currentUser._id);
   if (client?.email) {
     const itemsHtml = orderItems.map((it) => `<li>${it.quantity} × ${it.name} — ${(it.price * it.quantity).toLocaleString("fr-FR")} FCFA</li>`).join("");
-    const paymentLine = method === "kkiapay"
+    const paymentLine = method === "fedapay"
       ? "Vous pourrez régler en ligne une fois votre commande livrée."
       : `Merci de prévoir <strong>${grandTotal.toLocaleString("fr-FR")} FCFA</strong> en espèces pour le livreur.`;
 
@@ -329,7 +329,7 @@ const getMyOrders = asyncHandler(async (req, res) => {
 const getPendingPaymentOrder = asyncHandler(async (req, res) => {
   const order = await Order.findOne({
     client: req.user._id,
-    paymentMethod: "kkiapay",
+    paymentMethod: "fedapay",
     paymentStatus: { $ne: "paid" },
     deliveryProofUrl: { $ne: "" },
   }).sort({ createdAt: -1 });
@@ -371,7 +371,7 @@ const initPayment = asyncHandler(async (req, res) => {
   if (order.client.toString() !== req.user._id.toString()) {
     return res.status(403).json({ message: "Cette commande ne vous appartient pas." });
   }
-  if (order.paymentMethod !== "kkiapay") {
+  if (order.paymentMethod !== "fedapay") {
     return res.status(400).json({ message: "Cette commande n'utilise pas le paiement en ligne." });
   }
   if (order.paymentStatus === "paid") {
@@ -405,7 +405,7 @@ const payOrder = asyncHandler(async (req, res) => {
   if (order.client.toString() !== req.user._id.toString()) {
     return res.status(403).json({ message: "Cette commande ne vous appartient pas." });
   }
-  if (order.paymentMethod !== "kkiapay") {
+  if (order.paymentMethod !== "fedapay") {
     return res.status(400).json({ message: "Cette commande n'utilise pas le paiement en ligne." });
   }
   if (order.paymentStatus === "paid") {
@@ -512,7 +512,7 @@ const submitDeliveryProof = asyncHandler(async (req, res) => {
     );
   }
 
-  if (order.paymentMethod === "kkiapay") {
+  if (order.paymentMethod === "fedapay") {
     await notify(
       order.client,
       "order_status",

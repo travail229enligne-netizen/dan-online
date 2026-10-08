@@ -127,8 +127,8 @@ export default function CommandeLivraison() {
         <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 8, fontSize: 14 }}>
           <div>📍 {order.deliveryAddress}{order.deliveryCity ? `, ${order.deliveryCity}` : ""}</div>
           <div>📞 {order.deliveryPhone}</div>
-          <div style={{ fontWeight: 600, color: order.paymentMethod === "kkiapay" ? "var(--green-dark)" : "var(--terracotta-dark)" }}>
-            {order.paymentMethod === "kkiapay"
+          <div style={{ fontWeight: 600, color: order.paymentMethod === "fedapay" ? "var(--green-dark)" : "var(--terracotta-dark)" }}>
+            {order.paymentMethod === "fedapay"
               ? "💳 Déjà réglée en ligne"
               : `💵 À encaisser : ${order.grandTotal.toLocaleString("fr-FR")} FCFA`}
           </div>

@@ -92,8 +92,8 @@ export default function Commandes() {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {orders.map((order) => {
               const shopIds = [...new Set(order.items.map((it) => it.shop))];
-              const canPayNow = order.paymentMethod === "kkiapay" && order.paymentStatus !== "paid" && !!order.deliveryProofUrl;
-              const waitingProof = order.paymentMethod === "kkiapay" && order.paymentStatus !== "paid" && !order.deliveryProofUrl && order.status !== "delivered" && order.status !== "cancelled";
+              const canPayNow = order.paymentMethod === "fedapay" && order.paymentStatus !== "paid" && !!order.deliveryProofUrl;
+              const waitingProof = order.paymentMethod === "fedapay" && order.paymentStatus !== "paid" && !order.deliveryProofUrl && order.status !== "delivered" && order.status !== "cancelled";
 
               return (
                 <div key={order._id} style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 14, boxSizing: "border-box" }}>
@@ -103,7 +103,7 @@ export default function Commandes() {
                     </span>
                     <div style={{ display: "flex", gap: 6 }}>
                       <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 9px", borderRadius: 20, background: "var(--cream)", color: "var(--ink-soft)" }}>
-                        {order.paymentMethod === "kkiapay" ? "💳 Mobile Money" : "💵 Espèces"}
+                        {order.paymentMethod === "fedapay" ? "💳 Mobile Money" : "💵 Espèces"}
                       </span>
                       <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: order.status === "delivered" ? "#e8f5ee" : "var(--cream)", color: order.status === "delivered" ? "var(--green-dark)" : "var(--ink-soft)" }}>
                         {statusLabels[order.status] || order.status}
@@ -153,7 +153,7 @@ export default function Commandes() {
                     </a>
                   )}
 
-                  {order.paymentMethod === "kkiapay" && order.paymentStatus === "paid" && (
+                  {order.paymentMethod === "fedapay" && order.paymentStatus === "paid" && (
                     <div style={{ fontSize: 11, color: "var(--green-dark)", fontWeight: 600, marginTop: 6 }}>
                       ✅ Payé le {order.paidAt ? new Date(order.paidAt).toLocaleDateString("fr-FR") : ""}
                     </div>

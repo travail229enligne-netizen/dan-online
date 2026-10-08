@@ -7,7 +7,7 @@ const faqs = [
   },
   {
     q: "Comment puis-je payer ma commande ?",
-    a: "Deux options selon la boutique et la commande : le paiement en ligne via Kkiapay (Mobile Money, carte) avant la livraison, ou le paiement en espèces à la livraison (le livreur encaisse directement).",
+    a: "Deux options selon la boutique et la commande : le paiement en ligne via FedaPay (Mobile Money) avant la livraison, ou le paiement en espèces à la livraison (le livreur encaisse directement).",
   },
   {
     q: "Qui livre ma commande ?",

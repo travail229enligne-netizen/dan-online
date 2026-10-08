@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import Script from "next/script";
+import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/router";
 import MerchantLayout from "../../components/MerchantLayout";
 import { useAuth } from "../../lib/auth";
 import api from "../../lib/api";
@@ -8,16 +8,18 @@ const durations = [3, 7, 15, 30];
 
 export default function Booster() {
   const { user } = useAuth();
+  const router = useRouter();
+  const retourRef = useRef(false);
   const [shop, setShop] = useState(undefined);
   const [products, setProducts] = useState([]);
   const [target, setTarget] = useState("shop");
   const [selectedProduct, setSelectedProduct] = useState("");
   const [days, setDays] = useState(7);
   const [price, setPrice] = useState(null);
-  const [widgetReady, setWidgetReady] = useState(false);
   const [paying, setPaying] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [done, setDone] = useState(null);
 
   useEffect(() => {
     api.get("/shops/me").then((r) => {
@@ -33,59 +35,38 @@ export default function Booster() {
   }, [target, days]);
 
   useEffect(() => {
-    if (!widgetReady || typeof window.addKkiapayListener !== "function") return;
-
-    const handleSuccess = async (response) => {
-      const transactionId = response?.transactionId;
-      if (!transactionId) return;
-      setPaying(true);
-      setError("");
-      try {
-        if (target === "shop") {
-          await api.post("/feature/shop", { days, transactionId });
+    if (!router.isReady || !router.query.retour || retourRef.current) return;
+    retourRef.current = true;
+    setPaying(true);
+    setError("");
+    api
+      .post("/feature/confirm")
+      .then((r) => {
+        if (r.data.applied > 0) {
+          setDone(r.data.last);
+          setSuccess(true);
         } else {
-          await api.post(`/feature/product/${selectedProduct}`, { days, transactionId });
+          setError("Paiement non confirmé. Si tu as été débité, patiente une minute puis recharge cette page.");
         }
-        setSuccess(true);
-      } catch (err) {
-        setError(err.response?.data?.message || "Paiement reçu mais activation impossible. Contacte le support.");
-      } finally {
-        setPaying(false);
-      }
-    };
+      })
+      .catch((err) => setError(err.response?.data?.message || "Impossible de confirmer le paiement. Contacte le support."))
+      .finally(() => setPaying(false));
+  }, [router.isReady]);
 
-    const handleFailed = () => {
-      setError("Le paiement a échoué ou a été annulé.");
-      setPaying(false);
-    };
-
-    window.addKkiapayListener("success", handleSuccess);
-    window.addKkiapayListener("failed", handleFailed);
-    return () => {
-      if (typeof window.removeKkiapayListener === "function") {
-        window.removeKkiapayListener("success", handleSuccess);
-        window.removeKkiapayListener("failed", handleFailed);
-      }
-    };
-  }, [widgetReady, target, days, selectedProduct]);
-
-  const handlePay = () => {
+  const handlePay = async () => {
     setError("");
     if (target === "product" && !selectedProduct) {
       setError("Choisis un produit à mettre en avant.");
       return;
     }
-    if (!widgetReady || typeof window.openKkiapayWidget !== "function") {
-      setError("Le module de paiement n'est pas encore chargé, réessaie dans un instant.");
-      return;
+    setPaying(true);
+    try {
+      const { data } = await api.post("/feature/init", { target, days, productId: selectedProduct });
+      window.location.href = data.url;
+    } catch (err) {
+      setError(err.response?.data?.message || "Impossible d'ouvrir le paiement. Réessaie.");
+      setPaying(false);
     }
-    window.openKkiapayWidget({
-      amount: price.total,
-      key: process.env.NEXT_PUBLIC_KKIAPAY_PUBLIC_KEY,
-      sandbox: true,
-      phone: user?.phone,
-      data: JSON.stringify({ userId: user?._id, target, days }),
-    });
   };
 
   if (shop === undefined) {
@@ -115,7 +96,7 @@ export default function Booster() {
           <div style={{ fontSize: 48 }}>✅</div>
           <h1 style={{ fontSize: 20, marginTop: 10 }}>Mise en avant activée !</h1>
           <p style={{ fontSize: 14, color: "var(--ink-soft)", marginTop: 8 }}>
-            {target === "shop" ? "Ta boutique" : "Ton produit"} est maintenant mis en avant pour {days} jours.
+            {done?.target === "product" ? "Ton produit" : "Ta boutique"} est maintenant mis en avant pour {done?.days} jours.
           </p>
         </div>
       </MerchantLayout>
@@ -124,7 +105,6 @@ export default function Booster() {
 
   return (
     <>
-      <Script src="https://cdn.kkiapay.me/k.js" onLoad={() => setWidgetReady(true)} />
       <MerchantLayout title="Booster ma visibilité">
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, marginBottom: 4 }}>Booster ma visibilité</h1>
         <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 20 }}>

@@ -21,7 +21,7 @@ export default function Commande() {
     deliveryCity: "",
   });
   const [selfDelivery, setSelfDelivery] = useState(false);
-  const paymentMethod = "kkiapay";
+  const paymentMethod = "fedapay";
   const [shopFees, setShopFees] = useState([]);
   const [error, setError] = useState("");
   const [requireLogin, setRequireLogin] = useState(false);

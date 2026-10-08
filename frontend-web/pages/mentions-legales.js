@@ -41,7 +41,7 @@ export default function MentionsLegales() {
             <p style={p}>
               Le site et l'application Shopyz sont hébergés par des prestataires cloud tiers
               (hébergement du site web, de l'application serveur et de la base de données),
-              ainsi que par un service de gestion des paiements en ligne (Kkiapay) pour les
+              ainsi que par un service de gestion des paiements en ligne (FedaPay) pour les
               transactions Mobile Money et carte bancaire.
             </p>
           </div>

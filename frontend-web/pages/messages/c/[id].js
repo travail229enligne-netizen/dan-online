@@ -78,8 +78,8 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
         <div style={{ marginTop: 8, color: "var(--ink-soft)", lineHeight: 1.6 }}>
           <div>📍 {order.deliveryAddress}{order.deliveryCity ? `, ${order.deliveryCity}` : ""}</div>
           <div>📞 {order.deliveryPhone}</div>
-          <div style={{ fontWeight: 600, color: order.paymentMethod === "kkiapay" && order.paymentStatus === "paid" ? "var(--green-dark)" : "var(--terracotta-dark)" }}>
-            {order.paymentMethod === "kkiapay"
+          <div style={{ fontWeight: 600, color: order.paymentMethod === "fedapay" && order.paymentStatus === "paid" ? "var(--green-dark)" : "var(--terracotta-dark)" }}>
+            {order.paymentMethod === "fedapay"
               ? order.paymentStatus === "paid"
                 ? "💳 Réglée en ligne"
                 : "💳 Le client réglera en ligne après la livraison"
@@ -121,7 +121,7 @@ function OrderSummaryCard({ order, isCourier, onRespond, onSubmitProof, respondi
               ✅ Preuve de livraison
             </div>
             <img src={order.deliveryProofUrl} alt="Preuve de livraison" style={{ width: "100%", display: "block" }} />
-            {order.paymentMethod === "kkiapay" && (
+            {order.paymentMethod === "fedapay" && (
               <div style={{ padding: "8px 10px", fontSize: 11, color: order.paymentStatus === "paid" ? "var(--green-dark)" : "var(--terracotta-dark)", fontWeight: 600 }}>
                 {order.paymentStatus === "paid" ? "✅ Client a payé en ligne" : "⏳ En attente du paiement du client"}
               </div>

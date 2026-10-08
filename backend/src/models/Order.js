@@ -44,10 +44,9 @@ const orderSchema = new mongoose.Schema(
     paymentProofUrl: { type: String, default: "" },
     paymentMethod: {
       type: String,
-      enum: ["kkiapay", "cod"],
+      enum: ["fedapay", "cod"],
       default: "cod",
     },
-    kkiapayTransactionId: { type: String, default: "" },
     fedapayTransactionId: { type: String, default: "" },
     paymentStatus: {
       type: String,

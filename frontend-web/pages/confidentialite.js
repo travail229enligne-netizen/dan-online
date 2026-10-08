@@ -39,7 +39,7 @@ export default function Confidentialite() {
           <div style={card}>
             <h2 style={h2}>Paiements en ligne</h2>
             <p style={p}>
-              Les paiements en ligne sont traités par notre partenaire Kkiapay. Shopyz ne
+              Les paiements en ligne sont traités par notre partenaire FedaPay. Shopyz ne
               stocke jamais tes identifiants Mobile Money ni tes données de carte bancaire :
               seule une référence de transaction nous est transmise pour confirmer le paiement.
             </p>
