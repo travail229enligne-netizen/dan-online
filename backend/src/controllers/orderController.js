@@ -403,7 +403,10 @@ const initPayment = asyncHandler(async (req, res) => {
     return res.status(502).json({ message: "Impossible d'ouvrir le paiement. Réessayez dans un instant." });
   }
 
-  await Order.updateOne({ _id: order._id }, { $set: { fedapayTransactionId: checkout.transactionId } });
+  await Order.updateOne(
+    { _id: order._id },
+    { $set: { fedapayTransactionId: checkout.transactionId }, $addToSet: { fedapayTransactionIds: checkout.transactionId } }
+  );
   res.json({ url: checkout.url });
 });
 
@@ -443,11 +446,16 @@ const payOrder = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Le montant payé ne correspond pas à la commande." });
   }
 
-  order.paymentStatus = "paid";
-  order.paidAt = new Date();
-  order.status = "delivered";
-  await order.save();
+  const claimed = await Order.findOneAndUpdate(
+    { _id: order._id, paymentStatus: { $ne: "paid" } },
+    { $set: { paymentStatus: "paid", paidAt: new Date(), status: "delivered" } },
+    { new: true }
+  );
+  if (!claimed) return res.json(await Order.findById(order._id));
 
+  order.paymentStatus = "paid";
+  order.paidAt = claimed.paidAt;
+  order.status = "delivered";
   await notifyOrderCompletion(order);
 
   res.json(order);
@@ -615,3 +623,4 @@ module.exports = {
 };
 
 module.exports.initPayment = initPayment;
+module.exports.notifyOrderCompletion = notifyOrderCompletion;

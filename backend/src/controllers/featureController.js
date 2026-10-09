@@ -70,8 +70,35 @@ const initFeature = asyncHandler(async (req, res) => {
   }
 });
 
+// Applique les jours d'un achat de mise en avant UNE SEULE fois (reservation atomique)
+async function settleFeaturePayment(fp, payment) {
+  if (!payment || payment.status !== "SUCCESS" || Number(payment.amount) < Number(fp.amount)) return null;
+
+  const claimed = await FeaturePayment.findOneAndUpdate(
+    { _id: fp._id, status: "pending" },
+    { $set: { status: "applied", appliedAt: new Date() } }
+  );
+  if (!claimed) return null;
+
+  try {
+    const Model = fp.target === "shop" ? Shop : Product;
+    const doc = await Model.findById(fp.target === "shop" ? fp.shop : fp.product);
+    if (!doc) throw new Error("Cible introuvable");
+    const now = new Date();
+    const base = doc.featuredUntil && new Date(doc.featuredUntil) > now ? new Date(doc.featuredUntil) : now;
+    base.setDate(base.getDate() + fp.days);
+    doc.featuredUntil = base;
+    await doc.save();
+    return { target: fp.target, days: fp.days };
+  } catch (err) {
+    console.error("Feature apply error:", err.message);
+    await FeaturePayment.updateOne({ _id: fp._id }, { $set: { status: "pending", appliedAt: null } });
+    return null;
+  }
+}
+
 // @route   POST /api/feature/confirm
-// Verifie cote serveur les paiements en attente du marchand (24h) et applique les jours UNE SEULE fois
+// Verifie cote serveur les paiements en attente du marchand (24h) et applique les jours une seule fois
 const confirmFeature = asyncHandler(async (req, res) => {
   const since = new Date(Date.now() - 24 * 3600 * 1000);
   const pendings = await FeaturePayment.find({
@@ -94,33 +121,14 @@ const confirmFeature = asyncHandler(async (req, res) => {
       console.error("FedaPay verify error (feature):", err.message);
       continue;
     }
-    if (payment.status !== "SUCCESS" || Number(payment.amount) < Number(fp.amount)) continue;
-
-    // Reservation atomique : un paiement ne peut etre applique qu'une fois
-    const claimed = await FeaturePayment.findOneAndUpdate(
-      { _id: fp._id, status: "pending" },
-      { $set: { status: "applied", appliedAt: new Date() } }
-    );
-    if (!claimed) continue;
-
-    try {
-      const Model = fp.target === "shop" ? Shop : Product;
-      const doc = await Model.findById(fp.target === "shop" ? fp.shop : fp.product);
-      if (!doc) throw new Error("Cible introuvable");
-      const now = new Date();
-      const base = doc.featuredUntil && new Date(doc.featuredUntil) > now ? new Date(doc.featuredUntil) : now;
-      base.setDate(base.getDate() + fp.days);
-      doc.featuredUntil = base;
-      await doc.save();
+    const result = await settleFeaturePayment(fp, payment);
+    if (result) {
       applied += 1;
-      last = { target: fp.target, days: fp.days };
-    } catch (err) {
-      console.error("Feature apply error:", err.message);
-      await FeaturePayment.updateOne({ _id: fp._id }, { $set: { status: "pending", appliedAt: null } });
+      last = result;
     }
   }
 
   res.json({ applied, last });
 });
 
-module.exports = { getFeaturePrice, initFeature, confirmFeature, SHOP_PRICE_PER_DAY, PRODUCT_PRICE_PER_DAY };
+module.exports = { getFeaturePrice, initFeature, confirmFeature, settleFeaturePayment, SHOP_PRICE_PER_DAY, PRODUCT_PRICE_PER_DAY };
