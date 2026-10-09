@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const Order = require("../models/Order");
 const Shop = require("../models/Shop");
 const Withdrawal = require("../models/Withdrawal");
+const { tryAutoPayout } = require("../services/autoPayout");
 
 // Delai de securite (heures) entre le paiement du client et la disponibilite des fonds
 const HOLD_HOURS = Number(process.env.WITHDRAW_HOLD_HOURS || 0);
@@ -33,7 +34,7 @@ async function shopBalance(shopId) {
   }
   const withdrawals = await Withdrawal.find({ shop: shopId, type: "shop" }).sort({ createdAt: -1 });
   const paid = withdrawals.filter((w) => w.status === "paid").reduce((sum, w) => sum + w.amount, 0);
-  const inProgress = withdrawals.filter((w) => w.status === "pending").reduce((sum, w) => sum + w.amount, 0);
+  const inProgress = withdrawals.filter((w) => ["pending", "processing"].includes(w.status)).reduce((sum, w) => sum + w.amount, 0);
   return { earned, pendingAmount, withdrawals, available: earned - paid - inProgress };
 }
 
@@ -48,7 +49,7 @@ async function courierBalance(userId) {
   }
   const withdrawals = await Withdrawal.find({ courier: userId, type: "courier" }).sort({ createdAt: -1 });
   const paid = withdrawals.filter((w) => w.status === "paid").reduce((sum, w) => sum + w.amount, 0);
-  const inProgress = withdrawals.filter((w) => w.status === "pending").reduce((sum, w) => sum + w.amount, 0);
+  const inProgress = withdrawals.filter((w) => ["pending", "processing"].includes(w.status)).reduce((sum, w) => sum + w.amount, 0);
   return { earned, pendingAmount, withdrawals, available: earned - paid - inProgress };
 }
 
@@ -89,7 +90,7 @@ const requestWithdrawal = asyncHandler(async (req, res) => {
     await Withdrawal.deleteOne({ _id: withdrawal._id });
     return res.status(400).json({ message: "Solde insuffisant. Réessaie dans un instant." });
   }
-  res.status(201).json(withdrawal);
+  res.status(201).json(await tryAutoPayout(withdrawal));
 });
 
 // @route   GET /api/wallet/courier/me
@@ -123,7 +124,7 @@ const requestCourierWithdrawal = asyncHandler(async (req, res) => {
     await Withdrawal.deleteOne({ _id: withdrawal._id });
     return res.status(400).json({ message: "Solde insuffisant. Réessaie dans un instant." });
   }
-  res.status(201).json(withdrawal);
+  res.status(201).json(await tryAutoPayout(withdrawal));
 });
 
 // @route   GET /api/admin/withdrawals

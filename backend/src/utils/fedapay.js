@@ -1,4 +1,4 @@
-const { FedaPay, Transaction } = require("fedapay");
+const { FedaPay, Transaction, Payout } = require("fedapay");
 
 FedaPay.setApiKey(process.env.FEDAPAY_SECRET_KEY);
 FedaPay.setEnvironment(process.env.FEDAPAY_ENV === "live" ? "live" : "sandbox");
@@ -26,4 +26,20 @@ async function verifyTransaction(transactionId) {
   };
 }
 
-module.exports = { createCheckout, verifyTransaction };
+// Cree un depot (payout) FedaPay ; l'envoi se fait ensuite avec payout.sendNow()
+async function createPayout({ amount, description, customer }) {
+  return Payout.create({
+    amount: Math.round(Number(amount)),
+    currency: { iso: "XOF" },
+    description,
+    customer,
+  });
+}
+
+// Statut d'un depot (source de verite) : pending, started, processing, sent, failed
+async function retrievePayout(payoutId) {
+  const p = await Payout.retrieve(payoutId);
+  return { id: String(p.id), status: String(p.status || "").toLowerCase() };
+}
+
+module.exports = { createCheckout, verifyTransaction, createPayout, retrievePayout };

@@ -1,7 +1,8 @@
 const { Webhook } = require("fedapay");
 const Order = require("../models/Order");
 const FeaturePayment = require("../models/FeaturePayment");
-const { verifyTransaction } = require("../utils/fedapay");
+const { verifyTransaction, retrievePayout } = require("../utils/fedapay");
+const Withdrawal = require("../models/Withdrawal");
 const { notifyOrderCompletion } = require("./orderController");
 const { settleFeaturePayment } = require("./featureController");
 
@@ -27,6 +28,29 @@ const handleFedapayWebhook = async (req, res) => {
   const entity = event?.entity || event?.data || event?.object || {};
   const txId = entity?.id !== undefined && entity?.id !== null ? String(entity.id) : "";
   console.log("FedaPay webhook:", name, "| transaction:", txId || "?", "| cles:", Object.keys(event || {}).join(","));
+
+  if (name === "payout.sent" || name === "payout.failed") {
+    try {
+      const w = txId ? await Withdrawal.findOne({ fedapayPayoutId: txId }) : null;
+      if (!w) return res.json({ received: true });
+      const po = await retrievePayout(txId);
+      if (po.status === "sent") {
+        await Withdrawal.updateOne(
+          { _id: w._id, status: { $in: ["processing", "pending"] } },
+          { $set: { status: "paid", processedAt: new Date(), note: "Verse automatiquement par FedaPay" } }
+        );
+      } else if (po.status === "failed") {
+        await Withdrawal.updateOne(
+          { _id: w._id, status: "processing" },
+          { $set: { status: "pending", note: "Echec du versement automatique (FedaPay). A traiter manuellement." } }
+        );
+      }
+      return res.json({ received: true });
+    } catch (err) {
+      console.error("FedaPay webhook (payout): erreur de traitement:", err.message);
+      return res.status(500).json({ message: "Erreur de traitement." });
+    }
+  }
 
   if (name !== "transaction.approved" || !txId) return res.json({ received: true });
 

@@ -13,11 +13,12 @@ const withdrawalSchema = new mongoose.Schema(
     phone: { type: String, required: true }, // numero Mobile Money pour le versement
     status: {
       type: String,
-      enum: ["pending", "paid", "rejected"],
+      enum: ["pending", "processing", "paid", "rejected"],
       default: "pending",
     },
     processedAt: { type: Date, default: null },
     note: { type: String, default: "" }, // ex. raison du refus
+    fedapayPayoutId: { type: String, default: "" },
   },
   { timestamps: true }
 );
