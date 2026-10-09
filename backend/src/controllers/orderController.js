@@ -573,6 +573,13 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
   if (!order) return res.status(404).json({ message: "Commande introuvable." });
 
+  if (req.user.role !== "admin") {
+    const ShopModel = require("../models/Shop");
+    const myShop = await ShopModel.findOne({ owner: req.user._id }).select("_id");
+    const owns = myShop && order.items.some((it) => it.shop.toString() === myShop._id.toString());
+    if (!owns) return res.status(403).json({ message: "Cette commande ne concerne pas ta boutique." });
+  }
+
   order.status = status;
   if (status === "delivered" && order.paymentMethod === "cod" && order.paymentStatus !== "paid") {
     order.paymentStatus = "paid";
