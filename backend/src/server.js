@@ -34,7 +34,6 @@ app.use(
 );
 // Webhooks : corps brut, doit etre monte avant express.json()
 app.use("/api/webhooks", require("./routes/webhookRoutes"));
-
 app.use(express.json());
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 

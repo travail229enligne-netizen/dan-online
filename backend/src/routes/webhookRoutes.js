@@ -1,8 +1,10 @@
 const express = require("express");
-const { handleFedapayWebhook } = require("../controllers/webhookController");
+const { handleFedaPayWebhook } = require("../controllers/webhookController");
 
 const router = express.Router();
-// Corps brut obligatoire pour verifier la signature
-router.post("/fedapay", express.raw({ type: "*/*", limit: "1mb" }), handleFedapayWebhook);
+
+// Important : express.raw() ici, PAS express.json() - la verification de
+// signature FedaPay a besoin du corps brut de la requete, non transforme.
+router.post("/fedapay", express.raw({ type: "application/json" }), handleFedaPayWebhook);
 
 module.exports = router;

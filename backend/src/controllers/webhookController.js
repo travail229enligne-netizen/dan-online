@@ -1,96 +1,85 @@
 const { Webhook } = require("fedapay");
 const Order = require("../models/Order");
-const FeaturePayment = require("../models/FeaturePayment");
-const { verifyTransaction, retrievePayout } = require("../utils/fedapay");
-const Withdrawal = require("../models/Withdrawal");
-const { notifyOrderCompletion } = require("./orderController");
-const { settleFeaturePayment } = require("./featureController");
+const { notify } = require("../utils/notify");
 
-// POST /api/webhooks/fedapay  (corps brut, signe par FedaPay)
-const handleFedapayWebhook = async (req, res) => {
-  const secret = process.env.FEDAPAY_WEBHOOK_SECRET;
-  if (!secret) {
-    console.error("FedaPay webhook: FEDAPAY_WEBHOOK_SECRET manquant.");
-    return res.status(503).json({ message: "Webhook non configure." });
+// Reutilise la meme logique de notification que les paiements classiques
+async function notifyOrderCompletion(order) {
+  const shopOwnerIds = [...new Set(order.items.map((it) => it.shop.owner.toString()))];
+  for (const ownerId of shopOwnerIds) {
+    await notify(
+      ownerId,
+      "order_status",
+      "Paiement recu",
+      "Le paiement de la commande (" + order.grandTotal.toLocaleString("fr-FR") + " FCFA) a ete confirme.",
+      "/marchand/commandes"
+    );
   }
+
+  if (order.assignedCourier) {
+    await notify(
+      order.assignedCourier,
+      "order_status",
+      "Course terminee",
+      "Livraison effectuee avec succes. Merci pour ton travail !",
+      "/livreur/portefeuille"
+    );
+  }
+
+  await notify(
+    order.client,
+    "order_status",
+    "Merci pour ta commande !",
+    "Ta commande est livree et payee. N'hesite pas a laisser un avis sur les produits achetes.",
+    "/commandes"
+  );
+
+  const User = require("../models/User");
+  const admins = await User.find({ role: "admin" }).select("_id");
+  for (const admin of admins) {
+    await notify(
+      admin._id,
+      "order_status",
+      "Nouvelle vente",
+      "Une commande de " + order.grandTotal.toLocaleString("fr-FR") + " FCFA a ete finalisee. Commission : " + order.commissionAmount.toLocaleString("fr-FR") + " FCFA.",
+      "/admin/dashboard"
+    );
+  }
+}
+
+// @route   POST /api/webhooks/fedapay
+// @access  Public (verifie par signature, pas par authentification classique)
+const handleFedaPayWebhook = async (req, res) => {
+  const signature = req.headers["x-fedapay-signature"];
+  const endpointSecret = process.env.FEDAPAY_WEBHOOK_SECRET;
 
   let event;
   try {
-    const payload = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : String(req.body || "");
-    event = Webhook.constructEvent(payload, req.headers["x-fedapay-signature"], secret);
-    if (typeof event === "string") event = JSON.parse(event);
+    event = Webhook.constructEvent(req.body, signature, endpointSecret);
   } catch (err) {
-    console.error("FedaPay webhook: signature invalide:", err.message);
-    return res.status(400).json({ message: "Signature invalide." });
+    console.error("Webhook FedaPay invalide:", err.message);
+    return res.status(400).send("Signature invalide.");
   }
-
-  const name = event?.name || event?.type || "";
-  const entity = event?.entity || event?.data || event?.object || {};
-  const txId = entity?.id !== undefined && entity?.id !== null ? String(entity.id) : "";
-  console.log("FedaPay webhook:", name, "| transaction:", txId || "?", "| cles:", Object.keys(event || {}).join(","));
-
-  if (name === "payout.sent" || name === "payout.failed") {
-    try {
-      const w = txId ? await Withdrawal.findOne({ fedapayPayoutId: txId }) : null;
-      if (!w) return res.json({ received: true });
-      const po = await retrievePayout(txId);
-      if (po.status === "sent") {
-        await Withdrawal.updateOne(
-          { _id: w._id, status: { $in: ["processing", "pending"] } },
-          { $set: { status: "paid", processedAt: new Date(), note: "Verse automatiquement par FedaPay" } }
-        );
-      } else if (po.status === "failed") {
-        await Withdrawal.updateOne(
-          { _id: w._id, status: "processing" },
-          { $set: { status: "pending", note: "Echec du versement automatique (FedaPay). A traiter manuellement." } }
-        );
-      }
-      return res.json({ received: true });
-    } catch (err) {
-      console.error("FedaPay webhook (payout): erreur de traitement:", err.message);
-      return res.status(500).json({ message: "Erreur de traitement." });
-    }
-  }
-
-  if (name !== "transaction.approved" || !txId) return res.json({ received: true });
 
   try {
-    const payment = await verifyTransaction(txId);
-    if (payment.status !== "SUCCESS") return res.json({ received: true });
+    const entity = event.entity || {};
+    const status = String(entity.status || "").toLowerCase();
 
-    const order = await Order.findOne({
-      $or: [{ fedapayTransactionId: txId }, { fedapayTransactionIds: txId }],
-    }).populate("items.shop");
+    if (status === "approved" && entity.id) {
+      const order = await Order.findOne({ fedapayTransactionId: String(entity.id) }).populate("items.shop");
 
-    if (order) {
-      if (Number(payment.amount) < Number(order.grandTotal)) {
-        console.error("FedaPay webhook: montant insuffisant pour la commande", order._id.toString());
-        return res.json({ received: true });
-      }
-      const claimed = await Order.findOneAndUpdate(
-        { _id: order._id, paymentStatus: { $ne: "paid" } },
-        { $set: { paymentStatus: "paid", paidAt: new Date(), status: "delivered" } },
-        { new: true }
-      );
-      if (claimed) {
+      if (order && order.paymentStatus !== "paid") {
         order.paymentStatus = "paid";
-        order.paidAt = claimed.paidAt;
+        order.paidAt = new Date();
         order.status = "delivered";
+        await order.save();
         await notifyOrderCompletion(order);
-      } else {
-        console.log("FedaPay webhook: commande deja payee", order._id.toString());
       }
-      return res.json({ received: true });
     }
-
-    const fp = await FeaturePayment.findOne({ fedapayTransactionId: txId });
-    if (fp) await settleFeaturePayment(fp, payment);
-
-    return res.json({ received: true });
   } catch (err) {
-    console.error("FedaPay webhook: erreur de traitement:", err.message);
-    return res.status(500).json({ message: "Erreur de traitement." });
+    console.error("Erreur traitement webhook FedaPay:", err.message);
   }
+
+  res.status(200).send("OK");
 };
 
-module.exports = { handleFedapayWebhook };
+module.exports = { handleFedaPayWebhook };
